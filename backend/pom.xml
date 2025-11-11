@@ -29,7 +29,7 @@
     </scm>
     <properties>
         <java.version>21</java.version>
-        <native.image.mainClass>com.studenttracker.projecttracker.ProjectTrackerApplication</native.image.mainClass>
+        <native.image.mainClass>POSE_Project_Tracking.Blog.ProjectTrackingApplication</native.image.mainClass>
     </properties>
 
     <dependencies>

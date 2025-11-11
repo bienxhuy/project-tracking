@@ -1,4 +1,4 @@
-package OOSE_Final_Project.Blog;
+package POSE_Project_Tracking.Blog;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
