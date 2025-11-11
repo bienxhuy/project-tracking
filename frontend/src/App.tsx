@@ -1,7 +1,9 @@
+import { TempPage } from "./pages/TempPage"
+
 function App() {
   return (
     <>
-      Hello World!
+      <TempPage />
     </>
   )
 }
