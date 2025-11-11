@@ -1,151 +1,77 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-background: light-dark(220 25% 98%, 220 25% 8%);
-  --color-foreground: light-dark(220 20% 15%, 220 15% 95%);
+  /* Colors with light-dark() for automatic theme switching */
+  --color-background: light-dark(hsl(220 25% 98%), hsl(220 25% 8%));
+  --color-foreground: light-dark(hsl(220 20% 15%), hsl(220 15% 95%));
 
-  --color-card: light-dark(0 0% 100%, 220 20% 12%);
-  --color-card-foreground: light-dark(220 20% 15%, 220 15% 95%);
+  --color-card: light-dark(hsl(0 0% 100%), hsl(220 20% 12%));
+  --color-card-foreground: light-dark(hsl(220 20% 15%), hsl(220 15% 95%));
 
-  --color-popover: light-dark(0 0% 100%, 220 20% 12%);
-  --color-popover-foreground: light-dark(220 20% 15%, 220 15% 95%);
+  --color-popover: light-dark(hsl(0 0% 100%), hsl(220 20% 12%));
+  --color-popover-foreground: light-dark(hsl(220 20% 15%), hsl(220 15% 95%));
 
-  --color-primary: 221 83% 53%;
-  --color-primary-foreground: 0 0% 100%;
+  --color-primary: hsl(221 83% 53%);
+  --color-primary-foreground: hsl(0 0% 100%);
   
-  --color-secondary: light-dark(220 15% 95%, 220 20% 15%);
-  --color-secondary-foreground: light-dark(220 20% 15%, 220 15% 95%);
+  --color-secondary: light-dark(hsl(220 15% 95%), hsl(220 20% 15%));
+  --color-secondary-foreground: light-dark(hsl(220 20% 15%), hsl(220 15% 95%));
 
-  --color-muted: light-dark(220 15% 95%, 220 20% 15%);
-  --color-muted-foreground: light-dark(220 10% 50%, 220 10% 60%);
+  --color-muted: light-dark(hsl(220 15% 95%), hsl(220 20% 15%));
+  --color-muted-foreground: light-dark(hsl(220 10% 50%), hsl(220 10% 60%));
 
-  --color-accent: 142 76% 36%;
-  --color-accent-foreground: 0 0% 100%;
+  --color-accent: hsl(142 76% 36%);
+  --color-accent-foreground: hsl(0 0% 100%);
 
-  --color-destructive: 0 84% 60%;
-  --color-destructive-foreground: 0 0% 100%;
+  --color-destructive: hsl(0 84% 60%);
+  --color-destructive-foreground: hsl(0 0% 100%);
   
-  --color-warning: 38 92% 50%;
-  --color-warning-foreground: 0 0% 100%;
+  --color-warning: hsl(38 92% 50%);
+  --color-warning-foreground: hsl(0 0% 100%);
   
-  --color-success: 142 76% 36%;
-  --color-success-foreground: 0 0% 100%;
+  --color-success: hsl(142 76% 36%);
+  --color-success-foreground: hsl(0 0% 100%);
 
-  --color-border: light-dark(220 15% 90%, 220 15% 20%);
-  --color-input: light-dark(220 15% 90%, 220 15% 20%);
-  --color-ring: 221 83% 53%;
+  --color-border: light-dark(hsl(220 15% 90%), hsl(220 15% 20%));
+  --color-input: light-dark(hsl(220 15% 90%), hsl(220 15% 20%));
+  --color-ring: hsl(221 83% 53%);
 
+  /* Radius values */
   --radius: 0.75rem;
   --radius-lg: 0.75rem;
   --radius-md: calc(0.75rem - 2px);
   --radius-sm: calc(0.75rem - 4px);
+
+  /* Sidebar colors */
+  --color-sidebar-background: light-dark(hsl(0 0% 100%), hsl(220 20% 10%));
+  --color-sidebar-foreground: light-dark(hsl(220 20% 15%), hsl(220 15% 95%));
+  --color-sidebar-primary: hsl(221 83% 53%);
+  --color-sidebar-primary-foreground: hsl(0 0% 100%);
+  --color-sidebar-accent: light-dark(hsl(220 15% 95%), hsl(220 20% 15%));
+  --color-sidebar-accent-foreground: light-dark(hsl(220 20% 15%), hsl(220 15% 95%));
+  --color-sidebar-border: light-dark(hsl(220 15% 90%), hsl(220 15% 20%));
+  --color-sidebar-ring: hsl(221 83% 53%);
 }
 
 :root {
-  --background: 220 25% 98%;
-  --foreground: 220 20% 15%;
-
-  --card: 0 0% 100%;
-  --card-foreground: 220 20% 15%;
-
-  --popover: 0 0% 100%;
-  --popover-foreground: 220 20% 15%;
-
-  --primary: 221 83% 53%;
-  --primary-foreground: 0 0% 100%;
-  
-  --secondary: 220 15% 95%;
-  --secondary-foreground: 220 20% 15%;
-
-  --muted: 220 15% 95%;
-  --muted-foreground: 220 10% 50%;
-
-  --accent: 142 76% 36%;
-  --accent-foreground: 0 0% 100%;
-
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-  
-  --warning: 38 92% 50%;
-  --warning-foreground: 0 0% 100%;
-  
-  --success: 142 76% 36%;
-  --success-foreground: 0 0% 100%;
-
-  --border: 220 15% 90%;
-  --input: 220 15% 90%;
-  --ring: 221 83% 53%;
-
-  --radius: 0.75rem;
-  
+  /* Legacy CSS custom properties for gradients and shadows */
   --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(221 83% 63%));
   --gradient-card: linear-gradient(to bottom, hsl(0 0% 100%), hsl(220 25% 99%));
   
   --shadow-sm: 0 1px 2px 0 hsl(220 20% 15% / 0.05);
   --shadow-md: 0 4px 6px -1px hsl(220 20% 15% / 0.1);
   --shadow-lg: 0 10px 15px -3px hsl(220 20% 15% / 0.1);
-
-  --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 220 20% 15%;
-  --sidebar-primary: 221 83% 53%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 15% 95%;
-  --sidebar-accent-foreground: 220 20% 15%;
-  --sidebar-border: 220 15% 90%;
-  --sidebar-ring: 221 83% 53%;
 }
 
 .dark {
-  --background: 220 25% 8%;
-  --foreground: 220 15% 95%;
-
-  --card: 220 20% 12%;
-  --card-foreground: 220 15% 95%;
-
-  --popover: 220 20% 12%;
-  --popover-foreground: 220 15% 95%;
-
-  --primary: 221 83% 53%;
-  --primary-foreground: 0 0% 100%;
-
-  --secondary: 220 20% 15%;
-  --secondary-foreground: 220 15% 95%;
-
-  --muted: 220 20% 15%;
-  --muted-foreground: 220 10% 60%;
-
-  --accent: 142 76% 36%;
-  --accent-foreground: 0 0% 100%;
-
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-  
-  --warning: 38 92% 50%;
-  --warning-foreground: 0 0% 100%;
-  
-  --success: 142 76% 36%;
-  --success-foreground: 0 0% 100%;
-
-  --border: 220 15% 20%;
-  --input: 220 15% 20%;
-  --ring: 221 83% 53%;
-  
-  --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(221 83% 63%));
+  /* Dark mode overrides for gradients and shadows */
   --gradient-card: linear-gradient(to bottom, hsl(220 20% 12%), hsl(220 20% 14%));
   
   --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
   --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.4);
   --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.5);
-
-  --sidebar-background: 220 20% 10%;
-  --sidebar-foreground: 220 15% 95%;
-  --sidebar-primary: 221 83% 53%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 20% 15%;
-  --sidebar-accent-foreground: 220 15% 95%;
-  --sidebar-border: 220 15% 20%;
-  --sidebar-ring: 221 83% 53%;
 }
+
 
 * {
   @apply border-border;
