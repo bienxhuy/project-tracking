@@ -22,6 +22,7 @@ target/
 .env.prod
 /uploads/
 /previews/
+.env
 
 ### NetBeans ###
 /nbproject/private/
