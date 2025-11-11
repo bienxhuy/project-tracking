@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>OTP Verification</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f4f4;
+            padding: 30px;
+            color: #333;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d89ef;
+            margin-bottom: 20px;
+        }
+
+        .otp-code {
+            font-size: 32px;
+            font-weight: bold;
+            color: #e74c3c;
+            background-color: #fceae9;
+            padding: 15px;
+            text-align: center;
+            border-radius: 6px;
+            margin: 20px 0;
+            letter-spacing: 4px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .signature {
+            font-style: italic;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="header">🔐 Xác nhận OTP</div>
+    <p>Xin chào <strong th:text="${name}">User</strong>,</p>
+    <p th:text="${content}">Dưới đây là mã OTP của bạn để xác thực hành động.</p>
+
+    <div class="otp-code" th:text="${otp}">123456</div>
+
+    <p>Vui lòng không chia sẻ mã này với bất kỳ ai. Mã có hiệu lực trong vòng <strong>100 năm (Chưa giới hạn
+        time)</strong>.</p>
+
+    <div class="footer">
+        Trân trọng,<br>
+        <div class="signature">OOSE Team</div>
+        <div>Nhất Kỳ Viên Phương Là Số 1!</div>
+    </div>
+</div>
+</body>
+</html>

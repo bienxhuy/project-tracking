@@ -1,0 +1,26 @@
+[
+  {
+    "name": "org.hibernate.persister.entity.JoinedSubclassEntityPersister",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.cloudinary.http45.UploaderStrategy",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.cloudinary.Cloudinary",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.cloudinary.http45.ApiStrategy",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.cloudinary.utils.ObjectUtils",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  }
+]
