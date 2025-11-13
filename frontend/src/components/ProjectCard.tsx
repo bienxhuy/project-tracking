@@ -5,12 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, Users, Target } from "lucide-react";
-import { ProjectCard as ProjectCardProps } from "@/types/projectCard.type";
+
+export interface ProjectCardProps {
+  id: string;
+  title: string;
+  semester: string;
+  year: string;
+  batch: string;
+  progress: number;
+  members: number;
+  milestones: number;
+  completedMilestones: number;
+  status: "active" | "completed" | "locked";
+}
 
 const statusConfig = {
   active: { label: "Active", className: "bg-primary text-primary-foreground" },
   completed: { label: "Completed", className: "bg-success text-success-foreground" },
-  pending: { label: "Pending", className: "bg-warning text-warning-foreground" },
+  locked: { label: "Locked", className: "bg-warning text-warning-foreground" },
 };
 
 export const ProjectCard = ({

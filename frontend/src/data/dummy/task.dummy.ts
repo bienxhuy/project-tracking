@@ -1,31 +1,31 @@
-import { TaskCard } from "@/types/taskCard.type";
+// Simulate data from an API or database
 
-export const tasks: TaskCard[] = [
+import { Task } from "@/types/task.type";
+
+export const tasks: Task[] = [
   {
     id: "t1",
-    projectId: "1",
-    milestoneId: "m1",
     title: "Design Database Schema",
+    description: "Create and optimize the database schema for the project.",
     assignees: [
       { id: "1", name: "John Doe", initials: "JD" },
       { id: "2", name: "Jane Smith", initials: "JS" }
     ],
-    dueDate: "2024-03-15",
+    startDate: "2024-03-01",
+    endDate: "2024-03-15",
     completed: false,
     isLocked: false,
-    onToggle: () => {}
   },
   {
     id: "t2",
-    projectId: "1",
-    milestoneId: "m1",
     title: "Create API Endpoints",
+    description: "Develop RESTful API endpoints for the application.",
     assignees: [
       { id: "3", name: "Mike Johnson", initials: "MJ" }
     ],
-    dueDate: "2024-03-20",
+    startDate: "2024-03-05",
+    endDate: "2024-03-20",
     completed: false,
     isLocked: true,
-    onToggle: () => {}
   }
 ];

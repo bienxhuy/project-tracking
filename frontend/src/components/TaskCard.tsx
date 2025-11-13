@@ -4,7 +4,18 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, Users, Lock } from "lucide-react";
 // import { useNavigate } from "react-router-dom";
-import { TaskCard as TaskItemProps } from "@/types/taskCard.type";
+
+interface TaskCardProps {
+  id: string;
+  projectId: string;
+  milestoneId: string;
+  title: string;
+  assignees: Array<{ id: string; name: string; initials: string }>;
+  endDate: string;
+  completed: boolean;
+  isLocked: boolean;
+  onToggle: () => void;
+}
 
 export const TaskCard = ({
   // id,
@@ -12,11 +23,11 @@ export const TaskCard = ({
   // milestoneId,
   title,
   assignees,
-  dueDate,
+  endDate,
   completed,
   isLocked = false,
   onToggle,
-}: TaskItemProps) => {
+}: TaskCardProps) => {
   // const navigate = useNavigate();
 
   const handleClick = () => {
@@ -62,7 +73,7 @@ export const TaskCard = ({
           </div>
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            <span>{dueDate}</span>
+            <span>{endDate}</span>
           </div>
         </div>
       </div>

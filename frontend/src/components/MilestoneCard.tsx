@@ -3,7 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Clock } from "lucide-react";
 // import { useNavigate } from "react-router-dom";
-import { MilestoneCard as MilestoneCardProps } from "@/types/milestoneCard.type";
+
+interface MilestoneCardProps {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  progress: number;
+  tasksTotal: number;
+  tasksCompleted: number;
+  completed: boolean;
+}
 
 export const MilestoneCard = ({
   // id,
