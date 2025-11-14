@@ -5,7 +5,6 @@ import POSE_Project_Tracking.Blog.dto.req.UserReq;
 import POSE_Project_Tracking.Blog.dto.req.UserUpdateReq;
 import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
 import POSE_Project_Tracking.Blog.entity.User;
-import POSE_Project_Tracking.Blog.enums.ERole;
 import POSE_Project_Tracking.Blog.enums.EUserStatus;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,5 +37,4 @@ public interface IUserService {
 
     String updateUserToken(Long id, UserUpdateReq userDetails);
 
-    Long getCountOfUsers(ERole role);
 }

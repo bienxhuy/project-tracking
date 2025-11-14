@@ -1,7 +1,7 @@
 package POSE_Project_Tracking.Blog.repository;
 
 import POSE_Project_Tracking.Blog.entity.User;
-import POSE_Project_Tracking.Blog.enums.ERole;
+import POSE_Project_Tracking.Blog.enums.EUserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,7 +21,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmail(String email);
 
-    List<User> findByRole(ERole role);
+    List<User> findByRole(EUserRole role);
 
     boolean existsByUsername(String username);
 

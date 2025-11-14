@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalException {
 
-
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<ApiResponse<?>> handleEntityNotFoundException(NoSuchElementException ex) {
         var result = new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, "HandleNotFound", ex.getMessage(),
@@ -43,6 +42,18 @@ public class GlobalException {
                 .collect(Collectors.toList());
         ApiResponse<Object> response = new ApiResponse<>(HttpStatus.BAD_REQUEST, "Invalid request content", errorList, "VALIDATION_ERROR");
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<ApiResponse<?>> handleCustomException(CustomException ex) {
+        var errorCode = ex.getErrorCode();
+        var result = new ApiResponse<>(
+                errorCode.getHttpStatus(),
+                "Business Logic Error",
+                ex.getMessage(),
+                errorCode.getCode()
+        );
+        return ResponseEntity.status(errorCode.getHttpStatus()).body(result);
     }
 
 }

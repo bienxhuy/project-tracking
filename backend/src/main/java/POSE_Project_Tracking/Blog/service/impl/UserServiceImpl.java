@@ -5,7 +5,7 @@ import POSE_Project_Tracking.Blog.dto.req.UserUpdateReq;
 import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
 import POSE_Project_Tracking.Blog.entity.User;
 import POSE_Project_Tracking.Blog.enums.ELoginType;
-import POSE_Project_Tracking.Blog.enums.ERole;
+import POSE_Project_Tracking.Blog.enums.EUserRole;
 import POSE_Project_Tracking.Blog.enums.EUserStatus;
 import POSE_Project_Tracking.Blog.mapper.UserMapper;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
@@ -61,7 +61,7 @@ public class UserServiceImpl implements IUserService {
 
 
         // Thiết lập giá trị mặc định
-        user.setRole(ERole.USER);
+        user.setRole(EUserRole.STUDENT);
         user.setAccountStatus(EUserStatus.VERIFYING);
         user.setLevel(0);
         user.setLoginType(ELoginType.LOCAL);
@@ -183,22 +183,6 @@ public class UserServiceImpl implements IUserService {
         return securityUtil.createAccessToken(user);
 
     }
-
-    @Override
-    public Long getCountOfUsers(ERole role) {
-        return (long) userRepository.findByRole(role)
-                .size();
-    }
-
-    //    @Override
-    //    public UserRes updateUserPassword(Long id, String newPassword) {
-    //        var user = userRepository.findById(id)
-    //                                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " +
-    //                                 id));
-    //        if (passwordEncoder.matches(newPassword, user.getPassword())) {
-    //            throw new IllegalArgumentException("New passwords is same as current password");
-    //        }
-    //    }
 
 
     UserRes changeToRes(User user) {

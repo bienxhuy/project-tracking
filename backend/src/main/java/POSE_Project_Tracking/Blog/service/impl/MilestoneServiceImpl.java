@@ -1,0 +1,208 @@
+package POSE_Project_Tracking.Blog.service.impl;
+
+import POSE_Project_Tracking.Blog.dto.req.MilestoneReq;
+import POSE_Project_Tracking.Blog.dto.res.MilestoneRes;
+import POSE_Project_Tracking.Blog.entity.Milestone;
+import POSE_Project_Tracking.Blog.entity.Project;
+import POSE_Project_Tracking.Blog.entity.User;
+import POSE_Project_Tracking.Blog.enums.EMilestoneStatus;
+import POSE_Project_Tracking.Blog.exceptionHandler.CustomException;
+import POSE_Project_Tracking.Blog.mapper.MilestoneMapper;
+import POSE_Project_Tracking.Blog.repository.MilestoneRepository;
+import POSE_Project_Tracking.Blog.repository.ProjectRepository;
+import POSE_Project_Tracking.Blog.repository.TaskRepository;
+import POSE_Project_Tracking.Blog.repository.UserRepository;
+import POSE_Project_Tracking.Blog.service.IMilestoneService;
+import POSE_Project_Tracking.Blog.util.SecurityUtil;
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static POSE_Project_Tracking.Blog.enums.ErrorCode.*;
+
+@Service
+@Transactional(rollbackOn = Exception.class)
+public class MilestoneServiceImpl implements IMilestoneService {
+
+    @Autowired
+    private MilestoneRepository milestoneRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TaskRepository taskRepository;
+
+    @Autowired
+    private MilestoneMapper milestoneMapper;
+
+    @Autowired
+    private SecurityUtil securityUtil;
+
+    @Override
+    public MilestoneRes createMilestone(MilestoneReq milestoneReq) {
+        // Lấy project
+        Project project = projectRepository.findById(milestoneReq.getProjectId())
+                .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
+
+        // Map request to entity
+        Milestone milestone = milestoneMapper.toEntity(milestoneReq, project);
+
+        // Set createdBy từ current user
+        User currentUser = securityUtil.getCurrentUser();
+        milestone.setCreatedBy(currentUser);
+
+        // Save
+        milestone = milestoneRepository.save(milestone);
+
+        return milestoneMapper.toResponse(milestone);
+    }
+
+    @Override
+    public MilestoneRes updateMilestone(Long id, MilestoneReq milestoneReq) {
+        Milestone milestone = milestoneRepository.findById(id)
+                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
+
+        // Check if locked
+        if (Boolean.TRUE.equals(milestone.getLocked())) {
+            throw new CustomException(MILESTONE_LOCKED);
+        }
+
+        // Update only allowed fields
+        milestoneMapper.updateEntityFromRequest(milestoneReq, milestone);
+
+        milestone = milestoneRepository.save(milestone);
+
+        return milestoneMapper.toResponse(milestone);
+    }
+
+    @Override
+    public MilestoneRes getMilestoneById(Long id) {
+        Milestone milestone = milestoneRepository.findById(id)
+                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
+
+        return milestoneMapper.toResponse(milestone);
+    }
+
+    @Override
+    public MilestoneRes getMilestoneWithDetails(Long id) {
+        Milestone milestone = milestoneRepository.findByIdWithProject(id)
+                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
+
+        // Force lazy loading
+        milestone.getTasks().size();
+
+        return milestoneMapper.toResponse(milestone);
+    }
+
+    @Override
+    public List<MilestoneRes> getAllMilestones() {
+        return milestoneRepository.findAll().stream()
+                .map(milestoneMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MilestoneRes> getMilestonesByProject(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
+
+        return milestoneRepository.findByProject(project).stream()
+                .map(milestoneMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MilestoneRes> getMilestonesByStatus(EMilestoneStatus status) {
+        return milestoneRepository.findByStatus(status).stream()
+                .map(milestoneMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteMilestone(Long id) {
+        Milestone milestone = milestoneRepository.findById(id)
+                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(milestone.getLocked())) {
+            throw new CustomException(MILESTONE_LOCKED);
+        }
+
+        milestoneRepository.delete(milestone);
+    }
+
+    @Override
+    public void lockMilestone(Long id, Long userId) {
+        Milestone milestone = milestoneRepository.findById(id)
+                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NON_EXISTENT));
+
+        milestone.setLocked(true);
+        milestone.setLockedBy(user);
+        milestone.setLockedAt(LocalDateTime.now());
+
+        milestoneRepository.save(milestone);
+    }
+
+    @Override
+    public void unlockMilestone(Long id) {
+        Milestone milestone = milestoneRepository.findById(id)
+                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
+
+        milestone.setLocked(false);
+        milestone.setLockedBy(null);
+        milestone.setLockedAt(null);
+
+        milestoneRepository.save(milestone);
+    }
+
+    @Override
+    public void updateMilestoneCompletion(Long id) {
+        Milestone milestone = milestoneRepository.findById(id)
+                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
+
+        Long totalTasks = (long) milestone.getTasks().size();
+        if (totalTasks == 0) {
+            milestone.setCompletionPercentage(0.0f);
+        } else {
+            Long completedTasks = taskRepository.countCompletedTasksByMilestone(id);
+            float percentage = (float) completedTasks / totalTasks * 100;
+            milestone.setCompletionPercentage(percentage);
+        }
+
+        milestoneRepository.save(milestone);
+    }
+
+    @Override
+    public List<MilestoneRes> getOverdueMilestones() {
+        LocalDateTime now = LocalDateTime.now();
+        return milestoneRepository.findAll().stream()
+                .filter(milestone -> milestone.getEndDate() != null &&
+                        milestone.getEndDate().atStartOfDay().isBefore(now) &&
+                        milestone.getStatus() != EMilestoneStatus.COMPLETED)
+                .map(milestoneMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void updateMilestoneStatus(Long id, EMilestoneStatus status) {
+        Milestone milestone = milestoneRepository.findById(id)
+                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(milestone.getLocked())) {
+            throw new CustomException(MILESTONE_LOCKED);
+        }
+
+        milestone.setStatus(status);
+        milestoneRepository.save(milestone);
+    }
+}
