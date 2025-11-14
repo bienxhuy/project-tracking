@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
-const MainLayout = () => {
+
+export const MainLayout = () => {
   return (
     <>
       <h1 className='w-full h-60[px] text-center'>HEADER</h1>
@@ -8,5 +9,3 @@ const MainLayout = () => {
     </>
   )
 }
-
-export default MainLayout
