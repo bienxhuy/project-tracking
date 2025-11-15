@@ -1,5 +1,6 @@
 package POSE_Project_Tracking.Blog.service.impl;
 
+import POSE_Project_Tracking.Blog.config.CacheConfig;
 import POSE_Project_Tracking.Blog.dto.req.UserReq;
 import POSE_Project_Tracking.Blog.dto.req.UserUpdateReq;
 import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
@@ -13,6 +14,8 @@ import POSE_Project_Tracking.Blog.service.IUserService;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -82,6 +85,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    @Cacheable(value = CacheConfig.USER_PROFILE_CACHE, key = "#id")
     public UserRes getUserById(Long id) {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User Not found"));
@@ -89,6 +93,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    @Cacheable(value = CacheConfig.USER_PROFILE_CACHE, key = "'username_' + #username")
     public UserRes getUserByUsername(String username) {
         var user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User Not found"));
@@ -103,6 +108,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    @CacheEvict(value = CacheConfig.USER_PROFILE_CACHE, key = "#id")
     public UserRes updateUser(Long id, UserUpdateReq userDetails) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
