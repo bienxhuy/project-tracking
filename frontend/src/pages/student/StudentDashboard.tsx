@@ -1,25 +1,72 @@
 import { useEffect, useState } from "react"
 import { fetchTempProjects } from "@/services/project.service"
+import { fetchAllYears } from "@/services/semester.service"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, FolderKanban } from "lucide-react"
+import { LayoutDashboard, FolderKanban, Filter } from "lucide-react"
+import { Button } from "@/components/ui/button";
 
 import { Project } from "@/types/project.type";
 import { ProjectCard } from "@/components/ProjectCard";
 
-export const StudentDashboard = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
 
+const alphabetSortOptions = {
+  az: 'A-Z',
+  za: 'Z-A',
+};
+
+const dateSortOptions = {
+  newest: 'Mới nhất',
+  oldest: 'Cũ nhất',
+};
+
+
+export const StudentDashboard = () => {
+  // Current displayed projects
+  const [projects, setProjects] = useState<Project[]>([]);
+  // Available years for filtering
+  const [years, setYears] = useState<number[]>([]);
+  // Alphabetical sort state
+  const [alphabetSort, setAlphabetSort] = useState<string>('az');
+  // Date sort state
+  const [dateSort, setDateSort] = useState<string>('newest');
+
+  // Fetch data on component mount
   useEffect(() => {
     const currentBatchProject = fetchTempProjects();
     setProjects(currentBatchProject);
+
+    const availableYears = fetchAllYears();
+    setYears(availableYears);
   }, [])
+
+  // Sort displaying projects whenever sort state changes
+  const alphabeticallySortProjects = () => setProjects(projects.sort((a, b) => {
+    if (alphabetSort === 'az') {
+      return a.title.localeCompare(b.title);
+    } else {
+      return b.title.localeCompare(a.title);
+    }
+  }));
+
+  const dateSortProjects = () => setProjects(projects.sort((a, b) => {
+    if (dateSort === 'newest') {
+      return b.startDate.getTime() - a.startDate.getTime();
+    } else {
+      return a.startDate.getTime() - b.startDate.getTime();
+    }
+  }));
+
+  // Fetch projects based on filters
+  const fetchProjectsBasedOnFilter = () => {
+    // TODO: Implement API call to fetch projects based on selected filters
+  }
 
   return (
     <>
-      <div className="py-10 px-0 md:px-20 lg:px-32 bg-amber">
+      <div className="py-10 px-5 md:px-15 lg:px-32 bg-amber">
 
         <Tabs defaultValue="dashboard" className="space-y-6 mb-10">
           <TabsList className="bg-secondary">
@@ -62,56 +109,95 @@ export const StudentDashboard = () => {
         <div className="flex flex-col rounded-lg gap-2">
           <h3 className="text-xl font-bold text-foreground">Dự án hiện tại</h3>
 
-          {/* FILTER BAR */}
-          <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+          {/**Displaying projects functional block*/}
+          <div className="lg:flex lg:justify-between">
 
-            {/* Search */}
-            <div className="w-40">
-              <Input
-                placeholder="Tìm kiếm"
-                className="h-10"
-              />
+            {/* FILTER BAR */}
+            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-2">
+
+              {/* Search */}
+              <div className="w-40">
+                <Input
+                  placeholder="Tìm kiếm"
+                  className="h-10"
+                />
+              </div>
+
+              {/* Filter group */}
+              <div className="flex gap-2">
+
+                {/* Year Select */}
+                <Select>
+                  <SelectTrigger className="w-28 h-10">
+                    <SelectValue placeholder="Năm học" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Semester Select */}
+                <Select>
+                  <SelectTrigger className="w-24 h-10">
+                    <SelectValue placeholder="Học kỳ" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">HK1</SelectItem>
+                    <SelectItem value="2">HK2</SelectItem>
+                    <SelectItem value="3">HK3</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Batch Select */}
+                <Select>
+                  <SelectTrigger className="w-20 h-10">
+                    <SelectValue placeholder="Đợt" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Đợt 1</SelectItem>
+                    <SelectItem value="2">Đợt 2</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Filter button */}
+                <Button
+                  size="icon"
+                  variant="default"
+                  onClick={fetchProjectsBasedOnFilter}>
+                  <Filter />
+                </Button>
+
+              </div>
             </div>
 
-            {/* Filter group */}
+            {/*Sort group*/}
             <div className="flex gap-2">
-
-              <Select>
-                <SelectTrigger className="w-28 h-10">
-                  <SelectValue placeholder="Năm học" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2024">2024</SelectItem>
-                  <SelectItem value="2025">2025</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select>
-                <SelectTrigger className="w-24 h-10">
-                  <SelectValue placeholder="Học kỳ" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">HK1</SelectItem>
-                  <SelectItem value="2">HK2</SelectItem>
-                  <SelectItem value="3">HK3</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select>
-                <SelectTrigger className="w-20 h-10">
-                  <SelectValue placeholder="Đợt" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Đợt 1</SelectItem>
-                  <SelectItem value="2">Đợt 2</SelectItem>
-                </SelectContent>
-              </Select>
-
+              <Button
+                className="hover:bg-gray-200 hover:text-black cursor-pointer"
+                size="sm"
+                variant="outline"
+                onClick={
+                  () => { setDateSort(dateSort === 'newest' ? 'oldest' : 'newest'); dateSortProjects(); }
+                }>
+                {dateSortOptions[dateSort.toString() as keyof typeof dateSortOptions]}
+              </Button>
+              <Button
+                className="hover:bg-gray-200 hover:text-black cursor-pointer gap-0"
+                size="sm"
+                variant="outline"
+                onClick={
+                  () => { setAlphabetSort(alphabetSort === 'az' ? 'za' : 'az'); alphabeticallySortProjects(); }
+                }>
+                {alphabetSortOptions[alphabetSort.toString() as keyof typeof alphabetSortOptions]}
+              </Button>
             </div>
+
           </div>
 
           {/* PROJECT GRID */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4 w-full mt-2">
             {projects.map((project) => (
               <ProjectCard
                 key={project.id}
@@ -129,7 +215,7 @@ export const StudentDashboard = () => {
             ))}
           </div>
         </div>
-      </div>
+      </div >
 
     </>
   )
