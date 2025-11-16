@@ -6,12 +6,12 @@ import POSE_Project_Tracking.Blog.entity.User;
 import POSE_Project_Tracking.Blog.entity.UserDeviceToken;
 import POSE_Project_Tracking.Blog.service.FirebaseMessagingService;
 import POSE_Project_Tracking.Blog.service.UserDeviceTokenService;
+import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +29,7 @@ public class DeviceTokenController {
 
     private final UserDeviceTokenService deviceTokenService;
     private final FirebaseMessagingService messagingService;
+    private final SecurityUtil securityUtil;
 
     /**
      * Đăng ký device token cho user hiện tại
@@ -36,10 +37,9 @@ public class DeviceTokenController {
     @PostMapping("/register")
     @Operation(summary = "Register a new device token for the current user")
     public ResponseEntity<UserDeviceToken> registerDeviceToken(
-            Authentication authentication,
             @RequestBody Map<String, String> request) {
         
-        User currentUser = (User) authentication.getPrincipal();
+        User currentUser = securityUtil.getCurrentUser();
         
         String fcmToken = request.get("fcmToken");
         String deviceType = request.getOrDefault("deviceType", "UNKNOWN");
@@ -57,8 +57,8 @@ public class DeviceTokenController {
      */
     @GetMapping("/my-tokens")
     @Operation(summary = "Get all device tokens of the current user")
-    public ResponseEntity<List<UserDeviceToken>> getMyDeviceTokens(Authentication authentication) {
-        User currentUser = (User) authentication.getPrincipal();
+    public ResponseEntity<List<UserDeviceToken>> getMyDeviceTokens() {
+        User currentUser = securityUtil.getCurrentUser();
         List<UserDeviceToken> tokens = deviceTokenService.getActiveDeviceTokens(currentUser);
         return ResponseEntity.ok(tokens);
     }
@@ -88,8 +88,8 @@ public class DeviceTokenController {
      */
     @DeleteMapping("/my-tokens/all")
     @Operation(summary = "Delete all device tokens of the current user")
-    public ResponseEntity<String> deleteAllMyDeviceTokens(Authentication authentication) {
-        User currentUser = (User) authentication.getPrincipal();
+    public ResponseEntity<String> deleteAllMyDeviceTokens() {
+        User currentUser = securityUtil.getCurrentUser();
         deviceTokenService.deleteAllUserDeviceTokens(currentUser);
         return ResponseEntity.ok("All device tokens deleted successfully");
     }
@@ -99,10 +99,9 @@ public class DeviceTokenController {
      */
     @PostMapping("/test-notification")
     @Operation(summary = "Send a test notification to all devices of the current user")
-    public ResponseEntity<List<PushNotificationResponse>> sendTestNotification(
-            Authentication authentication) {
+    public ResponseEntity<List<PushNotificationResponse>> sendTestNotification() {
         
-        User currentUser = (User) authentication.getPrincipal();
+        User currentUser = securityUtil.getCurrentUser();
         List<String> tokens = deviceTokenService.getActiveFcmTokens(currentUser);
         
         if (tokens.isEmpty()) {
