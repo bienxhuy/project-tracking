@@ -3,6 +3,7 @@ package POSE_Project_Tracking.Blog.controller;
 import java.io.IOException;
 import java.util.List;
 
+import POSE_Project_Tracking.Blog.enums.EUserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 import POSE_Project_Tracking.Blog.dto.req.UserUpdateReq;
 import POSE_Project_Tracking.Blog.dto.res.ApiResponse;
 import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
-import POSE_Project_Tracking.Blog.enums.ERole;
 import POSE_Project_Tracking.Blog.enums.EUserStatus;
 import POSE_Project_Tracking.Blog.service.IUserService;
 import jakarta.validation.Valid;
@@ -114,9 +114,9 @@ public class UserController {
         return new ApiResponse<>(HttpStatus.OK, "Fetched all users by ids", result, null);
     }
 
-    @GetMapping("/role-count")
-    public ApiResponse<Long> getRoleCount(@RequestParam ERole role) {
-        var result = userService.getCountOfUsers(role);
-        return new ApiResponse<>(HttpStatus.OK, "Get user count for role", result, null);
-    }
+//    @GetMapping("/role-count")
+//    public ApiResponse<Long> getRoleCount(@RequestParam EUserRole role) {
+//        var result = userService.getCountOfUsers(role);
+//        return new ApiResponse<>(HttpStatus.OK, "Get user count for role", result, null);
+//    }
 }

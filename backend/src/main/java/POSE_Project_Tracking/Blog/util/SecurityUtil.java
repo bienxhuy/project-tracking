@@ -23,6 +23,9 @@ import org.springframework.stereotype.Service;
 
 import POSE_Project_Tracking.Blog.dto.UserClaim;
 import POSE_Project_Tracking.Blog.entity.User;
+import POSE_Project_Tracking.Blog.repository.UserRepository;
+import POSE_Project_Tracking.Blog.exceptionHandler.CustomException;
+import POSE_Project_Tracking.Blog.enums.ErrorCode;
 
 @Service
 public class SecurityUtil {
@@ -34,6 +37,9 @@ public class SecurityUtil {
 
     @Autowired
     private JwtDecoder jwtDecoder;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Value("${secrect-key}")
     private String jwtKey;
@@ -116,5 +122,13 @@ public class SecurityUtil {
             return s;
         }
         return null;
+    }
+
+    public User getCurrentUser() {
+        String username = getCurrentUserLogin()
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHENTICATED));
+        
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NON_EXISTENT));
     }
 }

@@ -1,0 +1,13 @@
+package POSE_Project_Tracking.Blog.enums;
+
+public enum ENotificationType {
+    PROJECT_ASSIGNED,
+    TASK_ASSIGNED,
+    REPORT_SUBMITTED,
+    COMMENT_ADDED,
+    TASK_COMPLETED,
+    DEADLINE_APPROACHING,
+    TASK_OVERDUE,
+    MENTION,
+    PROJECT_CREATION_DEFINED
+}

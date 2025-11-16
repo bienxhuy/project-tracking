@@ -1,6 +1,6 @@
 package POSE_Project_Tracking.Blog.dto;
 
-import POSE_Project_Tracking.Blog.enums.ERole;
+import POSE_Project_Tracking.Blog.enums.EUserRole;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +13,7 @@ public class UserClaim {
 
     Long id;
 
-    ERole role;
+    EUserRole role;
 
     String username;
 

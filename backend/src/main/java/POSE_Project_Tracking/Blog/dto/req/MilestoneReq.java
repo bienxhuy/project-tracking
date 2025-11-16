@@ -1,0 +1,29 @@
+package POSE_Project_Tracking.Blog.dto.req;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+
+import java.time.LocalDate;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class MilestoneReq {
+
+    @NotBlank(message = "Tiêu đề không được để trống")
+    private String title;
+
+    private String description;
+
+    @NotNull(message = "ID dự án không được để trống")
+    private Long projectId;
+
+    private LocalDate startDate;
+
+    private LocalDate endDate;
+
+    private Integer orderNumber;
+}
