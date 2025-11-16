@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom"
 import { MainLayout } from "./pages/MainLayout"
 import { TempPage } from "./pages/TempPage"
 import { StudentDashboard } from "./pages/student/StudentDashboard"
-import { ProjectDetail } from "./pages/ProjectDetail"
+import { ProjectDetailPage } from "./pages/ProjectDetail"
 
 function App() {
   return (
@@ -15,7 +15,7 @@ function App() {
               <Route path="dashboard" element={<StudentDashboard />} />
             </Route>
             
-            <Route path="project/:projectId" element={<ProjectDetail />} />
+            <Route path="project/:id" element={<ProjectDetailPage />} />
           </Route>
 
           <Route path="/temp" element={<TempPage />} />
