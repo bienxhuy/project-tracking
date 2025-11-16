@@ -6,8 +6,8 @@ export interface Project {
   id: string;
   title: string;
   content: string;
-  year: string;
-  semester: string;
+  year: number;
+  semester: number;
   batch: string;
   falculty: string;
   startDate: Date;
