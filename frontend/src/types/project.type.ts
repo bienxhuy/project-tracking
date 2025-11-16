@@ -10,8 +10,8 @@ export interface Project {
   semester: string;
   batch: string;
   falculty: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   milestoneCount: number;
   memberCount: number;
   completionPercentage: number;
