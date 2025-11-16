@@ -66,7 +66,7 @@ export const StudentDashboard = () => {
 
   return (
     <>
-      <div className="py-10 px-5 md:px-15 lg:px-32 bg-amber">
+      <div className="pt-5 pb-15 px-5 md:px-15 lg:px-32 bg-amber">
 
         <Tabs defaultValue="dashboard" className="space-y-6 mb-10">
           <TabsList className="bg-secondary">
