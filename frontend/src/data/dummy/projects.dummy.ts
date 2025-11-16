@@ -1,8 +1,10 @@
+// Simulated data from BE
+
 import { Project, ProjectDetail } from "@/types/project.type";
 
 export const currentBatchProjects: Project[] = [
   {
-    id: "1",
+    id: 1,
     title: "GreenCampus Energy Monitor",
     content:
       "IoT sensors and dashboard to monitor building energy usage and suggest optimizations for labs and dorms.",
@@ -10,15 +12,15 @@ export const currentBatchProjects: Project[] = [
     semester: 1,
     batch: "3",
     falculty: "Electrical Engineering",
-    startDate: new Date("Jan 10, 2025"),
-    endDate: new Date("Apr 30, 2025"),
+    startDate: new Date("2025-01-10"),
+    endDate: new Date("2025-04-30"),
     memberCount: 3,
     milestoneCount: 6,
     completionPercentage: 45,
-    status: "active" as const,
+    status: "active",
   },
   {
-    id: "2",
+    id: 2,
     title: "DormMate — Roommate Matching",
     content:
       "Web app using preference surveys and roommate compatibility scoring to help students find suitable dorm partners.",
@@ -26,15 +28,15 @@ export const currentBatchProjects: Project[] = [
     semester: 1,
     batch: "3",
     falculty: "Human-Computer Interaction",
-    startDate: new Date("Feb 1, 2025"),
-    endDate: new Date("May 5, 2025"),
+    startDate: new Date("2025-02-01"),
+    endDate: new Date("2025-05-05"),
     memberCount: 4,
     milestoneCount: 4,
     completionPercentage: 100,
-    status: "completed" as const,
+    status: "completed",
   },
   {
-    id: "3",
+    id: 3,
     title: "Lab Scheduler & Resource Booker",
     content:
       "Centralized booking system for lab equipment with conflict resolution and usage analytics.",
@@ -42,15 +44,15 @@ export const currentBatchProjects: Project[] = [
     semester: 1,
     batch: "3",
     falculty: "Software Engineering",
-    startDate: new Date("Jan 20, 2025"),
-    endDate: new Date("Apr 15, 2025"),
+    startDate: new Date("2025-01-20"),
+    endDate: new Date("2025-04-15"),
     memberCount: 2,
     milestoneCount: 5,
     completionPercentage: 10,
-    status: "active" as const,
+    status: "active",
   },
   {
-    id: "4",
+    id: 4,
     title: "VR Campus Tour",
     content:
       "Virtual reality guided tours of campus landmarks with accessibility modes and multi-language narration.",
@@ -58,17 +60,17 @@ export const currentBatchProjects: Project[] = [
     semester: 1,
     batch: "3",
     falculty: "Multimedia Design",
-    startDate: new Date("Feb 5, 2025"),
-    endDate: new Date("Jun 1, 2025"),
+    startDate: new Date("2025-02-05"),
+    endDate: new Date("2025-06-01"),
     memberCount: 5,
     milestoneCount: 3,
     completionPercentage: 30,
-    status: "active" as const,
+    status: "active",
   },
 ];
 
 export const projectDetailDummy: ProjectDetail = {
-  id: "1",
+  id: 1,
   title: "Smart Attendance System",
   content:
     "Face-recognition based attendance tracking for classrooms with reporting dashboard.",
@@ -76,8 +78,8 @@ export const projectDetailDummy: ProjectDetail = {
   semester: 2,
   batch: "2",
   falculty: "Computer Science",
-  startDate: new Date("Oct 1, 2024"),
-  endDate: new Date("Dec 20, 2024"),
+  startDate: new Date("2024-10-01"),
+  endDate: new Date("2024-12-20"),
   memberCount: 4,
   milestoneCount: 5,
   completionPercentage: 20,
@@ -86,12 +88,12 @@ export const projectDetailDummy: ProjectDetail = {
     "Build a robust, privacy-aware face-recognition attendance system that automates roll-call, stores anonymized logs for instructors, and exposes an admin dashboard for attendance reports and analytics.",
   milestones: [
     {
-      id: "m1",
+      id: 1,
       title: "Research & Requirements",
       description:
         "Gather functional and non-functional requirements; survey available face-recognition models and privacy constraints.",
-      startDate: "Oct 1, 2024",
-      endDate: "Oct 10, 2024",
+      startDate: new Date("2024-10-01"),
+      endDate: new Date("2024-10-10"),
       status: "COMPLETED",
       orderNumber: 1,
       completionPercentage: 100,
@@ -99,12 +101,12 @@ export const projectDetailDummy: ProjectDetail = {
       tasksCompleted: 4,
     },
     {
-      id: "m2",
+      id: 2,
       title: "Prototype - Face Detection & Recognition",
       description:
         "Implement a prototype pipeline for detecting faces and matching against known students using an on-device or lightweight model.",
-      startDate: "Oct 11, 2024",
-      endDate: "Oct 25, 2024",
+      startDate: new Date("2024-10-11"),
+      endDate: new Date("2024-10-25"),
       status: "COMPLETED",
       orderNumber: 2,
       completionPercentage: 100,
@@ -112,12 +114,12 @@ export const projectDetailDummy: ProjectDetail = {
       tasksCompleted: 6,
     },
     {
-      id: "m3",
+      id: 3,
       title: "Backend & Database",
       description:
         "Design and implement API endpoints and database schema for storing attendance logs and student metadata; implement basic auth for instructors.",
-      startDate: "Oct 26, 2024",
-      endDate: "Nov 10, 2024",
+      startDate: new Date("2024-10-26"),
+      endDate: new Date("2024-11-10"),
       status: "IN_PROGRESS",
       orderNumber: 3,
       completionPercentage: 40,
@@ -125,12 +127,12 @@ export const projectDetailDummy: ProjectDetail = {
       tasksCompleted: 2,
     },
     {
-      id: "m4",
+      id: 4,
       title: "Front-end Dashboard",
       description:
         "Create the reporting dashboard with attendance summaries, filters by date/class, and export functionality.",
-      startDate: "Nov 11, 2024",
-      endDate: "Dec 1, 2024",
+      startDate: new Date("2024-11-11"),
+      endDate: new Date("2024-12-01"),
       status: "IN_PROGRESS",
       orderNumber: 4,
       completionPercentage: 10,
@@ -138,12 +140,12 @@ export const projectDetailDummy: ProjectDetail = {
       tasksCompleted: 0,
     },
     {
-      id: "m5",
+      id: 5,
       title: "Testing & Deployment",
       description:
         "End-to-end testing, privacy review, and deployment to the lab environment; final demo preparation.",
-      startDate: "Dec 2, 2024",
-      endDate: "Dec 20, 2024",
+      startDate: new Date("2024-12-02"),
+      endDate: new Date("2024-12-20"),
       status: "LOCKED",
       orderNumber: 5,
       completionPercentage: 0,
@@ -151,4 +153,4 @@ export const projectDetailDummy: ProjectDetail = {
       tasksCompleted: 0,
     },
   ],
-}
+};

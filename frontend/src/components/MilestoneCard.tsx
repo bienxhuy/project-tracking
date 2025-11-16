@@ -5,8 +5,8 @@ import { CheckCircle2, Clock } from "lucide-react";
 // import { useNavigate } from "react-router-dom";
 
 interface MilestoneCardProps {
-  id: string;
-  projectId: string;
+  id: number;
+  projectId: number;
   title: string;
   description: string;
   progress: number;

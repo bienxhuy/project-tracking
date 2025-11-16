@@ -1,11 +1,11 @@
 // Minimal representation of a milestone data for API calls 
 
 export interface Milestone {
-  id: string;
+  id: number;
   title: string;
   description: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   status: "LOCKED" | "IN_PROGRESS" | "COMPLETED";
   orderNumber: number;
   completionPercentage: number;

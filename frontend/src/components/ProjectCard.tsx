@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Calendar, Users, Target } from "lucide-react";
 
 export interface ProjectCardProps {
-  id: string;
+  id: number;
   title: string;
   semester: number;
   year: number;

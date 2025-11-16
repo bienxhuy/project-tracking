@@ -3,7 +3,7 @@
 import { Milestone } from "./milestone.type";
 
 export interface Project {
-  id: string;
+  id: number;
   title: string;
   content: string;
   year: number;
