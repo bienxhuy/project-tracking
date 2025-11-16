@@ -163,6 +163,7 @@ export const StudentDashboard = () => {
 
                 {/* Filter button */}
                 <Button
+                  className="cursor-pointer"
                   size="icon"
                   variant="default"
                   onClick={fetchProjectsBasedOnFilter}>
@@ -175,7 +176,7 @@ export const StudentDashboard = () => {
             {/*Sort group*/}
             <div className="flex gap-2">
               <Button
-                className="hover:bg-gray-200 hover:text-black cursor-pointer"
+                className="cursor-pointer"
                 size="sm"
                 variant="outline"
                 onClick={
@@ -184,7 +185,7 @@ export const StudentDashboard = () => {
                 {dateSortOptions[dateSort.toString() as keyof typeof dateSortOptions]}
               </Button>
               <Button
-                className="hover:bg-gray-200 hover:text-black cursor-pointer gap-0"
+                className="cursor-pointer"
                 size="sm"
                 variant="outline"
                 onClick={
