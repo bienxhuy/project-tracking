@@ -1,11 +1,13 @@
+import { Footer } from '@/components/Footer'
+import { Header } from '@/components/Header'
 import { Outlet } from 'react-router-dom'
 
 export const MainLayout = () => {
   return (
     <>
-      <h1 className='w-full h-60[px] text-center'>HEADER</h1>
+      <Header />
       <Outlet />
-      <h1 className='w-full h-60[px] text-center'>FOOTER</h1>
+      <Footer />
     </>
   )
 }
