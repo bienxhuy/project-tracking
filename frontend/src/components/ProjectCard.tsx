@@ -53,7 +53,7 @@ export const ProjectCard = ({
         <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
           <div className="flex items-center gap-1">
             <Calendar className="w-4 h-4" />
-            <span>{semester} {year} - Batch {batch}</span>
+            <span>Semester {semester} {year} - Batch {batch}</span>
           </div>
         </div>
       </CardHeader>

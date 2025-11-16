@@ -7,7 +7,7 @@ export const currentBatchProjects: Project[] = [
     content:
       "IoT sensors and dashboard to monitor building energy usage and suggest optimizations for labs and dorms.",
     year: "2025",
-    semester: "Semester 1",
+    semester: "1",
     batch: "3",
     falculty: "Electrical Engineering",
     startDate: "Jan 10, 2025",
@@ -23,7 +23,7 @@ export const currentBatchProjects: Project[] = [
     content:
       "Web app using preference surveys and roommate compatibility scoring to help students find suitable dorm partners.",
     year: "2025",
-    semester: "Semester 1",
+    semester: "1",
     batch: "3",
     falculty: "Human-Computer Interaction",
     startDate: "Feb 1, 2025",
@@ -39,7 +39,7 @@ export const currentBatchProjects: Project[] = [
     content:
       "Centralized booking system for lab equipment with conflict resolution and usage analytics.",
     year: "2025",
-    semester: "Semester 1",
+    semester: "1",
     batch: "3",
     falculty: "Software Engineering",
     startDate: "Jan 20, 2025",
@@ -55,7 +55,7 @@ export const currentBatchProjects: Project[] = [
     content:
       "Virtual reality guided tours of campus landmarks with accessibility modes and multi-language narration.",
     year: "2025",
-    semester: "Semester 1",
+    semester: "1",
     batch: "3",
     falculty: "Multimedia Design",
     startDate: "Feb 5, 2025",
@@ -73,7 +73,7 @@ export const projectDetailDummy: ProjectDetail = {
   content:
     "Face-recognition based attendance tracking for classrooms with reporting dashboard.",
   year: "2024",
-  semester: "Semester 2",
+  semester: "2",
   batch: "2",
   falculty: "Computer Science",
   startDate: "Oct 1, 2024",
