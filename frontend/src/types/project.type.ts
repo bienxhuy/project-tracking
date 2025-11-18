@@ -15,10 +15,16 @@ export interface Project {
   milestoneCount: number;
   memberCount: number;
   completionPercentage: number;
-  status: "ACTIVE" | "COMPLETED" | "LOCKED";
+  status: "ACTIVE" | "COMPLETED";
+  isLocked: boolean;
 }
 
 export interface ProjectDetail extends Project {
   objective: string;
   milestones: Milestone[];
 }
+
+export const statusConfig = {
+  ACTIVE: { label: "Đang hoạt động", className: "bg-warning text-warning-foreground" },
+  COMPLETED: { label: "Hoàn thành", className: "bg-success text-success-foreground" },
+};

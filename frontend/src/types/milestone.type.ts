@@ -6,7 +6,8 @@ export interface Milestone {
   description: string;
   startDate: Date;
   endDate: Date;
-  status: "LOCKED" | "IN_PROGRESS" | "COMPLETED";
+  status: "IN_PROGRESS" | "COMPLETED";
+  isLocked: boolean;
   orderNumber: number;
   completionPercentage: number;
   tasksTotal: number;

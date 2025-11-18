@@ -6,6 +6,7 @@ export interface Task {
   description: string;
   startDate: Date;
   endDate: Date;
-  status: "IN_PROGRESS" | "COMPLETED" | "LOCKED";
+  status: "IN_PROGRESS" | "COMPLETED";
+  isLocked: boolean;
   assignees: Array<{ id: number; name: string; initials: string }>;
 }
