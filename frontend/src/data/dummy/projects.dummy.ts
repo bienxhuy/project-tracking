@@ -89,6 +89,7 @@ export const projectDetailDummy: ProjectDetail = {
   completionPercentage: 20,
   status: "ACTIVE",
   isLocked: false,
+  isObjDesLocked: false,
   objective:
     "Xây dựng hệ thống điểm danh dựa trên nhận diện khuôn mặt mạnh mẽ, bảo mật quyền riêng tư, tự động hóa việc điểm danh, lưu trữ nhật ký ẩn danh cho giảng viên và cung cấp bảng điều khiển quản trị cho báo cáo và phân tích điểm danh.",
   milestones: [

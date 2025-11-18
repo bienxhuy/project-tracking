@@ -21,6 +21,7 @@ export interface Project {
 
 export interface ProjectDetail extends Project {
   objective: string;
+  isObjDesLocked: boolean;
   milestones: Milestone[];
 }
 

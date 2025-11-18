@@ -215,6 +215,7 @@ export const StudentDashboard = () => {
                     milestones={project.milestoneCount}
                     completedMilestones={1}
                     status={project.status}
+                    isLocked={project.isLocked}
                   />
                 ))}
               </div>
