@@ -20,11 +20,12 @@ export const ProjectDetailPage = () => {
 
   // Mock user role - replace with actual auth
   const [userRole] = useState<"student" | "instructor">("student");
-  
+
   // Project content state
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [isContentLocked, setIsContentLocked] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [creatingMilestone, setCreatingMilestone] = useState<boolean>(false);
 
   // State for instructor to add comments
   const [comment, setComment] = useState<string>("");
@@ -48,6 +49,8 @@ export const ProjectDetailPage = () => {
     );
   }
 
+  // In case project is loaded
+
   // Derived project states
   const statusInfo = statusConfig[project.status];
   const completedMilestones = project.milestones.filter(m => m.status === "COMPLETED").length;
@@ -56,12 +59,6 @@ export const ProjectDetailPage = () => {
   const totalTasks = project.milestones.reduce((sum, milestone) => sum + milestone.tasksTotal, 0);
   const totalCompletedTasks = project.milestones.reduce((sum, milestone) => sum + milestone.tasksCompleted, 0);
   const overallProgress = totalTasks > 0 ? Math.round((totalCompletedTasks / totalTasks) * 100) : 0;
-
-  // Add calculated progress to each milestone for display in progress bar
-  const milestonesWithProgress = project.milestones.map(milestone => ({
-    ...milestone,
-    progress: milestone.tasksTotal > 0 ? Math.round((milestone.tasksCompleted / milestone.tasksTotal) * 100) : 0
-  }));
 
   // Event handlers for content editing
   const handleSaveContent = () => {
@@ -190,7 +187,7 @@ export const ProjectDetailPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ProjectProgressBar milestones={milestonesWithProgress} projectTotalTasks={totalTasks} projectId={project.id } />
+            <ProjectProgressBar milestones={project.milestones} projectTotalTasks={totalTasks} projectId={project.id} />
             <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-success" />
@@ -236,28 +233,45 @@ export const ProjectDetailPage = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-foreground">Cột mốc</h2>
             {userRole === "student" && (
-              <Button onClick={() => console.log("Create milestone")}>
+              <Button onClick={() => setCreatingMilestone(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Tạo cột mốc
               </Button>
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {milestonesWithProgress.map((milestone) => (
+            {/* Existing Milestone Cards */}
+            {project.milestones.map((milestone) => {
+              console.log(milestone); return (
+                <MilestoneCard
+                  key={milestone.id}
+                  id={milestone.id}
+                  projectId={project.id}
+                  title={milestone.title}
+                  description={milestone.description}
+                  startDate={milestone.startDate}
+                  endDate={milestone.endDate}
+                  completionPercentage={milestone.completionPercentage}
+                  tasksTotal={milestone.tasksTotal}
+                  tasksCompleted={milestone.tasksCompleted}
+                  status={milestone.status}
+                />
+              )
+            })}
+            {/* New Milestone Card in creation mode */}
+            {creatingMilestone && (
               <MilestoneCard
-                key={milestone.id}
-                id={milestone.id}
                 projectId={project.id}
-                title={milestone.title}
-                description={milestone.description}
-                startDate={milestone.startDate}
-                endDate={milestone.endDate}
-                progress={milestone.progress}
-                tasksTotal={milestone.tasksTotal}
-                tasksCompleted={milestone.tasksCompleted}
-                status={milestone.status}
+                // All fields empty or undefined
+                autoFocus={true}
+                onCancel={() => setCreatingMilestone(false)}
+                onCreated={(newMilestone) => {
+                  // Push into main list
+                  setProject({ ...project, milestones: [...project.milestones, newMilestone] });
+                  setCreatingMilestone(false);
+                }}
               />
-            ))}
+            )}
           </div>
         </div>
       </div>
