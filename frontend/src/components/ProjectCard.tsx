@@ -1,8 +1,11 @@
 import { useNavigate } from "react-router-dom";
+import { statusConfig } from "@/types/project.type";
+
+import { Calendar, Users, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, Users, Target } from "lucide-react";
+
 
 export interface ProjectCardProps {
   id: number;
@@ -14,14 +17,10 @@ export interface ProjectCardProps {
   members: number;
   milestones: number;
   completedMilestones: number;
-  status: "active" | "completed" | "locked";
+  status: "ACTIVE" | "COMPLETED";
+  isLocked: boolean;
 }
 
-const statusConfig = {
-  active: { label: "Active", className: "bg-primary text-primary-foreground" },
-  completed: { label: "Completed", className: "bg-success text-success-foreground" },
-  locked: { label: "Locked", className: "bg-warning text-warning-foreground" },
-};
 
 export const ProjectCard = ({
   id,
