@@ -4,9 +4,8 @@ export interface Task {
   id: number;
   title: string;
   description: string;
-  assignees: Array<{ id: number; name: string; initials: string }>;
   startDate: Date;
   endDate: Date;
-  completed: boolean;
-  isLocked: boolean;
+  status: "IN_PROGRESS" | "COMPLETED" | "LOCKED";
+  assignees: Array<{ id: number; name: string; initials: string }>;
 }

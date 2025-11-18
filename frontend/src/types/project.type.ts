@@ -15,7 +15,7 @@ export interface Project {
   milestoneCount: number;
   memberCount: number;
   completionPercentage: number;
-  status: "active" | "completed" | "locked";
+  status: "ACTIVE" | "COMPLETED" | "LOCKED";
 }
 
 export interface ProjectDetail extends Project {
