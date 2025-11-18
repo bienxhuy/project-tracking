@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface Milestone {
   id: number;
   title: string;
-  progress: number;
+  completionPercentage: number;
   tasksTotal: number;
   color?: string;
 }
@@ -42,14 +42,14 @@ export const ProjectProgressBar = ({ milestones, projectTotalTasks, projectId, c
 
                   {/* Progress fill */}
                   <div
-                    className={`absolute inset-0 transition-all duration-300 ${milestone.progress < 30
+                    className={`absolute inset-0 transition-all duration-300 ${milestone.completionPercentage < 30
                       ? 'bg-red-500'
-                      : milestone.progress < 70
+                      : milestone.completionPercentage < 70
                         ? 'bg-yellow-500'
                         : 'bg-green-500'
                       }`}
                     style={{
-                      width: `${milestone.progress}%`,
+                      width: `${milestone.completionPercentage}%`,
                     }}
                   />
 
@@ -62,7 +62,7 @@ export const ProjectProgressBar = ({ milestones, projectTotalTasks, projectId, c
               <TooltipContent side="top" className="bg-popover text-popover-foreground border border-border">
                 <div className="text-sm">
                   <p className="font-semibold">{milestone.title}</p>
-                  <p className="text-muted-foreground">Tiến độ: {milestone.progress}%</p>
+                  <p className="text-muted-foreground">Tiến độ: {milestone.completionPercentage}%</p>
                 </div>
               </TooltipContent>
             </Tooltip>
