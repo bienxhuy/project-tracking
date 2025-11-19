@@ -208,11 +208,6 @@ export function UserTable({
                             <Lock className="mr-2 h-4 w-4" />
                             Deactivate
                           </>
-                        ) : user.accountStatus === UserStatus.BANNED ? (
-                          <>
-                            <Unlock className="mr-2 h-4 w-4" />
-                            Unban
-                          </>
                         ) : (
                           <>
                             <Unlock className="mr-2 h-4 w-4" />
