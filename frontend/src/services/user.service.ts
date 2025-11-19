@@ -128,12 +128,7 @@ class UserService {
     return updatedUser;
   }
 
-  // Ban user
-  async banUser(id: number): Promise<User> {
-    return this.updateUser(id, { accountStatus: UserStatus.BANNED });
-  }
-
-  // Unban/Activate user
+  // Activate user
   async activateUser(id: number): Promise<User> {
     return this.updateUser(id, { accountStatus: UserStatus.ACTIVE });
   }
