@@ -7,6 +7,9 @@ import { ProjectDetail } from "./pages/ProjectDetail"
 import { AdminLayout } from "./pages/admin/AdminLayout"
 import { AdminDashboard } from "./pages/admin/AdminDashboard"
 import { ManageUsers } from "./pages/admin/ManageUsers"
+import NotificationTestPage from "./pages/NotificationTestPage"
+import HomePage from "./pages/HomePage"
+import { NotificationManager } from "./components/NotificationManager"
 
 function App() {
   return (
@@ -14,11 +17,15 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<MainLayout />}>
+            <Route index element={<HomePage />} />
+            
             <Route path="student">
               <Route path="dashboard" element={<StudentDashboard />} />
             </Route>
             
             <Route path="project/:projectId" element={<ProjectDetail />} />
+            
+            <Route path="test-notification" element={<NotificationTestPage />} />
           </Route>
 
           {/* Admin Routes */}
@@ -30,6 +37,9 @@ function App() {
 
           <Route path="/temp" element={<TempPage />} />
         </Routes>
+        
+        {/* Notification Manager - Active on all pages */}
+        <NotificationManager />
       </BrowserRouter>
     </>
   )

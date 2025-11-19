@@ -26,7 +26,16 @@ public class SecurityConfiguration {
                 return new BCryptPasswordEncoder();
         }
 
-        private static final String[] PUBLIC_URLS = { "/api/v1/auth/**", "/api/v1/otp/**" };
+        private static final String[] PUBLIC_URLS = { 
+                "/api/v1/auth/**", 
+                "/api/v1/otp/**",
+                // Swagger UI endpoints
+                "/v3/api-docs/**",
+                "/swagger-ui/**",
+                "/swagger-ui.html",
+                "/swagger-resources/**",
+                "/webjars/**"
+        };
 
         @Autowired
         private CustomOAuth2UserService customOAuth2UserService;

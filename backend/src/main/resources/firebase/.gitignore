@@ -1,0 +1,3 @@
+# Ignore Firebase service account files (contains sensitive credentials)
+firebase-service-account.json
+*.json

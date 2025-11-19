@@ -3,7 +3,7 @@ package POSE_Project_Tracking.Blog.config;
 import POSE_Project_Tracking.Blog.entity.RefreshToken;
 import POSE_Project_Tracking.Blog.entity.User;
 import POSE_Project_Tracking.Blog.enums.ELoginType;
-import POSE_Project_Tracking.Blog.enums.ERole;
+import POSE_Project_Tracking.Blog.enums.EUserRole;
 import POSE_Project_Tracking.Blog.enums.EUserStatus;
 import POSE_Project_Tracking.Blog.repository.RefreshTokenRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
@@ -63,7 +63,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                        .email(email)
                        .password("")
                        .loginType(ELoginType.GOOGLE)
-                       .role(ERole.USER)
+                       .role(EUserRole.STUDENT)
                        .accountStatus(EUserStatus.ACTIVE)
                        .username(displayName)
                        .build();

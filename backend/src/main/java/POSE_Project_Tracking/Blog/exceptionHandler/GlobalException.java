@@ -1,26 +1,39 @@
 package POSE_Project_Tracking.Blog.exceptionHandler;
 
-import POSE_Project_Tracking.Blog.dto.res.ApiResponse;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
+import POSE_Project_Tracking.Blog.dto.res.ApiResponse;
 
 @RestControllerAdvice
 public class GlobalException {
-
 
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<ApiResponse<?>> handleEntityNotFoundException(NoSuchElementException ex) {
         var result = new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, "HandleNotFound", ex.getMessage(),
                                        "ENTITY_NOT_FOUND");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiResponse<?>> handleBadCredentialsException(BadCredentialsException ex) {
+        var result = new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Authentication failed", ex.getMessage(), "BAD_CREDENTIALS");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<?>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        var result = new ApiResponse<>(HttpStatus.BAD_REQUEST, "Invalid argument", ex.getMessage(), "INVALID_ARGUMENT");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
     }
 
     @ExceptionHandler(InternalAuthenticationServiceException.class)
@@ -43,6 +56,18 @@ public class GlobalException {
                 .collect(Collectors.toList());
         ApiResponse<Object> response = new ApiResponse<>(HttpStatus.BAD_REQUEST, "Invalid request content", errorList, "VALIDATION_ERROR");
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<ApiResponse<?>> handleCustomException(CustomException ex) {
+        var errorCode = ex.getErrorCode();
+        var result = new ApiResponse<>(
+                errorCode.getHttpStatus(),
+                "Business Logic Error",
+                ex.getMessage(),
+                errorCode.getCode()
+        );
+        return ResponseEntity.status(errorCode.getHttpStatus()).body(result);
     }
 
 }
