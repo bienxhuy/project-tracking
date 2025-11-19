@@ -3,15 +3,15 @@
 import { Milestone } from "./milestone.type";
 
 export interface Project {
-  id: string;
+  id: number;
   title: string;
   content: string;
-  year: string;
-  semester: string;
+  year: number;
+  semester: number;
   batch: string;
   falculty: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   milestoneCount: number;
   memberCount: number;
   completionPercentage: number;

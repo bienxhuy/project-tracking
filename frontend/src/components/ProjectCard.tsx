@@ -1,16 +1,14 @@
-// TODO: Uncomment the navigation code when routing is set up
-
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, Users, Target } from "lucide-react";
 
 export interface ProjectCardProps {
-  id: string;
+  id: number;
   title: string;
-  semester: string;
-  year: string;
+  semester: number;
+  year: number;
   batch: string;
   progress: number;
   members: number;
@@ -26,7 +24,7 @@ const statusConfig = {
 };
 
 export const ProjectCard = ({
-  // id,
+  id,
   title,
   semester,
   year,
@@ -37,13 +35,13 @@ export const ProjectCard = ({
   completedMilestones,
   status,
 }: ProjectCardProps) => {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const statusInfo = statusConfig[status];
 
   return (
     <Card 
       className="hover:shadow-lg transition-all duration-300 border-border bg-gradient-card cursor-pointer bg-dark"
-      // onClick={() => navigate(`/project/${id}`)}
+      onClick={() => navigate(`/project/${id}`)}
     >
       <CardHeader>
         <div className="flex items-start justify-between">
@@ -53,7 +51,7 @@ export const ProjectCard = ({
         <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
           <div className="flex items-center gap-1">
             <Calendar className="w-4 h-4" />
-            <span>{semester} {year} - Batch {batch}</span>
+            <span>Học kỳ {semester} {year} - Đợt {batch}</span>
           </div>
         </div>
       </CardHeader>

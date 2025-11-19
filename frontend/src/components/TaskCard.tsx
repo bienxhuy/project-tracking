@@ -6,12 +6,12 @@ import { Calendar, Users, Lock } from "lucide-react";
 // import { useNavigate } from "react-router-dom";
 
 interface TaskCardProps {
-  id: string;
-  projectId: string;
-  milestoneId: string;
+  id: number;
+  projectId: number;
+  milestoneId: number;
   title: string;
-  assignees: Array<{ id: string; name: string; initials: string }>;
-  endDate: string;
+  assignees: Array<{ id: number; name: string; initials: string }>;
+  endDate: Date;
   completed: boolean;
   isLocked: boolean;
   onToggle: () => void;
@@ -73,7 +73,7 @@ export const TaskCard = ({
           </div>
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            <span>{endDate}</span>
+            <span>{endDate.toDateString()}</span>
           </div>
         </div>
       </div>
