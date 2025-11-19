@@ -2,14 +2,14 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
   Users, 
-  FolderKanban, 
   Settings, 
   LayoutDashboard,
   ChevronLeft,
-  Menu
+  Menu,
+  LogOut
 } from "lucide-react";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAdminSidebar } from "@/contexts/AdminSidebarContext";
 
 interface NavItem {
   title: string;
@@ -40,8 +40,15 @@ const navItems: NavItem[] = [
 
 export function AdminSidebar() {
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useAdminSidebar();
+
+  const handleLogout = () => {
+    // TODO: Implement logout logic (clear auth tokens, redirect to login, etc.)
+    console.log("Logging out...");
+    // Example: Clear localStorage, redirect
+    // localStorage.removeItem('authToken');
+    // window.location.href = '/login';
+  };
 
   return (
     <>
@@ -73,30 +80,40 @@ export function AdminSidebar() {
       >
         <div className="flex flex-col h-full">
           {/* Logo/Header */}
-          <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
-            {!collapsed && (
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">A</span>
+          <div className={cn(
+            "h-16 border-b border-gray-200 flex items-center px-4",
+            collapsed ? "justify-center" : "justify-between"
+          )}>
+            {!collapsed ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">A</span>
+                  </div>
+                  <span className="font-semibold text-gray-900">Admin Panel</span>
                 </div>
-                <span className="font-semibold text-gray-900">Admin Panel</span>
-              </div>
+                
+                {/* Collapse Button (Desktop only) */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hidden lg:flex"
+                  onClick={() => setCollapsed(!collapsed)}
+                >
+                  <ChevronLeft className="h-4 w-4 transition-transform" />
+                </Button>
+              </>
+            ) : (
+              /* Collapsed view - show icon and toggle button stacked or just toggle */
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden lg:flex"
+                onClick={() => setCollapsed(!collapsed)}
+              >
+                <ChevronLeft className="h-4 w-4 transition-transform rotate-180" />
+              </Button>
             )}
-            
-            {/* Collapse Button (Desktop only) */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden lg:flex"
-              onClick={() => setCollapsed(!collapsed)}
-            >
-              <ChevronLeft
-                className={cn(
-                  "h-4 w-4 transition-transform",
-                  collapsed && "rotate-180"
-                )}
-              />
-            </Button>
           </div>
 
           {/* Navigation */}
@@ -159,6 +176,23 @@ export function AdminSidebar() {
                 );
               })}
             </ul>
+
+            {/* Logout Button */}
+            <div className="px-2 mt-2 pt-2 border-t border-gray-200">
+              <button
+                onClick={handleLogout}
+                className={cn(
+                  "w-full flex items-center gap-3 rounded-lg px-3 py-2 transition-colors text-red-600 hover:bg-red-50",
+                  collapsed ? "justify-center" : ""
+                )}
+                title={collapsed ? "Logout" : undefined}
+              >
+                <LogOut className="h-5 w-5 flex-shrink-0" />
+                {!collapsed && (
+                  <span className="text-sm font-medium">Logout</span>
+                )}
+              </button>
+            </div>
           </nav>
 
           {/* Footer */}
