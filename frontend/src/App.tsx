@@ -4,6 +4,8 @@ import { MainLayout } from "./pages/MainLayout"
 import { TempPage } from "./pages/TempPage"
 import { StudentDashboard } from "./pages/student/StudentDashboard"
 import { ProjectDetail } from "./pages/ProjectDetail"
+import { AdminLayout } from "./pages/admin/AdminLayout"
+import { ManageUsers } from "./pages/admin/ManageUsers"
 
 function App() {
   return (
@@ -16,6 +18,11 @@ function App() {
             </Route>
             
             <Route path="project/:projectId" element={<ProjectDetail />} />
+          </Route>
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="users" element={<ManageUsers />} />
           </Route>
 
           <Route path="/temp" element={<TempPage />} />
