@@ -10,28 +10,35 @@ interface UserStatsCardsProps {
 export function UserStatsCards({ stats, loading }: UserStatsCardsProps) {
   const statCards = [
     {
-      title: "Total Students",
-      value: stats.totalStudents,
-      icon: GraduationCap,
+      title: "Total Users",
+      value: stats.totalUsers,
+      icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-50"
     },
     {
-      title: "Total Instructors",
-      value: stats.totalInstructors,
-      icon: Users,
+      title: "Admins",
+      value: stats.totalAdmins,
+      icon: GraduationCap,
       color: "text-purple-600",
       bgColor: "bg-purple-50"
     },
     {
-      title: "Active Users",
-      value: stats.totalActive,
+      title: "Instructors",
+      value: stats.totalInstructors,
+      icon: Users,
+      color: "text-orange-600",
+      bgColor: "bg-orange-50"
+    },
+    {
+      title: "Students",
+      value: stats.totalStudents,
       icon: UserCheck,
       color: "text-green-600",
       bgColor: "bg-green-50"
     },
     {
-      title: "Inactive Users",
+      title: "Inactive",
       value: stats.totalInactive,
       icon: UserX,
       color: "text-gray-600",
@@ -41,8 +48,8 @@ export function UserStatsCards({ stats, loading }: UserStatsCardsProps) {
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        {[1, 2, 3, 4, 5].map((i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
@@ -58,7 +65,7 @@ export function UserStatsCards({ stats, loading }: UserStatsCardsProps) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
       {statCards.map((stat) => (
         <Card key={stat.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -77,4 +84,5 @@ export function UserStatsCards({ stats, loading }: UserStatsCardsProps) {
     </div>
   );
 }
+
 

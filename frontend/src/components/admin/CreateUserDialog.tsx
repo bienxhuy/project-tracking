@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CreateUserDto, UserRole } from "@/types/user.type";
+import { CreateUserDto } from "@/types/user.type";
+import { UserRole, LoginType } from "@/types/util.type";
+
+// Role mapping for the form
+type FormRole = "STUDENT" | "INSTRUCTOR";
 
 interface CreateUserDialogProps {
   open: boolean;
@@ -29,36 +33,40 @@ export function CreateUserDialog({
   onOpenChange,
   onSubmit
 }: CreateUserDialogProps) {
-  const [formData, setFormData] = useState<CreateUserDto>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    role: UserRole.STUDENT,
-    studentId: "",
-    instructorId: ""
-  });
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<FormRole>("STUDENT");
+  const [generatedPassword, setGeneratedPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Generate random password when dialog opens
+  useEffect(() => {
+    if (open) {
+      generatePassword();
+    }
+  }, [open]);
+
+  const generatePassword = () => {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    setGeneratedPassword(password);
+  };
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
+    if (!displayName.trim()) {
+      newErrors.displayName = "Name is required";
     }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
-    }
-    if (!formData.email.trim()) {
+    if (!email.trim()) {
       newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Invalid email format";
-    }
-    if (formData.role === UserRole.STUDENT && !formData.studentId?.trim()) {
-      newErrors.studentId = "Student ID is required";
-    }
-    if (formData.role === UserRole.INSTRUCTOR && !formData.instructorId?.trim()) {
-      newErrors.instructorId = "Instructor ID is required";
     }
 
     setErrors(newErrors);
@@ -70,16 +78,32 @@ export function CreateUserDialog({
 
     setLoading(true);
     try {
-      await onSubmit(formData);
+      // Generate username from email (part before @)
+      const username = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+
+      // Map form role to backend role
+      const backendRole = role === "STUDENT" ? UserRole.STUDENT : UserRole.INSTRUCTOR;
+
+      const userData: CreateUserDto = {
+        username: username,
+        password: generatedPassword,
+        email: email,
+        displayName: displayName,
+        role: backendRole,
+        loginType: LoginType.LOCAL
+      };
+
+      await onSubmit(userData);
+      
+      // Show success message about verification email
+      // Note: Backend automatically sends OTP verification email
+      // alert(`✅ User created successfully!\n\n📧 A verification email with OTP code has been sent to:\n${email}\n\nThe user must verify their email before they can log in.`);
+      
       // Reset form
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        role: UserRole.STUDENT,
-        studentId: "",
-        instructorId: ""
-      });
+      setDisplayName("");
+      setEmail("");
+      setRole("STUDENT");
+      setGeneratedPassword("");
       setErrors({});
       onOpenChange(false);
     } catch (error) {
@@ -95,43 +119,25 @@ export function CreateUserDialog({
         <DialogHeader>
           <DialogTitle>Create New User Account</DialogTitle>
           <DialogDescription>
-            Enter user details to create a new account. Password will be auto-generated and sent via email.
+            Enter user details. The system will automatically send a verification email with OTP code to activate the account.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="firstName" className="text-sm font-medium">
-                First Name <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="firstName"
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                placeholder="John"
-                className={errors.firstName ? "border-red-500" : ""}
-              />
-              {errors.firstName && (
-                <p className="text-xs text-red-500">{errors.firstName}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="lastName" className="text-sm font-medium">
-                Last Name <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="lastName"
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                placeholder="Doe"
-                className={errors.lastName ? "border-red-500" : ""}
-              />
-              {errors.lastName && (
-                <p className="text-xs text-red-500">{errors.lastName}</p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <label htmlFor="displayName" className="text-sm font-medium">
+              Name <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="displayName"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Nguyễn Văn An"
+              className={errors.displayName ? "border-red-500" : ""}
+            />
+            {errors.displayName && (
+              <p className="text-xs text-red-500">{errors.displayName}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -141,9 +147,9 @@ export function CreateUserDialog({
             <Input
               id="email"
               type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="john.doe@university.edu"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="nguyen.van.an@ute.edu.vn"
               className={errors.email ? "border-red-500" : ""}
             />
             {errors.email && (
@@ -156,54 +162,51 @@ export function CreateUserDialog({
               Role <span className="text-red-500">*</span>
             </label>
             <Select
-              value={formData.role}
-              onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}
+              value={role}
+              onValueChange={(value) => setRole(value as FormRole)}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={UserRole.STUDENT}>Student</SelectItem>
-                <SelectItem value={UserRole.INSTRUCTOR}>Instructor</SelectItem>
+                <SelectItem value="STUDENT">Student</SelectItem>
+                <SelectItem value="INSTRUCTOR">Instructor</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {formData.role === UserRole.STUDENT && (
-            <div className="space-y-2">
-              <label htmlFor="studentId" className="text-sm font-medium">
-                Student ID <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="studentId"
-                value={formData.studentId}
-                onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                placeholder="SE123456"
-                className={errors.studentId ? "border-red-500" : ""}
-              />
-              {errors.studentId && (
-                <p className="text-xs text-red-500">{errors.studentId}</p>
-              )}
+          {/* Show generated password and email notification info */}
+          <div className="space-y-3">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-800">
+                <span className="font-semibold">Generated Password:</span>
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <Input
+                  value={generatedPassword}
+                  readOnly
+                  className="text-xs font-mono bg-white"
+                  type="text"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={generatePassword}
+                  className="whitespace-nowrap"
+                >
+                  Regenerate
+                </Button>
+              </div>
             </div>
-          )}
-
-          {formData.role === UserRole.INSTRUCTOR && (
-            <div className="space-y-2">
-              <label htmlFor="instructorId" className="text-sm font-medium">
-                Instructor ID <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="instructorId"
-                value={formData.instructorId}
-                onChange={(e) => setFormData({ ...formData, instructorId: e.target.value })}
-                placeholder="INS001"
-                className={errors.instructorId ? "border-red-500" : ""}
-              />
-              {errors.instructorId && (
-                <p className="text-xs text-red-500">{errors.instructorId}</p>
-              )}
+            
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p className="text-sm text-green-800">
+                <span className="font-semibold">📧 Email Verification:</span><br/>
+                After creating, the system will automatically send a verification email with OTP code to the user's email address. The user must login to verify the account.
+              </p>
             </div>
-          )}
+          </div>
         </div>
 
         <DialogFooter>
@@ -218,4 +221,3 @@ export function CreateUserDialog({
     </Dialog>
   );
 }
-

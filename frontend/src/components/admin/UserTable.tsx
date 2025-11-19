@@ -18,7 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Eye, Edit, Lock, Unlock, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import { User, UserRole, UserStatus } from "@/types/user.type";
+import { User } from "@/types/user.type";
+import { UserRole, UserStatus } from "@/types/util.type";
 
 interface UserTableProps {
   users: User[];
@@ -46,8 +47,12 @@ export function UserTable({
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentUsers = users.slice(startIndex, endIndex);
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  const getInitials = (displayName: string) => {
+    const names = displayName.split(" ");
+    if (names.length >= 2) {
+      return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
+    }
+    return displayName.charAt(0).toUpperCase();
   };
 
   const getRoleBadgeColor = (role: UserRole) => {
@@ -64,9 +69,18 @@ export function UserTable({
   };
 
   const getStatusBadgeColor = (status: UserStatus) => {
-    return status === UserStatus.ACTIVE
-      ? "bg-green-100 text-green-800"
-      : "bg-gray-100 text-gray-800";
+    switch (status) {
+      case UserStatus.ACTIVE:
+        return "bg-green-100 text-green-800";
+      case UserStatus.INACTIVE:
+        return "bg-gray-100 text-gray-800";
+      case UserStatus.BANNED:
+        return "bg-red-100 text-red-800";
+      case UserStatus.VERIFYING:
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -146,15 +160,15 @@ export function UserTable({
                     <Avatar>
                       <AvatarImage src={user.avatar} />
                       <AvatarFallback>
-                        {getInitials(user.firstName, user.lastName)}
+                        {getInitials(user.displayName)}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="font-medium">
-                        {user.firstName} {user.lastName}
+                        {user.displayName}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {user.studentId || user.instructorId || "N/A"}
+                        @{user.username}
                       </div>
                     </div>
                   </div>
@@ -166,8 +180,8 @@ export function UserTable({
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge className={getStatusBadgeColor(user.status)}>
-                    {user.status}
+                  <Badge className={getStatusBadgeColor(user.accountStatus)}>
+                    {user.accountStatus}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
@@ -191,10 +205,15 @@ export function UserTable({
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => onToggleStatus(user)}>
-                        {user.status === UserStatus.ACTIVE ? (
+                        {user.accountStatus === UserStatus.ACTIVE ? (
                           <>
                             <Lock className="mr-2 h-4 w-4" />
                             Deactivate
+                          </>
+                        ) : user.accountStatus === UserStatus.BANNED ? (
+                          <>
+                            <Unlock className="mr-2 h-4 w-4" />
+                            Unban
                           </>
                         ) : (
                           <>
@@ -264,4 +283,5 @@ export function UserTable({
     </div>
   );
 }
+
 

@@ -16,13 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User, UpdateUserDto, UserRole, UserStatus } from "@/types/user.type";
+import { User, UpdateUserDto } from "@/types/user.type";
+import { UserRole, UserStatus } from "@/types/util.type";
 
 interface EditUserDialogProps {
   open: boolean;
   user: User | null;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (id: string, data: UpdateUserDto) => Promise<void>;
+  onSubmit: (id: number, data: UpdateUserDto) => Promise<void>;
 }
 
 export function EditUserDialog({
@@ -38,13 +39,12 @@ export function EditUserDialog({
   useEffect(() => {
     if (user) {
       setFormData({
-        firstName: user.firstName,
-        lastName: user.lastName,
+        username: user.username,
+        displayName: user.displayName,
         email: user.email,
         role: user.role,
-        status: user.status,
-        studentId: user.studentId,
-        instructorId: user.instructorId
+        accountStatus: user.accountStatus,
+        level: user.level
       });
     }
   }, [user]);
@@ -52,11 +52,11 @@ export function EditUserDialog({
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.firstName?.trim()) {
-      newErrors.firstName = "First name is required";
+    if (!formData.username?.trim()) {
+      newErrors.username = "Username is required";
     }
-    if (!formData.lastName?.trim()) {
-      newErrors.lastName = "Last name is required";
+    if (!formData.displayName?.trim()) {
+      newErrors.displayName = "Display name is required";
     }
     if (!formData.email?.trim()) {
       newErrors.email = "Email is required";
@@ -96,36 +96,34 @@ export function EditUserDialog({
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="firstName" className="text-sm font-medium">
-                First Name <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="firstName"
-                value={formData.firstName || ""}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                className={errors.firstName ? "border-red-500" : ""}
-              />
-              {errors.firstName && (
-                <p className="text-xs text-red-500">{errors.firstName}</p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <label htmlFor="username" className="text-sm font-medium">
+              Username <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="username"
+              value={formData.username || ""}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              className={errors.username ? "border-red-500" : ""}
+            />
+            {errors.username && (
+              <p className="text-xs text-red-500">{errors.username}</p>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              <label htmlFor="lastName" className="text-sm font-medium">
-                Last Name <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="lastName"
-                value={formData.lastName || ""}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                className={errors.lastName ? "border-red-500" : ""}
-              />
-              {errors.lastName && (
-                <p className="text-xs text-red-500">{errors.lastName}</p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <label htmlFor="displayName" className="text-sm font-medium">
+              Display Name <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="displayName"
+              value={formData.displayName || ""}
+              onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+              className={errors.displayName ? "border-red-500" : ""}
+            />
+            {errors.displayName && (
+              <p className="text-xs text-red-500">{errors.displayName}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -159,6 +157,7 @@ export function EditUserDialog({
                 <SelectContent>
                   <SelectItem value={UserRole.STUDENT}>Student</SelectItem>
                   <SelectItem value={UserRole.INSTRUCTOR}>Instructor</SelectItem>
+                  <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -168,8 +167,8 @@ export function EditUserDialog({
                 Status
               </label>
               <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value as UserStatus })}
+                value={formData.accountStatus}
+                onValueChange={(value) => setFormData({ ...formData, accountStatus: value as UserStatus })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -177,38 +176,40 @@ export function EditUserDialog({
                 <SelectContent>
                   <SelectItem value={UserStatus.ACTIVE}>Active</SelectItem>
                   <SelectItem value={UserStatus.INACTIVE}>Inactive</SelectItem>
+                  <SelectItem value={UserStatus.BANNED}>Banned</SelectItem>
+                  <SelectItem value={UserStatus.VERIFYING}>Verifying</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {formData.role === UserRole.STUDENT && (
-            <div className="space-y-2">
-              <label htmlFor="studentId" className="text-sm font-medium">
-                Student ID
-              </label>
-              <Input
-                id="studentId"
-                value={formData.studentId || ""}
-                onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                disabled
-              />
-            </div>
-          )}
+          <div className="space-y-2">
+            <label htmlFor="level" className="text-sm font-medium">
+              Level
+            </label>
+            <Input
+              id="level"
+              type="number"
+              step="0.1"
+              min="0"
+              max="10"
+              value={formData.level || 0}
+              onChange={(e) => setFormData({ ...formData, level: parseFloat(e.target.value) || 0 })}
+            />
+          </div>
 
-          {formData.role === UserRole.INSTRUCTOR && (
-            <div className="space-y-2">
-              <label htmlFor="instructorId" className="text-sm font-medium">
-                Instructor ID
-              </label>
-              <Input
-                id="instructorId"
-                value={formData.instructorId || ""}
-                onChange={(e) => setFormData({ ...formData, instructorId: e.target.value })}
-                disabled
-              />
-            </div>
-          )}
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-sm font-medium text-muted-foreground">
+              New Password (leave empty to keep current)
+            </label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password || ""}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="••••••••"
+            />
+          </div>
         </div>
 
         <DialogFooter>
@@ -223,4 +224,3 @@ export function EditUserDialog({
     </Dialog>
   );
 }
-

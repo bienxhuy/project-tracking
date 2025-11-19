@@ -9,7 +9,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Plus, Upload } from "lucide-react";
-import { UserRole, UserStatus, UserFilters as UserFiltersType } from "@/types/user.type";
+import { UserFilters as UserFiltersType } from "@/types/user.type";
+import { UserRole, UserStatus } from "@/types/util.type";
 
 interface UserFiltersProps {
   filters: UserFiltersType;
@@ -64,14 +65,15 @@ export function UserFilters({
               <SelectItem value="ALL">All Roles</SelectItem>
               <SelectItem value={UserRole.STUDENT}>Student</SelectItem>
               <SelectItem value={UserRole.INSTRUCTOR}>Instructor</SelectItem>
+              <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
             </SelectContent>
           </Select>
 
           {/* Status Filter */}
           <Select
-            value={filters.status || "ALL"}
+            value={filters.accountStatus || "ALL"}
             onValueChange={(value) => 
-              onFiltersChange({ ...filters, status: value as UserStatus | "ALL" })
+              onFiltersChange({ ...filters, accountStatus: value as UserStatus | "ALL" })
             }
           >
             <SelectTrigger className="w-[150px]">
@@ -81,6 +83,8 @@ export function UserFilters({
               <SelectItem value="ALL">All Status</SelectItem>
               <SelectItem value={UserStatus.ACTIVE}>Active</SelectItem>
               <SelectItem value={UserStatus.INACTIVE}>Inactive</SelectItem>
+              <SelectItem value={UserStatus.BANNED}>Banned</SelectItem>
+              <SelectItem value={UserStatus.VERIFYING}>Verifying</SelectItem>
             </SelectContent>
           </Select>
 
@@ -98,4 +102,5 @@ export function UserFilters({
     </div>
   );
 }
+
 

@@ -33,9 +33,9 @@ export function DeleteUserDialog({
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete the account of{" "}
             <span className="font-semibold">
-              {user.firstName} {user.lastName}
+              {user.displayName}
             </span>{" "}
-            ({user.email}) and remove all associated data from the system.
+            (@{user.username}, {user.email}) and remove all associated data from the system.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -48,4 +48,5 @@ export function DeleteUserDialog({
     </AlertDialog>
   );
 }
+
 

@@ -70,6 +70,16 @@ export function BulkImportDialog({
     setResult(null);
   };
 
+  const generatePassword = () => {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return password;
+  };
+
   const parseCSV = async (file: File): Promise<CreateUserDto[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -83,13 +93,31 @@ export function BulkImportDialog({
           
           for (let i = 1; i < lines.length; i++) {
             const values = lines[i].split(",").map(v => v.trim());
-            const user: any = {};
+            const rowData: any = {};
             
             headers.forEach((header, index) => {
-              user[header] = values[index];
+              rowData[header] = values[index];
             });
 
-            users.push(user as CreateUserDto);
+            // Transform CSV data to CreateUserDto
+            const displayName = rowData.displayName || rowData.name || "";
+            const email = rowData.email || "";
+            const role = rowData.role || "STUDENT";
+            
+            // Generate username from email
+            const username = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+            
+            // Map role: STUDENT -> STUDENT, INSTRUCTOR -> INSTRUCTOR
+            const backendRole = role; // Direct mapping
+
+            users.push({
+              username: username,
+              password: generatePassword(), // Auto-generate password
+              email: email,
+              displayName: displayName,
+              role: backendRole as any,
+              loginType: "LOCAL" as any
+            });
           }
 
           resolve(users);
@@ -125,10 +153,10 @@ export function BulkImportDialog({
   };
 
   const downloadTemplate = (type: "student" | "instructor") => {
-    const headers = ["firstName", "lastName", "email", "role", type === "student" ? "studentId" : "instructorId"];
+    const headers = ["displayName", "email", "role"];
     const sampleData = type === "student" 
-      ? ["John,Doe,john.doe@student.ute.edu.vn,STUDENT,SE123456"]
-      : ["Jane,Smith,jane.smith@instructor.ute.edu.vn,INSTRUCTOR,INS001"];
+      ? ["Nguyễn Văn An,nguyen.van.an@ute.edu.vn,STUDENT"]
+      : ["Dr. Trần Văn Bình,tran.van.binh@ute.edu.vn,INSTRUCTOR"];
     
     const csv = [headers.join(","), ...sampleData].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -169,6 +197,7 @@ export function BulkImportDialog({
                   accept=".csv,.xls,.xlsx"
                   onChange={handleFileInput}
                   className="hidden"
+                  aria-label="Upload CSV or Excel file"
                 />
                 
                 {file ? (
@@ -230,11 +259,13 @@ export function BulkImportDialog({
               <div className="text-sm text-muted-foreground">
                 <p className="font-medium mb-1">Required fields:</p>
                 <ul className="list-disc list-inside space-y-1">
-                  <li>firstName, lastName</li>
+                  <li>displayName (full name)</li>
                   <li>email (must be unique)</li>
                   <li>role (STUDENT or INSTRUCTOR)</li>
-                  <li>studentId (for students) or instructorId (for instructors)</li>
                 </ul>
+                <p className="text-xs mt-2 text-blue-600">
+                  Note: Username and password will be auto-generated for each user.
+                </p>
               </div>
             </>
           ) : (
@@ -273,7 +304,7 @@ export function BulkImportDialog({
                       <div className="max-h-40 overflow-y-auto space-y-1">
                         {result.errors.map((error, index) => (
                           <div key={index} className="text-xs">
-                            <span className="font-medium">Row {error.row} ({error.email}):</span>{" "}
+                            <span className="font-medium">Row {error.row} (@{error.username}, {error.email}):</span>{" "}
                             {error.errors.join(", ")}
                           </div>
                         ))}
@@ -306,4 +337,5 @@ export function BulkImportDialog({
     </Dialog>
   );
 }
+
 
