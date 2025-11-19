@@ -21,20 +21,19 @@ import {
   UserFilters as UserFiltersType, 
   UserStats,
   CreateUserDto,
-  UpdateUserDto,
-  UserStatus
+  UpdateUserDto
 } from "@/types/user.type";
-import { userService } from "@/services/user.service";
+import { UserStatus, UserRole } from "@/types/util.type";
+import { userService } from "@/services/user.service"; // Dummy data service
 import { Users } from "lucide-react";
 
 export function ManageUsers() {
-  const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [filters, setFilters] = useState<UserFiltersType>({
     search: "",
     role: "ALL",
-    status: "ALL"
+    accountStatus: "ALL"
   });
   const [loading, setLoading] = useState(true);
   
@@ -56,7 +55,6 @@ export function ManageUsers() {
         userService.getUsers(),
         userService.getUserStats()
       ]);
-      setUsers(usersData);
       setFilteredUsers(usersData);
       setStats(statsData);
     } catch (error) {
@@ -85,12 +83,12 @@ export function ManageUsers() {
   }, [filters]);
 
   // Handle create user
-  const handleCreateUser = async (data: CreateUserDto) => {
+  const handleCreateUser = async (data: CreateUserDto): Promise<void> => {
     try {
       await userService.createUser(data);
       addToast({
-        title: "Success",
-        description: "User created successfully",
+        title: "User Created Successfully! 📧",
+        description: `Verification email sent to ${data.email}`,
         variant: "success"
       });
       await loadData();
@@ -110,7 +108,7 @@ export function ManageUsers() {
     setEditDialogOpen(true);
   };
 
-  const handleUpdateUser = async (id: string, data: UpdateUserDto) => {
+  const handleUpdateUser = async (id: number, data: UpdateUserDto) => {
     try {
       await userService.updateUser(id, data);
       addToast({
@@ -136,28 +134,46 @@ export function ManageUsers() {
   };
 
   // Handle toggle status
+  // Handle toggle status
+  // Handle toggle status
   const handleToggleStatus = async (user: User) => {
     try {
-      if (user.status === UserStatus.ACTIVE) {
-        await userService.deactivateUser(user.id);
-        addToast({
-          title: "Success",
-          description: "User deactivated successfully",
-          variant: "success"
-        });
+      let updatedUser: User;
+      let successMessage: string;
+
+      if (user.accountStatus === UserStatus.ACTIVE) {
+        updatedUser = await userService.deactivateUser(user.id);
+        successMessage = "User deactivated successfully";
+      } else if (user.accountStatus === UserStatus.INACTIVE) {
+        updatedUser = await userService.activateUser(user.id);
+        successMessage = "User activated successfully";
+      } else if (user.accountStatus === UserStatus.VERIFYING) {
+        updatedUser = await userService.activateUser(user.id);
+        successMessage = "User activated successfully";
       } else {
-        await userService.activateUser(user.id);
-        addToast({
-          title: "Success",
-          description: "User activated successfully",
-          variant: "success"
-        });
+        throw new Error("Unknown user status");
       }
-      await loadData();
+
+      // Update ONLY the changed user in local state
+      setFilteredUsers(prevUsers =>
+        prevUsers.map(u =>
+          u.id === updatedUser.id ? updatedUser : u
+        )
+      );
+
+      // Recalculate stats locally
+      const newStats = await userService.getUserStats();
+      setStats(newStats);
+
+      addToast({
+        title: "Success",
+        description: successMessage,
+        variant: "success"
+      });
     } catch (error) {
       addToast({
         title: "Error",
-        description: "Failed to update user status",
+        description: error instanceof Error ? error.message : "Failed to update user status",
         variant: "destructive"
       });
     }
@@ -172,20 +188,56 @@ export function ManageUsers() {
   const handleConfirmDelete = async () => {
     if (!selectedUser) return;
     
+    const deletedUser = selectedUser;
+    
     try {
-      await userService.deleteUser(selectedUser.id);
-      addToast({
-        title: "Success",
-        description: "User deleted successfully",
-        variant: "success"
-      });
+      // 1. Xóa NGAY khỏi UI (Optimistic)
+      setFilteredUsers(prevUsers => 
+        prevUsers.filter(u => u.id !== deletedUser.id)
+      );
+      
+      // 2. Update stats ngay
+      if (stats) {
+        setStats(prevStats => {
+          if (!prevStats) return prevStats;
+          const newStats = { ...prevStats };
+          newStats.totalUsers = Math.max(0, newStats.totalUsers - 1);
+          
+          if (deletedUser.role === UserRole.ADMIN) {
+            newStats.totalAdmins = Math.max(0, newStats.totalAdmins - 1);
+          } else if (deletedUser.role === UserRole.INSTRUCTOR) {
+            newStats.totalInstructors = Math.max(0, newStats.totalInstructors - 1);
+          } else if (deletedUser.role === UserRole.STUDENT) {
+            newStats.totalStudents = Math.max(0, newStats.totalStudents - 1);
+          }
+          
+          if (deletedUser.accountStatus === UserStatus.INACTIVE) {
+            newStats.totalInactive = Math.max(0, newStats.totalInactive - 1);
+          }
+          
+          return newStats;
+        });
+      }
+      
+      // 3. Close dialog ngay
       setDeleteDialogOpen(false);
       setSelectedUser(null);
-      await loadData();
+      
+      // 4. Gọi API ở background
+      await userService.deleteUser(deletedUser.id);
+      
+      addToast({
+        title: "Success",
+        description: `User "${deletedUser.displayName}" deleted successfully`,
+        variant: "success"
+      });
     } catch (error) {
+      // Nếu API fail → restore user lại
+      await loadData();
+      
       addToast({
         title: "Error",
-        description: "Failed to delete user",
+        description: error instanceof Error ? error.message : "Failed to delete user",
         variant: "destructive"
       });
     }
@@ -229,7 +281,16 @@ export function ManageUsers() {
       </div>
 
       {/* Stats Cards */}
-      <UserStatsCards stats={stats || { totalStudents: 0, totalInstructors: 0, totalActive: 0, totalInactive: 0 }} loading={loading} />
+      <UserStatsCards 
+        stats={stats || { 
+          totalUsers: 0, 
+          totalAdmins: 0, 
+          totalInstructors: 0, 
+          totalStudents: 0, 
+          totalInactive: 0
+        }} 
+        loading={loading} 
+      />
 
       {/* Filters */}
       <UserFilters
@@ -284,4 +345,5 @@ export function ManageUsers() {
     </div>
   );
 }
+
 

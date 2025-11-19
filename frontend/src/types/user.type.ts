@@ -1,54 +1,52 @@
-// User type definitions for the admin user management system
+// User type definitions matching backend entity structure
 
-export enum UserRole {
-  STUDENT = "STUDENT",
-  INSTRUCTOR = "INSTRUCTOR",
-  ADMIN = "ADMIN"
-}
+import { UserRole, UserStatus, LoginType } from "./util.type";
 
-export enum UserStatus {
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE"
-}
+// Re-export enums for backward compatibility
+export { UserRole, UserStatus, LoginType };
 
+// Main User interface matching backend entity
 export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
+  id: number;  // Long in backend
+  username: string;
   email: string;
-  role: UserRole;
-  status: UserStatus;
-  studentId?: string;  // For students
-  instructorId?: string;  // For instructors
+  displayName: string;
   avatar?: string;
-  createdAt: string;
-  updatedAt: string;
-  lastLogin?: string;
-  // Activity stats (optional)
-  projectCount?: number;
-  completedTasks?: number;
-  totalTasks?: number;
-}
-
-export interface CreateUserDto {
-  firstName: string;
-  lastName: string;
-  email: string;
   role: UserRole;
-  studentId?: string;
-  instructorId?: string;
+  accountStatus: UserStatus;
+  level: number;  // double in backend
+  loginType: LoginType;
+  createdAt: string;  // LocalDateTime from BaseEntity
+  updatedAt: string;  // LocalDateTime from BaseEntity
+  
+  // Password is not included in response for security
+  // password: string; (only for creation)
 }
 
+// DTO for creating new user
+export interface CreateUserDto {
+  username: string;
+  password: string;
+  email: string;
+  displayName: string;
+  role: UserRole;
+  loginType?: LoginType;  // Default to LOCAL if not provided
+  avatar?: string;
+}
+
+// DTO for updating user
 export interface UpdateUserDto {
-  firstName?: string;
-  lastName?: string;
+  username?: string;
+  password?: string;  // Optional, only if changing password
   email?: string;
+  displayName?: string;
   role?: UserRole;
-  status?: UserStatus;
-  studentId?: string;
-  instructorId?: string;
+  accountStatus?: UserStatus;
+  level?: number;
+  avatar?: string;
 }
 
+// Bulk operations
 export interface BulkCreateUserDto {
   users: CreateUserDto[];
 }
@@ -62,20 +60,26 @@ export interface BulkImportResult {
 
 export interface BulkImportError {
   row: number;
+  username: string;
   email: string;
   errors: string[];
 }
 
+// Filters for user list
 export interface UserFilters {
-  search?: string;
+  search?: string;  // Search by username, email, displayName
   role?: UserRole | "ALL";
-  status?: UserStatus | "ALL";
+  accountStatus?: UserStatus | "ALL";
+  loginType?: LoginType | "ALL";
 }
 
+// Statistics for dashboard
 export interface UserStats {
-  totalStudents: number;
+  totalUsers: number;
+  totalAdmins: number;
   totalInstructors: number;
-  totalActive: number;
+  totalStudents: number;
   totalInactive: number;
 }
+
 

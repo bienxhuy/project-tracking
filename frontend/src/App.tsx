@@ -5,6 +5,7 @@ import { TempPage } from "./pages/TempPage"
 import { StudentDashboard } from "./pages/student/StudentDashboard"
 import { ProjectDetail } from "./pages/ProjectDetail"
 import { AdminLayout } from "./pages/admin/AdminLayout"
+import { AdminDashboard } from "./pages/admin/AdminDashboard"
 import { ManageUsers } from "./pages/admin/ManageUsers"
 
 function App() {
@@ -22,6 +23,8 @@ function App() {
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<ManageUsers />} />
           </Route>
 
