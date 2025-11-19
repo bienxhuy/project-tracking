@@ -83,7 +83,6 @@ export function UserFilters({
               <SelectItem value="ALL">All Status</SelectItem>
               <SelectItem value={UserStatus.ACTIVE}>Active</SelectItem>
               <SelectItem value={UserStatus.INACTIVE}>Inactive</SelectItem>
-              <SelectItem value={UserStatus.BANNED}>Banned</SelectItem>
               <SelectItem value={UserStatus.VERIFYING}>Verifying</SelectItem>
             </SelectContent>
           </Select>

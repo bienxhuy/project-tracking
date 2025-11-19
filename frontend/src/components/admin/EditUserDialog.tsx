@@ -176,7 +176,6 @@ export function EditUserDialog({
                 <SelectContent>
                   <SelectItem value={UserStatus.ACTIVE}>Active</SelectItem>
                   <SelectItem value={UserStatus.INACTIVE}>Inactive</SelectItem>
-                  <SelectItem value={UserStatus.BANNED}>Banned</SelectItem>
                   <SelectItem value={UserStatus.VERIFYING}>Verifying</SelectItem>
                 </SelectContent>
               </Select>
