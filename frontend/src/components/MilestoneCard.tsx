@@ -59,6 +59,8 @@ export const MilestoneCard = ({
   autoFocus = false,
 }: MilestoneCardProps) => {
   const navigate = useNavigate();
+  // TODO: replace with actual auth
+  const [userRole] = useState<"student" | "instructor">("instructor");
 
   // Ref for title input to focus when entering edit/create mode
   const titleRef = useRef<HTMLInputElement>(null);
@@ -181,25 +183,28 @@ export const MilestoneCard = ({
                   <Lock className="w-5 h-5 text-red-400" />
                 )}
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="rounded-full cursor-pointer"
-                    onClick={handleEnterEdit}
-                  >
-                    <SquarePen />
-                  </Button>
+                {userRole == "student" && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="rounded-full cursor-pointer"
+                      onClick={handleEnterEdit}
+                    >
+                      <SquarePen />
+                    </Button>
 
-                  <Button
-                    size="icon"
-                    variant="destructive"
-                    className="rounded-full cursor-pointer"
-                    onClick={() => console.log("Delete milestone", id)}
-                  >
-                    <Trash />
-                  </Button>
-                </div>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="rounded-full cursor-pointer"
+                      onClick={() => console.log("Delete milestone", id)}
+                    >
+                      <Trash />
+                    </Button>
+                  </div>
+                )}
+
               </div>
 
               <div

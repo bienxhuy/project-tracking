@@ -18,8 +18,8 @@ export const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Mock user role - replace with actual auth
-  const [userRole] = useState<"student" | "instructor">("student");
+  // TODO: replace with actual auth
+  const [userRole] = useState<"student" | "instructor">("instructor");
 
   // Project content state
   const [project, setProject] = useState<ProjectDetail | null>(null);
