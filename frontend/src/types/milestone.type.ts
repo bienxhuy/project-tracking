@@ -1,4 +1,5 @@
 // Minimal representation of a milestone data for API calls 
+import { Task } from "./task.type";
 
 export interface Milestone {
   id: number;
@@ -12,4 +13,8 @@ export interface Milestone {
   completionPercentage: number;
   tasksTotal: number;
   tasksCompleted: number;
+}
+
+export interface MilestoneDetail extends Milestone {
+  tasks: Task[];
 }

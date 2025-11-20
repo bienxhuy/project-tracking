@@ -4,6 +4,7 @@ import { MainLayout } from "./pages/MainLayout"
 import { TempPage } from "./pages/TempPage"
 import { StudentDashboard } from "./pages/student/StudentDashboard"
 import { ProjectDetailPage } from "./pages/ProjectDetail"
+import { MilestoneDetailPage } from "./pages/MilestoneDetail"
 import { ScrollToTop } from "./components/ScropToTop"
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             </Route>
 
             <Route path="project/:id" element={<ProjectDetailPage />} />
+            <Route path="project/:projectId/milestone/:milestoneId" element={<MilestoneDetailPage />} />
           </Route>
 
           <Route path="/temp" element={<TempPage />} />

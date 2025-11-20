@@ -3,7 +3,7 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, Users, Lock } from "lucide-react";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface TaskCardProps {
   id: number;
@@ -11,6 +11,7 @@ interface TaskCardProps {
   milestoneId: number;
   title: string;
   assignees: Array<{ id: number; name: string; initials: string }>;
+  startDate: Date;
   endDate: Date;
   completed: boolean;
   isLocked: boolean;
@@ -18,20 +19,21 @@ interface TaskCardProps {
 }
 
 export const TaskCard = ({
-  // id,
-  // projectId,
-  // milestoneId,
+  id,
+  projectId,
+  milestoneId,
   title,
   assignees,
+  startDate,
   endDate,
   completed,
   isLocked = false,
   onToggle,
 }: TaskCardProps) => {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const handleClick = () => {
-    // navigate(`/project/${projectId}/milestone/${milestoneId}/task/${id}`);
+    navigate(`/project/${projectId}/milestone/${milestoneId}/task/${id}`);
   };
 
   return (
