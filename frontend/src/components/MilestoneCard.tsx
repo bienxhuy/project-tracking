@@ -210,7 +210,7 @@ export const MilestoneCard = ({
               <div
                 className="cursor-pointer hover:underline"
                 onClick={() =>
-                  navigate(`/projects/${projectId}/milestones/${id}`)
+                  navigate(`/project/${projectId}/milestone/${id}`)
                 }
               >
                 {title}
