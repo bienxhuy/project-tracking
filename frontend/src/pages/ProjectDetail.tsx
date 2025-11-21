@@ -19,12 +19,17 @@ export const ProjectDetailPage = () => {
   const navigate = useNavigate();
 
   // TODO: replace with actual auth
-  const [userRole] = useState<"student" | "instructor">("instructor");
+  const [userRole] = useState<"student" | "instructor">("student");
 
   // Project content state
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [isContentLocked, setIsContentLocked] = useState<boolean>(false);
+
+  const [objective, setObjective] = useState<string>("");
+  const [content, setContent] = useState<string>("");
   const [isEditing, setIsEditing] = useState<boolean>(false);
+
+  // State to check if creating new milestone or not
   const [creatingMilestone, setCreatingMilestone] = useState<boolean>(false);
 
   // State for instructor to add comments
@@ -35,6 +40,9 @@ export const ProjectDetailPage = () => {
   useEffect(() => {
     const data = fetchDetailProject();
     setProject(data);
+    setIsContentLocked(data.isLocked);
+    setObjective(data.objective);
+    setContent(data.content);
   }, [id]);
 
   // Handle case where project is not found
@@ -62,10 +70,12 @@ export const ProjectDetailPage = () => {
 
   // Event handlers for content editing
   const handleSaveContent = () => {
+    setProject({ ...project, objective, content });
     setIsEditing(false);
     // In real app, save to backend
   };
 
+  // Event handler for locking/unlocking content & objective
   const handleToggleLock = () => {
     setIsContentLocked(!isContentLocked);
     // In real app, update backend
@@ -125,8 +135,8 @@ export const ProjectDetailPage = () => {
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">Mục tiêu</h3>
               {isEditing && !isContentLocked ? (
                 <Textarea
-                  value={project.objective}
-                  onChange={(e) => setProject({ ...project, objective: e.target.value })}
+                  value={objective}
+                  onChange={(e) => setObjective(e.target.value)}
                   placeholder="Nhập mục tiêu dự án..."
                   className="min-h-[80px]"
                 />
@@ -140,8 +150,8 @@ export const ProjectDetailPage = () => {
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">Mô tả</h3>
               {isEditing && !isContentLocked ? (
                 <Textarea
-                  value={project.content}
-                  onChange={(e) => setProject({ ...project, content: e.target.value })}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
                   placeholder="Nhập mô tả dự án..."
                   className="min-h-[100px]"
                 />
@@ -242,7 +252,7 @@ export const ProjectDetailPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Existing Milestone Cards */}
             {project.milestones.map((milestone) => {
-              console.log(milestone); return (
+              return (
                 <MilestoneCard
                   key={milestone.id}
                   id={milestone.id}
