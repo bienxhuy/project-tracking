@@ -11,6 +11,8 @@ import NotificationTestPage from "./pages/NotificationTestPage"
 import HomePage from "./pages/HomePage"
 import { NotificationManager } from "./components/NotificationManager"
 
+import { ApiTestPage } from "./pages/ApiTestPage"
+
 function App() {
   return (
     <>
@@ -26,6 +28,8 @@ function App() {
             <Route path="project/:projectId" element={<ProjectDetail />} />
             
             <Route path="test-notification" element={<NotificationTestPage />} />
+
+            <Route path="test-api" element={<ApiTestPage />} />
           </Route>
 
           {/* Admin Routes */}
@@ -39,7 +43,7 @@ function App() {
         </Routes>
         
         {/* Notification Manager - Active on all pages */}
-        <NotificationManager />
+        {/* <NotificationManager /> */}
       </BrowserRouter>
     </>
   )
