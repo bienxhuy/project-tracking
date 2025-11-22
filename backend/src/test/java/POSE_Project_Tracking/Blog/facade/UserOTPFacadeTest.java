@@ -69,7 +69,7 @@ class UserOTPFacadeTest {
     @Test
     void createUser_validRequest_createsUserAndSendsOTP() {
         when(userService.createUser(any(UserReq.class))).thenReturn(userRes);
-        when(otpService.generateOTP(1L)).thenReturn(otp);
+        // Không cần mock otpService.generateOTP nữa
         doNothing().when(emailService).sendEmail(any(MessageDTO.class));
 
         UserRes result = facade.createUser(userReq);
@@ -77,23 +77,26 @@ class UserOTPFacadeTest {
         assertNotNull(result);
         assertEquals(1L, result.getId());
         verify(userService).createUser(any(UserReq.class));
-        verify(otpService).generateOTP(1L);
+        // Không verify otpService.generateOTP nữa vì createUser không gọi nó
+        verify(otpService, never()).generateOTP(anyLong());
         verify(emailService).sendEmail(any(MessageDTO.class));
     }
 
     @Test
     void createUser_emailSendFails_throwsException() {
         when(userService.createUser(any(UserReq.class))).thenReturn(userRes);
-        when(otpService.generateOTP(1L)).thenReturn(otp);
+        // Không cần mock otpService.generateOTP nữa vì createUser không gọi nó
         doThrow(new RuntimeException("Email service error")).when(emailService).sendEmail(any(MessageDTO.class));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             facade.createUser(userReq);
         });
 
-        assertEquals("Không thể gửi email xác thực OTP, vui lòng thử lại", exception.getMessage());
+        // Đổi expected message theo implementation mới
+        assertEquals("Không thể gửi email thông tin tài khoản, vui lòng thử lại", exception.getMessage());
         verify(userService).createUser(any(UserReq.class));
-        verify(otpService).generateOTP(1L);
+        // Không verify otpService.generateOTP nữa vì không được gọi
+        verify(otpService, never()).generateOTP(anyLong());
     }
 
     @Test

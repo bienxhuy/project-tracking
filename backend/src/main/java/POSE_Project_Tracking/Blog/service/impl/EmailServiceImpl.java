@@ -40,6 +40,8 @@ class EmailServiceImpl implements IEmailService {
             Context context = new Context();
             context.setVariable("name", messageDTO.getToName());
             context.setVariable("otp", messageDTO.getOTP());
+            context.setVariable("email", messageDTO.getTo());
+            context.setVariable("password", messageDTO.getPassword());
             String html = templateEngine.process("welcome-email", context);
 
             ///send email

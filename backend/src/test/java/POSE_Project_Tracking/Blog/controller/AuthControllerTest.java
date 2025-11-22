@@ -3,6 +3,7 @@ package POSE_Project_Tracking.Blog.controller;
 import POSE_Project_Tracking.Blog.config.FirebaseConfig;
 import POSE_Project_Tracking.Blog.config.TestConfig;
 import POSE_Project_Tracking.Blog.dto.req.LoginReq;
+import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
 import POSE_Project_Tracking.Blog.entity.RefreshToken;
 import POSE_Project_Tracking.Blog.entity.User;
 import POSE_Project_Tracking.Blog.enums.EUserRole;
@@ -163,7 +164,7 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("Test 2: Login với user đang VERIFYING - trả về error code VERIFYING_EMAIL")
+    @DisplayName("Test 2: Login với user đang VERIFYING - auto-activate và trả về success")
     void testLogin_WithVerifyingUser_ReturnsVerifyingError() throws Exception {
         // Arrange
         Authentication authentication = mock(Authentication.class);
@@ -171,25 +172,56 @@ class AuthControllerTest {
                 .thenReturn(authentication);
         
         when(userService.findByUsernameOrEmail("verifyinguser")).thenReturn(verifyingUser);
+        
+        // Mock UserRes sau khi được activate (updateUserStatus trả về UserRes)
+        UserRes activatedUserRes = new UserRes();
+        activatedUserRes.setId(2L);
+        activatedUserRes.setUsername("verifyinguser");
+        activatedUserRes.setEmail("verifying@example.com");
+        activatedUserRes.setRole(EUserRole.STUDENT);
+        activatedUserRes.setAccountStatus(EUserStatus.ACTIVE);
+        activatedUserRes.setDisplayName("Verifying User");
+        
+        // Mock user entity sau khi được activate (findByUsernameOrEmail trả về User)
+        User activatedUser = new User();
+        activatedUser.setId(2L);
+        activatedUser.setUsername("verifyinguser");
+        activatedUser.setEmail("verifying@example.com");
+        activatedUser.setPassword("encodedPassword");
+        activatedUser.setRole(EUserRole.STUDENT);
+        activatedUser.setAccountStatus(EUserStatus.ACTIVE);
+        activatedUser.setDisplayName("Verifying User");
+        
+        // updateUserStatus trả về UserRes
+        when(userService.updateUserStatus(2L, EUserStatus.ACTIVE)).thenReturn(activatedUserRes);
+        
+        // findByUsernameOrEmail trả về User - lần đầu VERIFYING, lần sau ACTIVE
+        when(userService.findByUsernameOrEmail("verifyinguser"))
+                .thenReturn(verifyingUser)  // Lần đầu trả về VERIFYING
+                .thenReturn(activatedUser);  // Lần sau trả về ACTIVE
+        
+        when(securityUtil.createAccessToken(activatedUser)).thenReturn("mock-access-token");
+        when(securityUtil.createRefreshToken(activatedUser)).thenReturn("mock-refresh-token");
+        when(refreshTokenRepository.findByUserId(2L)).thenReturn(Optional.empty());
+        when(refreshTokenRepository.save(ArgumentMatchers.any(RefreshToken.class))).thenReturn(new RefreshToken());
 
         LoginReq verifyingLoginReq = new LoginReq();
         verifyingLoginReq.setIdentifier("verifyinguser");
         verifyingLoginReq.setPassword("password123");
 
-        // Act & Assert
+        // Act & Assert - Bây giờ expect success vì user được auto-activate
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(verifyingLoginReq)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("error"))
-                .andExpect(jsonPath("$.message").value(ErrorCode.VERIFYING_EMAIL.getMessage()))
-                .andExpect(jsonPath("$.errorCode").value(ErrorCode.VERIFYING_EMAIL.name()))
-                .andExpect(jsonPath("$.data.accessToken").value(nullValue()))
-                .andExpect(jsonPath("$.data.userId").value(2));
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.message").value("Loggin successfully"))
+                .andExpect(jsonPath("$.data.accessToken").value("mock-access-token"));
 
-        // Verify - không tạo token cho user chưa verify
-        verify(securityUtil, never()).createAccessToken(ArgumentMatchers.any(User.class));
-        verify(securityUtil, never()).createRefreshToken(ArgumentMatchers.any(User.class));
+        // Verify - user được activate và tạo token
+        verify(userService).updateUserStatus(2L, EUserStatus.ACTIVE);
+        verify(securityUtil).createAccessToken(activatedUser);
+        verify(securityUtil).createRefreshToken(activatedUser);
     }
 
     @Test

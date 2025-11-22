@@ -146,7 +146,6 @@ export function UserTable({
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -181,9 +180,6 @@ export function UserTable({
                   <Badge className={getStatusBadgeColor(user.accountStatus)}>
                     {user.accountStatus}
                   </Badge>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {formatDate(user.createdAt)}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
