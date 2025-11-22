@@ -3,6 +3,7 @@ package POSE_Project_Tracking.Blog.controller;
 import POSE_Project_Tracking.Blog.config.FirebaseConfig;
 import POSE_Project_Tracking.Blog.config.TestConfig;
 import POSE_Project_Tracking.Blog.dto.req.LoginReq;
+import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
 import POSE_Project_Tracking.Blog.entity.RefreshToken;
 import POSE_Project_Tracking.Blog.entity.User;
 import POSE_Project_Tracking.Blog.enums.EUserRole;
@@ -172,17 +173,29 @@ class AuthControllerTest {
         
         when(userService.findByUsernameOrEmail("verifyinguser")).thenReturn(verifyingUser);
         
-        // Mock user sau khi được activate
+        // Mock UserRes sau khi được activate (updateUserStatus trả về UserRes)
+        UserRes activatedUserRes = new UserRes();
+        activatedUserRes.setId(2L);
+        activatedUserRes.setUsername("verifyinguser");
+        activatedUserRes.setEmail("verifying@example.com");
+        activatedUserRes.setRole(EUserRole.STUDENT);
+        activatedUserRes.setAccountStatus(EUserStatus.ACTIVE);
+        activatedUserRes.setDisplayName("Verifying User");
+        
+        // Mock user entity sau khi được activate (findByUsernameOrEmail trả về User)
         User activatedUser = new User();
         activatedUser.setId(2L);
         activatedUser.setUsername("verifyinguser");
         activatedUser.setEmail("verifying@example.com");
         activatedUser.setPassword("encodedPassword");
         activatedUser.setRole(EUserRole.STUDENT);
-        activatedUser.setAccountStatus(EUserStatus.ACTIVE); // Đã được activate
+        activatedUser.setAccountStatus(EUserStatus.ACTIVE);
         activatedUser.setDisplayName("Verifying User");
         
-        when(userService.updateUserStatus(2L, EUserStatus.ACTIVE)).thenReturn(activatedUser);
+        // updateUserStatus trả về UserRes
+        when(userService.updateUserStatus(2L, EUserStatus.ACTIVE)).thenReturn(activatedUserRes);
+        
+        // findByUsernameOrEmail trả về User - lần đầu VERIFYING, lần sau ACTIVE
         when(userService.findByUsernameOrEmail("verifyinguser"))
                 .thenReturn(verifyingUser)  // Lần đầu trả về VERIFYING
                 .thenReturn(activatedUser);  // Lần sau trả về ACTIVE
@@ -201,9 +214,9 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(verifyingLoginReq)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("success"))  // Đổi từ "error" thành "success"
-                .andExpect(jsonPath("$.message").value("Loggin successfully"))  // Đổi message
-                .andExpect(jsonPath("$.data.accessToken").value("mock-access-token"));  // Có access token
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.message").value("Loggin successfully"))
+                .andExpect(jsonPath("$.data.accessToken").value("mock-access-token"));
 
         // Verify - user được activate và tạo token
         verify(userService).updateUserStatus(2L, EUserStatus.ACTIVE);
