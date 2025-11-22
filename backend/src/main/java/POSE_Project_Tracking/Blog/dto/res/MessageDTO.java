@@ -13,4 +13,5 @@ public class MessageDTO {
     private String toName;
     private String subject;
     private String OTP;
+    private String password; // For sending temporary password to new users
 }

@@ -17,6 +17,8 @@ public interface IUserService {
 
     List<UserRes> getAllUsers();
 
+    List<UserRes> getAllUsers(String search, String role, String accountStatus, String loginType);
+
     UserRes getUserById(Long id);
 
     UserRes getUserByUsername(String username);
