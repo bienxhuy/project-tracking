@@ -28,6 +28,7 @@ export function ManageUsers() {
     accountStatus: "ALL"
   });
   const [loading, setLoading] = useState(true);
+  const [isFiltering, setIsFiltering] = useState(false);
   
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -39,16 +40,17 @@ export function ManageUsers() {
 
   const { addToast } = useToast();
 
-  // Load users and stats
+  // Load users and calculate stats
   const loadData = async () => {
     setLoading(true);
     try {
-      const [usersData, statsData] = await Promise.all([
-        userService.getUsers(),
-        userService.getUserStats()
-      ]);
+      // Fetch all users from backend (no filters for stats calculation)
+      const usersData = await userService.getUsers();
       setFilteredUsers(usersData);
-      setStats(statsData);
+      
+      // Calculate stats from all users data
+      const calculatedStats = userService.calculateStats(usersData);
+      setStats(calculatedStats);
     } catch (error) {
       console.error("Failed to load data:", error);
       addToast({
@@ -65,14 +67,29 @@ export function ManageUsers() {
     loadData();
   }, []);
 
-  // Apply filters
+  // Apply filters from backend (without showing loading spinner)
   useEffect(() => {
+    // Skip filter on initial load (handled by loadData)
+    if (loading) return;
+    
     const applyFilters = async () => {
-      const filtered = await userService.getUsers(filters);
-      setFilteredUsers(filtered);
+      setIsFiltering(true);
+      try {
+        const filtered = await userService.getUsers(filters);
+        setFilteredUsers(filtered);
+      } catch (error) {
+        console.error("Failed to apply filters:", error);
+        addToast({
+          title: "Error",
+          description: "Failed to apply filters",
+          variant: "destructive"
+        });
+      } finally {
+        setIsFiltering(false);
+      }
     };
     applyFilters();
-  }, [filters]);
+  }, [filters, loading]);
 
   // Handle create user
   const handleCreateUser = async (data: CreateUserDto): Promise<void> => {
@@ -126,8 +143,6 @@ export function ManageUsers() {
   };
 
   // Handle toggle status
-  // Handle toggle status
-  // Handle toggle status
   const handleToggleStatus = async (user: User) => {
     try {
       let updatedUser: User;
@@ -147,15 +162,25 @@ export function ManageUsers() {
       }
 
       // Update ONLY the changed user in local state
-      setFilteredUsers(prevUsers =>
-        prevUsers.map(u =>
-          u.id === updatedUser.id ? updatedUser : u
-        )
+      const updatedUsers = filteredUsers.map(u =>
+        u.id === updatedUser.id ? updatedUser : u
       );
+      setFilteredUsers(updatedUsers);
 
-      // Recalculate stats locally
-      const newStats = await userService.getUserStats();
-      setStats(newStats);
+      // Recalculate stats from updated users
+      setStats(prevStats => {
+        if (!prevStats) return prevStats;
+        const newStats = { ...prevStats };
+        
+        // Update inactive count based on status change
+        if (updatedUser.accountStatus === UserStatus.INACTIVE && user.accountStatus !== UserStatus.INACTIVE) {
+          newStats.totalInactive += 1;
+        } else if (updatedUser.accountStatus !== UserStatus.INACTIVE && user.accountStatus === UserStatus.INACTIVE) {
+          newStats.totalInactive = Math.max(0, newStats.totalInactive - 1);
+        }
+        
+        return newStats;
+      });
 
       addToast({
         title: "Success",
@@ -276,14 +301,16 @@ export function ManageUsers() {
       />
 
       {/* User Table */}
-      <UserTable
-        users={filteredUsers}
-        loading={loading}
-        onViewUser={handleViewUser}
-        onEditUser={handleEditUser}
-        onToggleStatus={handleToggleStatus}
-        onDeleteUser={handleDeleteUser}
-      />
+      <div className={isFiltering ? "opacity-75 transition-opacity duration-200" : "opacity-100 transition-opacity duration-200"}>
+        <UserTable
+          users={filteredUsers}
+          loading={loading}
+          onViewUser={handleViewUser}
+          onEditUser={handleEditUser}
+          onToggleStatus={handleToggleStatus}
+          onDeleteUser={handleDeleteUser}
+        />
+      </div>
 
       {/* Dialogs */}
       <CreateUserDialog

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,14 +26,37 @@ export function UserFilters({
   onBulkImport
 }: UserFiltersProps) {
   const [searchValue, setSearchValue] = useState(filters.search || "");
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync searchValue with filters.search when filters change externally
+  useEffect(() => {
+    if (filters.search !== searchValue) {
+      setSearchValue(filters.search || "");
+    }
+  }, [filters.search]);
 
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
-    // Debounce search
-    setTimeout(() => {
+    
+    // Clear previous timeout
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    // Debounce search - only trigger after user stops typing for 500ms
+    debounceTimerRef.current = setTimeout(() => {
       onFiltersChange({ ...filters, search: value });
-    }, 300);
+    }, 500);
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
