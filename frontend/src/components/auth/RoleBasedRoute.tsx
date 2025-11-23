@@ -15,7 +15,7 @@ interface RoleBasedRouteProps {
 export function RoleBasedRoute({ 
   children, 
   allowedRoles,
-  redirectTo = "/" 
+  redirectTo = "/" // Default redirect to HomePage
 }: RoleBasedRouteProps) {
   const { isAuthenticated, isLoading, user, hasRole } = useAuth();
   
@@ -44,7 +44,7 @@ export function RoleBasedRoute({
 
   if (!hasAllowedRole) {
     // User is authenticated but doesn't have required role
-    // Redirect to home page or show access denied message
+    // Redirect to HomePage, which will navigate to their correct role page
     return <Navigate to={redirectTo} replace />;
   }
 

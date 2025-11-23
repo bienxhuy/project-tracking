@@ -10,32 +10,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ identifier?: string; password?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
-  const { login, user, isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Helper function to get default route based on role
-  const getDefaultRouteByRole = (role: UserRole): string => {
-    switch (role) {
-      case UserRole.STUDENT:
-        return "/test-api";
-      case UserRole.INSTRUCTOR:
-        return "/temp-page";
-      case UserRole.ADMIN:
-        return "/admin";
-      default:
-        return "/";
-    }
-  };
-
-  // Navigate when user is loaded and authenticated after successful login
+  // Navigate to HomePage when authenticated (HomePage will handle role-based routing)
   useEffect(() => {
-    // Only navigate if user is authenticated and has a role
-    // This ensures we don't navigate during initial load
-    if (isAuthenticated && user?.role) {
-      const defaultRoute = getDefaultRouteByRole(user.role);
-      navigate(defaultRoute, { replace: true });
+    if (isAuthenticated) {
+      navigate("/", { replace: true });
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, navigate]);
 
   const validateForm = () => {
     const newErrors: { identifier?: string; password?: string } = {};
@@ -65,7 +48,7 @@ export default function LoginPage() {
     
     try {
       await login({ identifier, password });
-      // Don't navigate here - let useEffect handle it after user is loaded
+      // Don't navigate here - let useEffect handle it when isAuthenticated becomes true
     } catch (error: any) {
       // Check if it's a 401 or BAD_CREDENTIALS error
       const isBadCredentials = 

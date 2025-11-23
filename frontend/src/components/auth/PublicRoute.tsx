@@ -11,7 +11,7 @@ interface PublicRouteProps {
  * Used for login/register pages
  */
 export function PublicRoute({ children }: PublicRouteProps) {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -25,24 +25,9 @@ export function PublicRoute({ children }: PublicRouteProps) {
     );
   }
 
-  // Helper function to get default route based on role
-  const getDefaultRouteByRole = (role: UserRole): string => {
-    switch (role) {
-      case UserRole.STUDENT:
-        return "/test-api";
-      case UserRole.INSTRUCTOR:
-        return "/temp-page";
-      case UserRole.ADMIN:
-        return "/admin";
-      default:
-        return "/";
-    }
-  };
-
-  // Redirect to default route based on role if already authenticated
-  if (isAuthenticated && user?.role) {
-    const defaultRoute = getDefaultRouteByRole(user.role);
-    return <Navigate to={defaultRoute} replace />;
+  // Redirect to HomePage if already authenticated (HomePage will handle role routing)
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
   }
 
   // Render public content (login/register pages)
