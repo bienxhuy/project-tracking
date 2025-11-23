@@ -9,7 +9,11 @@ import { AdminDashboard } from "./pages/admin/AdminDashboard"
 import { ManageUsers } from "./pages/admin/ManageUsers"
 import NotificationTestPage from "./pages/NotificationTestPage"
 import HomePage from "./pages/HomePage"
-import { NotificationManager } from "./components/NotificationManager"
+import LoginPage from "./pages/LoginPage"
+import { PublicRoute } from "./components/auth/PublicRoute"
+import { ProtectedRoute } from "./components/auth/ProtectedRoute"
+import { RoleBasedRoute } from "./components/auth/RoleBasedRoute"
+import { UserRole } from "./types/user.type"
 
 import { ApiTestPage } from "./pages/ApiTestPage"
 
@@ -18,28 +22,60 @@ function App() {
     <>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<HomePage />} />
-            
-            <Route path="student">
-              <Route path="dashboard" element={<StudentDashboard />} />
-            </Route>
-            
-            <Route path="project/:projectId" element={<ProjectDetail />} />
-            
-            <Route path="test-notification" element={<NotificationTestPage />} />
+          {/* Public Route - Login Page */}
+          <Route 
+            path="/login" 
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            } 
+          />
 
-            <Route path="test-api" element={<ApiTestPage />} />
-          </Route>
+          {/* Protected Home Route - Redirect to login if no token */}
+          <Route 
+            index 
+            path="/" 
+            element={
+              <ProtectedRoute>
+                <LoginPage />
+              </ProtectedRoute>
+            } 
+          />
 
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
+          {/* Student Routes - Protected by Role (STUDENT only) */}
+          <Route 
+            path="/test-api" 
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.STUDENT]}>
+                <ApiTestPage />
+              </RoleBasedRoute>
+            }
+          />
+
+          {/* Instructor Routes - Protected by Role (INSTRUCTOR only) */}
+          <Route 
+            path="/temp-page" 
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.INSTRUCTOR]}>
+                <TempPage />
+              </RoleBasedRoute>
+            }
+          />
+
+          {/* Admin Routes - Protected by Role (ADMIN only) */}
+          <Route 
+            path="/admin" 
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.ADMIN]}>
+                <AdminLayout />
+              </RoleBasedRoute>
+            }
+          >
             <Route index element={<AdminDashboard />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<ManageUsers />} />
           </Route>
-
-          <Route path="/temp" element={<TempPage />} />
         </Routes>
         
         {/* Notification Manager - Active on all pages */}
