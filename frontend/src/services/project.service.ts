@@ -1,8 +1,15 @@
 // API Service to fetch project data
 
-import { currentBatchProjects } from "@/data/dummy/projects.dummy";
+import apiClient from "@/api/axios.customize";
+import { ApiResponse } from "@/types/auth.type";
+import { Project } from "@/types/project.type";
 
-export function fetchTempProjects() {
-  // TODO: Replace with real API call
-  return currentBatchProjects;
+class ProjectService {
+  async getProjects(): Promise<Project[]> {
+    const response = await apiClient.get<ApiResponse<Project[]>>("/api/v1/projects");
+    return response.data.data;
+  }
 }
+
+export const projectService = new ProjectService();
+

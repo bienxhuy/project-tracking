@@ -7,7 +7,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   accessToken: string;
-  userId?: number;
+  user: User;
 }
 
 export interface RegisterRequest {
