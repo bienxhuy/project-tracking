@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -29,19 +31,30 @@ interface MilestoneCardProps {
   completionPercentage?: number;
   tasksTotal?: number;
   tasksCompleted?: number;
-  status?: "LOCKED" | "IN_PROGRESS" | "COMPLETED";
+  status?: "COMPLETED" | "IN_PROGRESS";
+  isLocked?: boolean;
   onCancel?: () => void;
   onCreated?: (milestone: any) => void;
   autoFocus?: boolean; // whether to auto-focus the first input when in edit/create mode
 }
 
-// Form values for create/edit milestone
-type FormValues = {
-  title: string;
-  description: string;
-  startDate: string; // yyyy-mm-dd or empty
-  endDate: string; // yyyy-mm-dd or empty
-};
+// Zod schema for milestone form
+const milestoneSchema = z.object({
+  title: z.string().trim().min(3, { message: "Tên cột mốc phải có ít nhất 3 ký tự." }),
+  description: z.string().trim().optional(),
+  startDate: z.string().refine(
+    (v) => !isNaN(new Date(v).getTime()),
+    { message: "Ngày bắt đầu không hợp lệ." }
+  ),
+  endDate: z.string().refine(
+    (v) => !isNaN(new Date(v).getTime()),
+    { message: "Ngày kết thúc không hợp lệ." }
+  )
+}).refine(
+  (data) => new Date(data.startDate) <= new Date(data.endDate),
+  { message: "Ngày bắt đầu phải sau ngày kết thúc.", path: ["endDate"] }
+);
+
 
 export const MilestoneCard = ({
   id,
@@ -53,7 +66,8 @@ export const MilestoneCard = ({
   completionPercentage = 0,
   tasksTotal = 0,
   tasksCompleted = 0,
-  status = "LOCKED",
+  status,
+  isLocked = false,
   onCancel,
   onCreated,
   autoFocus = false,
@@ -62,7 +76,7 @@ export const MilestoneCard = ({
   // TODO: replace with actual auth
   const [userRole] = useState<"student" | "instructor">("student");
 
-  // Ref for title input to focus when entering edit/create mode
+  // Ref of title input to focus when entering edit/create mode
   const titleRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (autoFocus && titleRef.current) {
@@ -71,7 +85,7 @@ export const MilestoneCard = ({
     }
   }, [autoFocus]);
 
-  // New if no id provided
+  // The card is new if no id provided
   const isNew = !id;
 
   // State to track if we are in editing mode
@@ -82,8 +96,8 @@ export const MilestoneCard = ({
   const formatDateInput = (d?: Date) =>
     d ? d.toISOString().split("T")[0] : "";
 
-  // Init value for form in case editing/creating
-  const initialValues: FormValues = {
+  // Initial form values from props
+  const initialValues = {
     title: title ?? "",
     description: description ?? "",
     startDate: formatDateInput(startDate),
@@ -91,18 +105,14 @@ export const MilestoneCard = ({
   };
 
   // React Hook Form setup
-  const form = useForm<FormValues>({
+  const form = useForm<z.infer<typeof milestoneSchema>>({
+    resolver: zodResolver(milestoneSchema),
     defaultValues: initialValues,
   });
 
   // keep form in sync when props change (e.g., parent loads different milestone)
   useEffect(() => {
-    form.reset({
-      title: title ?? "",
-      description: description ?? "",
-      startDate: formatDateInput(startDate),
-      endDate: formatDateInput(endDate),
-    });
+    form.reset(initialValues);
     // note: intentionally not toggling isEditing here
     // we only sync values
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,12 +120,7 @@ export const MilestoneCard = ({
 
   // When user clicks the edit icon: reset form to current prop values then open editor
   const handleEnterEdit = () => {
-    form.reset({
-      title: title ?? "",
-      description: description ?? "",
-      startDate: formatDateInput(startDate),
-      endDate: formatDateInput(endDate),
-    });
+    form.reset(initialValues);
     setIsEditing(true);
   };
 
@@ -130,22 +135,18 @@ export const MilestoneCard = ({
     }
 
     // Existing milestone: revert form and close editor
-    form.reset({
-      title: title ?? "",
-      description: description ?? "",
-      startDate: formatDateInput(startDate),
-      endDate: formatDateInput(endDate),
-    });
+    form.reset(initialValues);
     setIsEditing(false);
   };
 
   // On form submit: either create new or update existing
-  const onSubmit: SubmitHandler<FormValues> = (data) => {
+  const onSubmit = (data: z.infer<typeof milestoneSchema>) => {
     if (isNew) {
+      // Create new milestone object to return via callback
       const created: Milestone = {
         id: Math.random(), // temporary until backend returns real id
         title: data.title,
-        description: data.description,
+        description: data.description ?? "",
         startDate: new Date(data.startDate),
         endDate: new Date(data.endDate),
         completionPercentage: 0,
@@ -239,7 +240,7 @@ export const MilestoneCard = ({
 
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {status === "LOCKED"
+                {isLocked
                   ? "Đã khóa"
                   : status === "IN_PROGRESS"
                     ? "Đang tiến hành"
@@ -289,6 +290,7 @@ export const MilestoneCard = ({
                         className="bg-white"
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -304,6 +306,7 @@ export const MilestoneCard = ({
                       <FormControl>
                         <Input type="date" {...field} className="bg-white" />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -316,6 +319,7 @@ export const MilestoneCard = ({
                       <FormControl>
                         <Input type="date" {...field} className="bg-white" />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
