@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Milestone } from "@/types/milestone.type";
+import { milestoneSchema } from "@/zod_schema/milestone.schema";
 
 interface MilestoneCardProps {
   id?: number;
@@ -37,24 +38,6 @@ interface MilestoneCardProps {
   onCreated?: (milestone: any) => void;
   autoFocus?: boolean; // whether to auto-focus the first input when in edit/create mode
 }
-
-// Zod schema for milestone form
-const milestoneSchema = z.object({
-  title: z.string().trim().min(3, { message: "Tên cột mốc phải có ít nhất 3 ký tự." }),
-  description: z.string().trim().optional(),
-  startDate: z.string().refine(
-    (v) => !isNaN(new Date(v).getTime()),
-    { message: "Ngày bắt đầu không hợp lệ." }
-  ),
-  endDate: z.string().refine(
-    (v) => !isNaN(new Date(v).getTime()),
-    { message: "Ngày kết thúc không hợp lệ." }
-  )
-}).refine(
-  (data) => new Date(data.startDate) <= new Date(data.endDate),
-  { message: "Ngày bắt đầu phải sau ngày kết thúc.", path: ["endDate"] }
-);
-
 
 export const MilestoneCard = ({
   id,
