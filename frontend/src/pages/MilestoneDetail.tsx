@@ -16,6 +16,7 @@ import { MilestoneProgressBar } from "@/components/MilestoneProgressBar";
 import { TaskCard } from "@/components/TaskCard";
 
 import { MilestoneDetail } from "@/types/milestone.type";
+import { Task } from "@/types/task.type";
 import { fetchTempMilestoneDetail } from "@/services/milestone.service";
 import { milestoneSchema } from "@/zod_schema/milestone.schema";
 
@@ -33,6 +34,15 @@ export const MilestoneDetailPage = () => {
   const [isMilestoneLocked, setIsMilestoneLocked] = useState<boolean>(false);
   const [milestone, setMilestone] = useState<MilestoneDetail | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [creatingTask, setCreatingTask] = useState<boolean>(false);
+
+  // TODO: Replace with actual project members from API
+  const availableMembers = [
+    { id: 1, name: "Nguyễn Văn A", initials: "NA" },
+    { id: 2, name: "Trần Thị B", initials: "TB" },
+    { id: 3, name: "Lê Văn C", initials: "LC" },
+    { id: 4, name: "Phạm Thị D", initials: "PD" },
+  ];
 
   // Initialize form with react-hook-form and zod
   const form = useForm<MilestoneFormValues>({
@@ -106,7 +116,42 @@ export const MilestoneDetailPage = () => {
   // TODO: Replace with logic
   // Event handler for toggling task completion
   const handleTaskToggle = (taskId: number) => {
-    console.log("Toggle task:", taskId);
+    if (!milestone) return;
+    const updatedTasks = milestone.tasks.map(task => {
+      if (task.id === taskId) {
+        const newStatus: "COMPLETED" | "IN_PROGRESS" = task.status === "COMPLETED" ? "IN_PROGRESS" : "COMPLETED";
+        return { ...task, status: newStatus };
+      }
+      return task;
+    });
+    setMilestone({ ...milestone, tasks: updatedTasks });
+    // TODO: call backend API to toggle task status
+  };
+
+  // Event handler for creating new task
+  const handleTaskCreated = (newTask: Task) => {
+    if (!milestone) return;
+    setMilestone({ ...milestone, tasks: [...milestone.tasks, newTask] });
+    setCreatingTask(false);
+    // TODO: call backend API to create task
+  };
+
+  // Event handler for updating task
+  const handleTaskUpdated = (updatedTask: Task) => {
+    if (!milestone) return;
+    const updatedTasks = milestone.tasks.map(task => 
+      task.id === updatedTask.id ? updatedTask : task
+    );
+    setMilestone({ ...milestone, tasks: updatedTasks });
+    // TODO: call backend API to update task
+  };
+
+  // Event handler for deleting task
+  const handleTaskDeleted = (taskId: number) => {
+    if (!milestone) return;
+    const updatedTasks = milestone.tasks.filter(task => task.id !== taskId);
+    setMilestone({ ...milestone, tasks: updatedTasks });
+    // TODO: call backend API to delete task
   };
 
   // TODO: Replace with logic
@@ -319,13 +364,14 @@ export const MilestoneDetailPage = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-foreground">Công việc</h2>
             {userRole === "student" && !isMilestoneLocked && (
-              <Button className="cursor-pointer" onClick={() => console.log("Create task")}>
+              <Button className="cursor-pointer" onClick={() => setCreatingTask(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Tạo công việc
               </Button>
             )}
           </div>
           <div className="space-y-3">
+            {/* Existing Tasks */}
             {milestone.tasks.map((task) => (
               <TaskCard
                 key={task.id}
@@ -333,14 +379,30 @@ export const MilestoneDetailPage = () => {
                 projectId={pId}
                 milestoneId={mId}
                 title={task.title}
+                description={task.description}
                 assignees={task.assignees}
                 startDate={task.startDate}
                 endDate={task.endDate}
                 completed={task.status === "COMPLETED"}
                 isLocked={task.isLocked}
                 onToggle={() => handleTaskToggle(task.id)}
+                onUpdated={handleTaskUpdated}
+                onDeleted={handleTaskDeleted}
+                availableMembers={availableMembers}
               />
             ))}
+            
+            {/* New Task Card in creation mode */}
+            {creatingTask && (
+              <TaskCard
+                projectId={pId}
+                milestoneId={mId}
+                autoFocus={true}
+                onCancel={() => setCreatingTask(false)}
+                onCreated={handleTaskCreated}
+                availableMembers={availableMembers}
+              />
+            )}
           </div>
         </div>
       </div>
