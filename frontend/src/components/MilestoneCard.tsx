@@ -60,7 +60,7 @@ export const MilestoneCard = ({
 }: MilestoneCardProps) => {
   const navigate = useNavigate();
   // TODO: replace with actual auth
-  const [userRole] = useState<"student" | "instructor">("instructor");
+  const [userRole] = useState<"student" | "instructor">("student");
 
   // Ref for title input to focus when entering edit/create mode
   const titleRef = useRef<HTMLInputElement>(null);

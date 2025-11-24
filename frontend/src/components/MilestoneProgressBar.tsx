@@ -17,22 +17,12 @@ export const MilestoneProgressBar = ({ tasks, className = "" }: TaskProgressBarP
   
   // Calculate the width percentage for each task based on equal distribution
   const segmentWidth = 100 / tasks.length;
-  
-  // Calculate progress percentage for each task
-  const getTaskProgress = (status: Task["status"]) => {
-    switch (status) {
-      case "COMPLETED": return 100;
-      case "IN_PROGRESS": return 50;
-      default: return 0;
-    }
-  };
 
   return (
     <TooltipProvider>
       <div className={`relative w-full h-3 bg-muted rounded-full overflow-hidden ${className}`}>
         <div className="absolute inset-0 flex">
           {tasks.map((task, index) => {
-            const progress = getTaskProgress(task.status);
             return (
               <Tooltip key={task.id} delayDuration={0}>
                 <TooltipTrigger asChild>
@@ -43,30 +33,30 @@ export const MilestoneProgressBar = ({ tasks, className = "" }: TaskProgressBarP
                     onMouseLeave={() => setHoveredIndex(null)}
                   >
                     {/* Background segment */}
-                    <div className="absolute inset-0 bg-muted" />
+                    <div className="absolute inset-0 bg-gray-300" />
                     
                     {/* Progress fill */}
                     <div
                       className={`absolute inset-0 transition-all duration-300 ${
                         hoveredIndex === index
-                          ? 'bg-primary brightness-110'
+                          ? 'bg-primary brightness-120'
                           : 'bg-primary'
                       }`}
                       style={{
-                        width: `${progress}%`,
+                        width: task.status === "COMPLETED" ? '100%' : '0%',
                       }}
                     />
                     
                     {/* Divider line between segments (except for the last one) */}
                     {index < tasks.length - 1 && (
-                      <div className="absolute right-0 top-0 w-[2px] h-full bg-background z-10" />
+                      <div className="absolute right-0 top-0 w-[3px] h-full bg-background z-10" />
                     )}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="bg-popover text-popover-foreground border border-border">
                   <div className="text-sm">
                     <p className="font-semibold">{task.title}</p>
-                    <p className="text-muted-foreground">{progress}% complete</p>
+                    <p className="text-muted-foreground">{task.status === "COMPLETED" ? "Hoàn thành" : "Đang tiến hành"}</p>
                   </div>
                 </TooltipContent>
               </Tooltip>
