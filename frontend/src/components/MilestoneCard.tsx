@@ -93,14 +93,6 @@ export const MilestoneCard = ({
     defaultValues: initialValues,
   });
 
-  // keep form in sync when props change (e.g., parent loads different milestone)
-  useEffect(() => {
-    form.reset(initialValues);
-    // note: intentionally not toggling isEditing here
-    // we only sync values
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, description, startDate, endDate]);
-
   // When user clicks the edit icon: reset form to current prop values then open editor
   const handleEnterEdit = () => {
     form.reset(initialValues);
