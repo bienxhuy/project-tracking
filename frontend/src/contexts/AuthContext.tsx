@@ -5,6 +5,35 @@ import { authService } from '../services/auth.service.ts';
 import { UserStatus } from '../types/util.type.ts';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const ACCESS_TOKEN_KEY = 'accessToken';
+const USER_STORAGE_KEY = 'user';
+
+const persistUser = (profile: User | null) => {
+  if (typeof window === 'undefined') return;
+  if (!profile) {
+    localStorage.removeItem(USER_STORAGE_KEY);
+    return;
+  }
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(profile));
+};
+
+const readCachedUser = (): User | null => {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem(USER_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as User;
+  } catch {
+    localStorage.removeItem(USER_STORAGE_KEY);
+    return null;
+  }
+};
+
+const clearAuthStorage = () => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(USER_STORAGE_KEY);
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -13,22 +42,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!user && user.accountStatus === UserStatus.ACTIVE;
 
   useEffect(() => {
+    const cachedUser = readCachedUser();
+    if (cachedUser) {
+      setUser(cachedUser);
+    }
     loadUser();
   }, []);
 
   const loadUser = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem(ACCESS_TOKEN_KEY);
       if (!token) {
+        persistUser(null);
+        setUser(null);
         setIsLoading(false);
         return;
       }
 
       const response = await authService.getAccount();
       setUser(response.data);
+      persistUser(response.data);
     } catch (error) {
       console.error('Failed to load user:', error);
-      localStorage.removeItem('accessToken');
+      clearAuthStorage();
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -37,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (credentials: LoginRequest) => {
     // Clear any existing token before attempting login
-    localStorage.removeItem('accessToken');
+    clearAuthStorage();
     setUser(null);
     
     try {
@@ -45,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Check for error codes first - if any error exists, don't save token
       if (response.errorCode) {
-        localStorage.removeItem('accessToken');
+        clearAuthStorage();
         setUser(null);
         
         if (response.errorCode === 'VERIFYING_EMAIL') {
@@ -60,17 +96,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Verify we have a valid accessToken before saving
       if (!response.data?.accessToken) {
-        localStorage.removeItem('accessToken');
+        clearAuthStorage();
         setUser(null);
         throw new Error('No access token received from server');
       }
 
       // Only save token when login is completely successful (no errorCode and has accessToken)
-      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem(ACCESS_TOKEN_KEY, response.data.accessToken);
+      const profile = response.data.user ?? null;
+      persistUser(profile);
+      setUser(profile);
       await loadUser();
     } catch (error: any) {
       // CRITICAL: Always clear token and user on any error
-      localStorage.removeItem('accessToken');
+      clearAuthStorage();
       setUser(null);
       
       console.error('Login failed:', error);
@@ -94,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
-      localStorage.removeItem('accessToken');
+      clearAuthStorage();
       setUser(null);
     }
   };
