@@ -7,18 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Upload, X, FileText } from "lucide-react";
+import { Upload } from "lucide-react";
 
 import { Attachment } from "@/types/attachment.type";
+import { FileCard } from "@/components/FileCard";
+import { updateReport as updateReportService } from "@/services/report.service";
 
 interface ProgressReportEditorProps {
   mode: "create" | "edit";
+  reportId?: number; // Required for edit mode
   initialData?: {
     title: string;
     content: string;
     attachments: Attachment[];
   };
-  onSubmit: (data: { title: string; content: string; attachments: Attachment[]; newFiles: File[] }) => void;
+  onSuccess?: () => void; // Callback after successful create/update
   onCancel: () => void;
   submitLabel?: string;
   cancelLabel?: string;
@@ -39,14 +42,16 @@ const ACCEPTED_FILE_TYPES = [
 
 export const ProgressReportEditor = ({
   mode,
+  reportId,
   initialData,
-  onSubmit,
+  onSuccess,
   onCancel,
   submitLabel = mode === "create" ? "Gửi báo cáo" : "Lưu",
 }: ProgressReportEditorProps) => {
   const [attachments, setAttachments] = useState<Attachment[]>(initialData?.attachments || []);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form setup
@@ -97,21 +102,38 @@ export const ProgressReportEditor = ({
     setAttachments((prev) => prev.filter((att) => att.id !== attachmentId));
   };
 
-  // Format file size for display
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-  };
-
-  // On submit, gather data and call onSubmit callback
-  const handleSubmit = (data: z.infer<typeof reportSchema>) => {
-    onSubmit({
-      title: data.title,
-      content: data.content,
-      attachments,
-      newFiles,
-    });
+  // On submit, handle create/update logic
+  const handleSubmit = async (data: z.infer<typeof reportSchema>) => {
+    setIsSubmitting(true);
+    try {
+      if (mode === "edit" && reportId) {
+        // TODO: Upload new files and get their IDs
+        console.log("Files to upload:", newFiles);
+        await updateReportService(reportId, { 
+          title: data.title, 
+          content: data.content,
+          // In production, include updated attachment IDs
+        });
+      } else if (mode === "create") {
+        // TODO: Upload files and create report via API
+        console.log("Creating report with files:", newFiles);
+        console.log("Report data:", { title: data.title, content: data.content, attachments });
+      }
+      
+      // Call success callback to update parent UI
+      onSuccess?.();
+      
+      // Reset form
+      form.reset();
+      setAttachments([]);
+      setNewFiles([]);
+      setFileError(null);
+    } catch (error) {
+      console.error("Failed to submit report:", error);
+      setFileError("Không thể lưu báo cáo. Vui lòng thử lại.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // On cancel, reset form and call onCancel callback
@@ -178,26 +200,14 @@ export const ProgressReportEditor = ({
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Tệp hiện có:</p>
               {attachments.map((attachment) => (
-                <div
+                <FileCard
                   key={attachment.id}
-                  className="flex items-center justify-between p-2 bg-muted rounded-md"
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">{attachment.originalFilename}</span>
-                    <span className="text-xs text-muted-foreground">
-                      ({formatFileSize(attachment.fileSize)})
-                    </span>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveExistingAttachment(attachment.id)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
+                  fileName={attachment.originalFilename}
+                  fileSize={attachment.fileSize}
+                  downloadUrl={attachment.storageUrl}
+                  onRemove={() => handleRemoveExistingAttachment(attachment.id)}
+                  variant="existing"
+                />
               ))}
             </div>
           )}
@@ -207,26 +217,13 @@ export const ProgressReportEditor = ({
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Tệp mới:</p>
               {newFiles.map((file, index) => (
-                <div
+                <FileCard
                   key={index}
-                  className="flex items-center justify-between p-2 bg-primary/5 rounded-md"
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">{file.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      ({formatFileSize(file.size)})
-                    </span>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveNewFile(index)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
+                  fileName={file.name}
+                  fileSize={file.size}
+                  onRemove={() => handleRemoveNewFile(index)}
+                  variant="new"
+                />
               ))}
             </div>
           )}
@@ -262,8 +259,13 @@ export const ProgressReportEditor = ({
         </div>
 
         <div className="flex gap-2">
-          <Button type="submit" size={mode === "edit" ? "sm" : undefined} className="cursor-pointer">
-            {submitLabel}
+          <Button 
+            type="submit" 
+            size={mode === "edit" ? "sm" : undefined} 
+            className="cursor-pointer"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Đang lưu..." : submitLabel}
           </Button>
           <Button
             type="button"
@@ -271,6 +273,7 @@ export const ProgressReportEditor = ({
             variant="ghost"
             className="cursor-pointer"
             onClick={handleCancel}
+            disabled={isSubmitting}
           >
             Hủy
           </Button>
