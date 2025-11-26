@@ -37,7 +37,7 @@ export const addCommentToReport = async (
   mentions: number[]
 ): Promise<{ id: number; content: string; createdDate: Date; commenter: { id: number; name: string; initials: string } }> => {
   // TODO: Replace with actual API call
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await new Promise(resolve => setTimeout(resolve, 0));
   
   return {
     id: Date.now(),
@@ -52,7 +52,7 @@ export const deleteCommentFromReport = async (
   commentId: number
 ): Promise<void> => {
   // TODO: Replace with actual API call
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await new Promise(resolve => setTimeout(resolve, 0));
 };
 
 export const updateReport = async (
@@ -60,15 +60,15 @@ export const updateReport = async (
   data: { title: string; content: string }
 ): Promise<void> => {
   // TODO: Replace with actual API call
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await new Promise(resolve => setTimeout(resolve, 0));
 };
 
 export const deleteReport = async (reportId: number): Promise<void> => {
   // TODO: Replace with actual API call
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await new Promise(resolve => setTimeout(resolve, 0));
 };
 
 export const toggleReportLock = async (reportId: number): Promise<void> => {
   // TODO: Replace with actual API call
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await new Promise(resolve => setTimeout(resolve, 0));
 };
