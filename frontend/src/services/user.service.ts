@@ -84,3 +84,26 @@ class UserService {
 }
 
 export const userService = new UserService();
+
+
+// API Service to fetch user data
+
+import { BaseUser } from "@/types/user.type";
+import { dummyStudents } from "@/data/dummy/users.dummy";
+
+export function fetchAllStudents(): BaseUser[] {
+  // TODO: Replace with real API call
+  return dummyStudents;
+}
+
+export function searchStudents(query: string): BaseUser[] {
+  // TODO: Replace with real API call
+  if (!query) return dummyStudents;
+  
+  const lowerQuery = query.toLowerCase();
+  return dummyStudents.filter(
+    student => 
+      student.full_name.toLowerCase().includes(lowerQuery) ||
+      student.email.toLowerCase().includes(lowerQuery)
+  );
+}
