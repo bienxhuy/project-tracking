@@ -29,3 +29,18 @@ export const statusConfig = {
   ACTIVE: { label: "Đang hoạt động", className: "bg-warning text-warning-foreground" },
   COMPLETED: { label: "Hoàn thành", className: "bg-success text-success-foreground" },
 };
+
+export interface CreateProjectRequest {
+  title: string;
+  objective: string;
+  content: string;
+  year: number;
+  semester: number;
+  batch: string;
+  falculty: string;
+  studentIds: number[];
+}
+
+export interface UpdateProjectRequest extends CreateProjectRequest {
+  id: number;
+}
