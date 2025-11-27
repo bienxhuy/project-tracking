@@ -2,11 +2,11 @@
 
 import apiClient from "@/api/axios.customize";
 import { ApiResponse } from "@/types/auth.type";
-import { Project } from "@/types/project.type";
+import { ProjectApiSummary } from "@/types/project.type";
 
 class ProjectService {
-  async getProjects(): Promise<Project[]> {
-    const response = await apiClient.get<ApiResponse<Project[]>>("/api/v1/projects");
+  async getProjects(): Promise<ProjectApiSummary[]> {
+    const response = await apiClient.get<ApiResponse<ProjectApiSummary[]>>("/api/v1/projects");
     return response.data.data;
   }
 }
