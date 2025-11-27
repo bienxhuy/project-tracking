@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
   Users, 
@@ -10,6 +11,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminSidebar } from "@/contexts/AdminSidebarContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/components/ui/toast";
 
 interface NavItem {
   title: string;
@@ -40,14 +43,35 @@ const navItems: NavItem[] = [
 
 export function AdminSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useAdminSidebar();
+  const { logout } = useAuth();
+  const { addToast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
-    // TODO: Implement logout logic (clear auth tokens, redirect to login, etc.)
-    console.log("Logging out...");
-    // Example: Clear localStorage, redirect
-    // localStorage.removeItem('authToken');
-    // window.location.href = '/login';
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
+    try {
+      await logout();
+      addToast({
+        title: "Signed out",
+        description: "You have been logged out of the admin panel.",
+        variant: "success",
+      });
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Logout failed:", error);
+      addToast({
+        title: "Logout failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoggingOut(false);
+      setMobileOpen(false);
+    }
   };
 
   return (
@@ -186,10 +210,13 @@ export function AdminSidebar() {
                   collapsed ? "justify-center" : ""
                 )}
                 title={collapsed ? "Logout" : undefined}
+                disabled={isLoggingOut}
               >
                 <LogOut className="h-5 w-5 flex-shrink-0" />
                 {!collapsed && (
-                  <span className="text-sm font-medium">Logout</span>
+                  <span className="text-sm font-medium">
+                    {isLoggingOut ? "Signing out..." : "Logout"}
+                  </span>
                 )}
               </button>
             </div>

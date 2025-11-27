@@ -7,7 +7,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   accessToken: string;
-  userId?: number;
+  user: User;
 }
 
 export interface RegisterRequest {
@@ -15,6 +15,11 @@ export interface RegisterRequest {
   email: string;
   password: string;
   displayName: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export interface ApiResponse<T> {
@@ -31,5 +36,6 @@ export interface AuthContextType {
   login: (credentials: LoginRequest) => Promise<void>;
   register: (userData: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
+  changePassword: (payload: ChangePasswordRequest) => Promise<void>;
   refreshUser: () => Promise<void>;
 }

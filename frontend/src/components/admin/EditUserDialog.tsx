@@ -181,34 +181,6 @@ export function EditUserDialog({
               </Select>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <label htmlFor="level" className="text-sm font-medium">
-              Level
-            </label>
-            <Input
-              id="level"
-              type="number"
-              step="0.1"
-              min="0"
-              max="10"
-              value={formData.level || 0}
-              onChange={(e) => setFormData({ ...formData, level: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium text-muted-foreground">
-              New Password (leave empty to keep current)
-            </label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password || ""}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="••••••••"
-            />
-          </div>
         </div>
 
         <DialogFooter>

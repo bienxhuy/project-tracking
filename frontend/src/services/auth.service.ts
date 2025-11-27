@@ -1,11 +1,12 @@
-import apiClient from '../api/axios.customize.ts';
-import { 
-  LoginRequest, 
-  LoginResponse, 
-  RegisterRequest, 
-  ApiResponse 
-} from '@/types/auth.type';
-import { User } from '@/types/user.type';
+import apiClient from "../api/axios.customize.ts";
+import {
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  ApiResponse,
+  ChangePasswordRequest,
+} from "@/types/auth.type";
+import { User } from "@/types/user.type";
 
 class AuthService {
   async login(credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> {
@@ -26,7 +27,20 @@ class AuthService {
 
   async logout(): Promise<ApiResponse<boolean>> {
     const response = await apiClient.get<ApiResponse<boolean>>(
-      '/api/v1/auth/logout'
+      "/api/v1/auth/logout"
+    );
+    return response.data;
+  }
+
+  async changePassword(
+    userId: number,
+    payload: ChangePasswordRequest
+  ): Promise<ApiResponse<User>> {
+    const response = await apiClient.put<ApiResponse<User>>(
+      `/api/v1/users/${userId}`,
+      {
+        password: payload.newPassword,
+      }
     );
     return response.data;
   }

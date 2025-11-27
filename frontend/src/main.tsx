@@ -8,9 +8,9 @@ import { AuthProvider } from './contexts/AuthContext'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ToastProvider>
-      {/* <AuthProvider> */}
+      <AuthProvider>
         <App />
-      {/* </AuthProvider> */}
+      </AuthProvider>
     </ToastProvider>
   </StrictMode>,
 )

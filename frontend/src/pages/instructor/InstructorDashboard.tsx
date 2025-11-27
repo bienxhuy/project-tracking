@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { fetchTempProjects, deleteProject } from "@/services/project.service"
+import { projectService } from "@/services/project.service"
 import { fetchAllYears } from "@/services/semester.service"
 import { toast } from "sonner"
 
@@ -58,7 +58,7 @@ export const InstructorDashboard = () => {
   }, [])
 
   const loadProjects = () => {
-    const currentBatchProject = fetchTempProjects()
+    const currentBatchProject = projectService.fetchTempProjects()
     setProjects(currentBatchProject)
   }
 
@@ -96,7 +96,7 @@ export const InstructorDashboard = () => {
     if (deleteDialog.projectId === null) return
 
     try {
-      await deleteProject(deleteDialog.projectId)
+      await projectService.deleteProject(deleteDialog.projectId)
       toast.success("Xóa dự án thành công")
       loadProjects()
       setDeleteDialog({ open: false, projectId: null })

@@ -13,9 +13,12 @@ import { Bell, Menu } from "lucide-react"
 import logo from "@/assets/logo.png"
 import developing from "@/assets/developing.jpg"
 import { useEffect, useState } from "react";
+import { useToast } from "@/components/ui/toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { fetchNotifications } from "@/services/notification.service";
 import { Notification } from "@/types/notification.type";
+import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
 
 // Notification displaying types
 const notificationTypes = [
@@ -26,6 +29,9 @@ const notificationTypes = [
 
 export const Header = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const { logout } = useAuth();
+  const { addToast } = useToast();
 
   useEffect(() => {
     // Fetch notifications when the component mounts
@@ -37,8 +43,26 @@ export const Header = () => {
   const handleNotificationClick = (notification: Notification) => {
     notification.isRead = true;
     setNotifications([...notifications]);
-
     // TODO: Call API to update notification status in the backend
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      addToast({
+        title: "Đăng xuất thành công",
+        variant: "success",
+      });
+    } catch (error: any) {
+      addToast({
+        title: "Đăng xuất thất bại",
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Không thể đăng xuất. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -165,12 +189,30 @@ export const Header = () => {
             <DropdownMenuContent>
               <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Đổi mật khẩu</DropdownMenuItem>
-              <DropdownMenuItem>Đăng xuất</DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setPasswordDialogOpen(true);
+                }}
+              >
+                Đổi mật khẩu
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  handleLogout();
+                }}
+              >
+                Đăng xuất
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
+      <ChangePasswordDialog
+        open={passwordDialogOpen}
+        onOpenChange={setPasswordDialogOpen}
+      />
     </header>
   )
 }

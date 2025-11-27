@@ -1,16 +1,19 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom"
 
 import { MainLayout } from "./pages/MainLayout"
-import { TempPage } from "./pages/TempPage"
 import { StudentDashboard } from "./pages/student/StudentDashboard"
 import { AdminLayout } from "./pages/admin/AdminLayout"
 import { AdminDashboard } from "./pages/admin/AdminDashboard"
 import { ManageUsers } from "./pages/admin/ManageUsers"
 import NotificationTestPage from "./pages/NotificationTestPage"
 import HomePage from "./pages/HomePage"
+import LoginPage from "./pages/LoginPage"
+import { PublicRoute } from "./components/auth/PublicRoute"
+import { ProtectedRoute } from "./components/auth/ProtectedRoute"
+import { RoleBasedRoute } from "./components/auth/RoleBasedRoute"
+import { UserRole } from "./types/user.type"
 // import { NotificationManager } from "./components/NotificationManager"
 
-import { ApiTestPage } from "./pages/ApiTestPage"
 import { InstructorDashboard } from "./pages/instructor/InstructorDashboard"
 import { ProjectEditorPage } from "./pages/instructor/ProjectEditorPage"
 import { ProjectDetailPage } from "./pages/ProjectDetail"
@@ -25,38 +28,106 @@ function App() {
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
-          {/* Main Application Routes */}
-          <Route path="/" element={<MainLayout />}>
+          {/* Public Route - Login Page */}
+          <Route 
+            path="/login" 
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            } 
+          />
+
+          {/* Protected Routes - All authenticated users can access */}
+          <Route 
+            path="/" 
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route index element={<HomePage />} />
 
-            <Route path="student">
-              <Route path="dashboard" element={<StudentDashboard />} />
-            </Route>
+            {/* Student Routes - Protected by Role (STUDENT only) */}
+            <Route 
+              path="student/dashboard" 
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.STUDENT]}>
+                  <StudentDashboard />
+                </RoleBasedRoute>
+              }
+            />
 
-            <Route path="instructor">
-              <Route path="dashboard" element={<InstructorDashboard />} />
-              <Route path="project/create" element={<ProjectEditorPage />} />
-              <Route path="project/edit/:projectId" element={<ProjectEditorPage />} />
-            </Route>
+            {/* Instructor Routes - Protected by Role (INSTRUCTOR only) */}
+            <Route 
+              path="instructor/dashboard" 
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.INSTRUCTOR]}>
+                  <InstructorDashboard />
+                </RoleBasedRoute>
+              }
+            />
+            <Route 
+              path="instructor/project/create" 
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.INSTRUCTOR]}>
+                  <ProjectEditorPage />
+                </RoleBasedRoute>
+              }
+            />
+            <Route 
+              path="instructor/project/edit/:projectId" 
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.INSTRUCTOR]}>
+                  <ProjectEditorPage />
+                </RoleBasedRoute>
+              }
+            />
 
-            <Route path="project/:id" element={<ProjectDetailPage />} />
-            <Route path="project/:projectId/milestone/:milestoneId" element={<MilestoneDetailPage />} />
-            <Route path="project/:projectId/milestone/:milestoneId/task/:taskId" element={<TaskDetailPage />} />
+            {/* Project Routes - Protected by Role (STUDENT and INSTRUCTOR only) */}
+            <Route 
+              path="project/:id" 
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.STUDENT, UserRole.INSTRUCTOR]}>
+                  <ProjectDetailPage />
+                </RoleBasedRoute>
+              } 
+            />
+            <Route 
+              path="project/:projectId/milestone/:milestoneId" 
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.STUDENT, UserRole.INSTRUCTOR]}>
+                  <MilestoneDetailPage />
+                </RoleBasedRoute>
+              } 
+            />
+            <Route 
+              path="project/:projectId/milestone/:milestoneId/task/:taskId" 
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.STUDENT, UserRole.INSTRUCTOR]}>
+                  <TaskDetailPage />
+                </RoleBasedRoute>
+              } 
+            />
 
-
+            {/* Test Notification Route - All authenticated users can access */}
             <Route path="test-notification" element={<NotificationTestPage />} />
-
-            <Route path="test-api" element={<ApiTestPage />} />
           </Route>
 
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
+          {/* Admin Routes - Protected by Role (ADMIN only) */}
+          <Route 
+            path="/admin" 
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.ADMIN]}>
+                <AdminLayout />
+              </RoleBasedRoute>
+            }
+          >
             <Route index element={<AdminDashboard />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<ManageUsers />} />
           </Route>
-
-          <Route path="/temp" element={<TempPage />} />
         </Routes>
 
         {/* Notification Manager - Active on all pages */}

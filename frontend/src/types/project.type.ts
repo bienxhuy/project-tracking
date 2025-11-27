@@ -46,3 +46,14 @@ export interface CreateProjectRequest {
 export interface UpdateProjectRequest extends CreateProjectRequest {
   id: number;
 }
+
+export interface ProjectApiSummary {
+  id: number;
+  name?: string;
+  title?: string;
+  status?: string;
+  faculty?: string;
+  falculty?: string;
+  year?: number;
+  completionPercentage?: number;
+}
