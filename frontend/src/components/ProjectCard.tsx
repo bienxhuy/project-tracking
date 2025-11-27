@@ -19,7 +19,7 @@ export interface ProjectCardProps {
   title: string;
   semester: number;
   year: number;
-  batch: string;
+  batch: number;
   progress: number;
   members: number;
   milestones: number;

@@ -38,7 +38,7 @@ export const ProjectDetailPage = () => {
 
   // Fetch project detail on mount
   useEffect(() => {
-    const data = fetchDetailProject();
+    const data = fetchDetailProject(Number(id));
     setProject(data);
     setIsContentLocked(data.isLocked);
     setObjective(data.objective);
