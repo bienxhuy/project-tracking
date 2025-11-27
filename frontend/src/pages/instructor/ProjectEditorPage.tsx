@@ -1,0 +1,433 @@
+import { useState, useEffect } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { toast } from "sonner"
+import { ArrowLeft, Save } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+
+import { StudentSelector } from "@/components/StudentSelector"
+import { User } from "@/types/user.type"
+import { CreateProjectRequest, UpdateProjectRequest } from "@/types/project.type"
+import { createProject, updateProject, fetchDetailProject, fetchAllFaculties } from "@/services/project.service"
+import { fetchAllYears } from "@/services/semester.service"
+import { projectSchema } from "@/zod_schema/project.schema"
+
+type ProjectFormValues = z.infer<typeof projectSchema>
+
+export const ProjectEditorPage = () => {
+  const navigate = useNavigate()
+  const { projectId } = useParams<{ projectId: string }>()
+  // Determine if we are in edit mode based on the presence of a projectId
+  const isEditMode = !!projectId
+
+  const [availableYears, setAvailableYears] = useState<number[]>([])
+  const [availableFaculties, setAvailableFaculties] = useState<string[]>([])
+  const [selectedStudents, setSelectedStudents] = useState<User[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Form setup with Zod validation
+  const form = useForm<ProjectFormValues>({
+    resolver: zodResolver(projectSchema),
+    defaultValues: {
+      title: "",
+      objective: "",
+      content: "",
+      year: 0,
+      semester: 0,
+      batch: 0,
+      falculty: "",
+      studentIds: [],
+    },
+  })
+
+  // Load available years, faculties and project data if in edit mode
+  useEffect(() => {
+    const loadData = async () => {
+      const years = fetchAllYears()
+      setAvailableYears(years)
+
+      const faculties = fetchAllFaculties()
+      setAvailableFaculties(faculties)
+
+      // Load project data if in edit mode
+      if (isEditMode) {
+        await loadProjectData()
+      }
+
+      setIsLoading(false)
+    }
+
+    loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId])
+
+  // Function to load project data into the form for editing
+  // This function is used in editing mode only
+  const loadProjectData = async () => {
+    try {
+      const projectDetail = fetchDetailProject(parseInt(projectId!))
+
+      if (projectDetail) {
+
+        // Set form values individually to ensure proper type handling
+        form.setValue('title', projectDetail.title)
+        form.setValue('objective', projectDetail.objective)
+        form.setValue('content', projectDetail.content)
+        form.setValue('year', projectDetail.year)
+        form.setValue('semester', projectDetail.semester)
+        form.setValue('batch', projectDetail.batch)
+        form.setValue('falculty', projectDetail.falculty)
+        form.setValue('studentIds', projectDetail.students.map((s) => s.id))
+
+        // Load selected students from project detail
+        setSelectedStudents(projectDetail.students)
+      } else {
+        toast.error("Không tìm thấy dự án")
+        navigate("/instructor/dashboard")
+      }
+    } catch (error) {
+      console.error('Error loading project:', error)
+      toast.error("Không thể tải thông tin dự án")
+      navigate("/instructor/dashboard")
+    }
+  }
+
+  // Watch studentIds changes from StudentSelector
+  useEffect(() => {
+    form.setValue("studentIds", selectedStudents.map((s) => s.id))
+  }, [selectedStudents, form])
+
+  // Form submission handler
+  // Served for both editing and creating mode
+  const handleSubmit = async (data: ProjectFormValues) => {
+    setIsSubmitting(true)
+
+    try {
+      if (isEditMode) {
+        const updateData: UpdateProjectRequest = {
+          id: parseInt(projectId!),
+          title: data.title,
+          objective: data.objective,
+          content: data.content,
+          year: data.year,
+          semester: data.semester,
+          batch: data.batch,
+          falculty: data.falculty,
+          studentIds: data.studentIds,
+        }
+        await updateProject(updateData)
+        toast.success("Cập nhật dự án thành công")
+      } else {
+        const createData: CreateProjectRequest = {
+          title: data.title,
+          objective: data.objective,
+          content: data.content,
+          year: data.year,
+          semester: data.semester,
+          batch: data.batch,
+          falculty: data.falculty,
+          studentIds: data.studentIds,
+        }
+        await createProject(createData)
+        toast.success("Tạo dự án thành công")
+      }
+
+      navigate("/instructor/dashboard")
+    } catch (error) {
+      toast.error(isEditMode ? "Cập nhật dự án thất bại" : "Tạo dự án thất bại")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleCancel = () => {
+    navigate("/instructor/dashboard")
+  }
+
+  return (
+    <div className="container mx-auto py-6 px-4 max-w-5xl">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="ghost" size="icon" onClick={handleCancel}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold">
+            {isEditMode ? "Cập nhật dự án" : "Tạo dự án mới"}
+          </h1>
+          <p className="text-muted-foreground">
+            {isEditMode
+              ? "Chỉnh sửa thông tin dự án của bạn"
+              : "Điền thông tin để tạo dự án mới"}
+          </p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <p className="text-muted-foreground">Đang tải...</p>
+        </div>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            {/* Basic Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Thông tin cơ bản</CardTitle>
+                <CardDescription>Các trường đánh dấu (*) là bắt buộc</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Project Name */}
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Tên dự án <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập tên dự án..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Objectives */}
+                <FormField
+                  control={form.control}
+                  name="objective"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Mục tiêu <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Mô tả mục tiêu của dự án..."
+                          rows={3}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Description */}
+                <FormField
+                  control={form.control}
+                  name="content"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Mô tả <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Mô tả chi tiết về dự án..."
+                          rows={4}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Academic Information Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Year */}
+                  <FormField
+                    control={form.control}
+                    name="year"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Năm học <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => field.onChange(parseInt(value))}
+                          value={field.value > 0 ? field.value.toString() : ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Chọn năm" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {availableYears.map((year) => (
+                              <SelectItem key={year} value={year.toString()}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Semester */}
+                  <FormField
+                    control={form.control}
+                    name="semester"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Học kỳ <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => field.onChange(parseInt(value))}
+                          value={field.value > 0 ? field.value.toString() : ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Chọn học kỳ" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="1">HK1</SelectItem>
+                            <SelectItem value="2">HK2</SelectItem>
+                            <SelectItem value="3">HK3</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Batch */}
+                  <FormField
+                    control={form.control}
+                    name="batch"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Đợt <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => field.onChange(parseInt(value))}
+                          value={field.value > 0 ? field.value.toString() : ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Đợt" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="1">1</SelectItem>
+                            <SelectItem value="2">2</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Faculty */}
+                  <FormField
+                    control={form.control}
+                    name="falculty"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Khoa <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Chọn khoa" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {availableFaculties.map((faculty) => (
+                              <SelectItem key={faculty} value={faculty}>
+                                {faculty}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Participating Students */}
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  Sinh viên tham gia <span className="text-destructive">*</span>
+                </CardTitle>
+                <CardDescription>
+                  Tìm kiếm và chọn sinh viên tham gia dự án
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="studentIds"
+                  render={() => (
+                    <FormItem>
+                      <FormControl>
+                        <StudentSelector
+                          selectedStudents={selectedStudents}
+                          onStudentsChange={setSelectedStudents}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            <Separator />
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-4">
+              <Button type="button" variant="outline" onClick={handleCancel}>
+                Hủy
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="gap-2">
+                <Save className="h-4 w-4" />
+                {isSubmitting
+                  ? "Đang xử lý..."
+                  : isEditMode
+                    ? "Cập nhật dự án"
+                    : "Tạo dự án"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      )}
+    </div>
+  )
+}
