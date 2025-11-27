@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { fetchTempProjects } from "@/services/project.service"
+import { projectService } from "@/services/project.service"
 import { fetchAllYears } from "@/services/semester.service"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -36,7 +36,7 @@ export const StudentDashboard = () => {
 
   // Fetch data on component mount
   useEffect(() => {
-    const currentBatchProject = fetchTempProjects();
+    const currentBatchProject = projectService.fetchTempProjects();
     setProjects(currentBatchProject);
 
     const availableYears = fetchAllYears();

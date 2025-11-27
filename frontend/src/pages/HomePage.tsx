@@ -13,9 +13,9 @@ export default function HomePage() {
   const getDefaultRouteByRole = (role: UserRole): string => {
     switch (role) {
       case UserRole.STUDENT:
-        return "/test-api";
+        return "/student/dashboard";
       case UserRole.INSTRUCTOR:
-        return "/temp-page";
+        return "/instructor/dashboard";
       case UserRole.ADMIN:
         return "/admin";
       default:

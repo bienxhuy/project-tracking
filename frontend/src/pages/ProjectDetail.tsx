@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircle2, Clock, Lock, Unlock, Plus, Edit } from "lucide-react";
-import { fetchDetailProject } from "@/services/project.service";
+import { projectService } from "@/services/project.service";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +38,7 @@ export const ProjectDetailPage = () => {
 
   // Fetch project detail on mount
   useEffect(() => {
-    const data = fetchDetailProject(Number(id));
+    const data = projectService.fetchDetailProject(Number(id));
     setProject(data);
     setIsContentLocked(data.isLocked);
     setObjective(data.objective);

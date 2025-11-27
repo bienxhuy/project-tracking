@@ -30,7 +30,7 @@ import { Separator } from "@/components/ui/separator"
 import { StudentSelector } from "@/components/StudentSelector"
 import { BaseUser } from "@/types/user.type"
 import { CreateProjectRequest, UpdateProjectRequest } from "@/types/project.type"
-import { createProject, updateProject, fetchDetailProject, fetchAllFaculties } from "@/services/project.service"
+import { projectService } from "@/services/project.service"
 import { fetchAllYears } from "@/services/semester.service"
 import { projectSchema } from "@/zod_schema/project.schema"
 
@@ -69,7 +69,7 @@ export const ProjectEditorPage = () => {
       const years = fetchAllYears()
       setAvailableYears(years)
 
-      const faculties = fetchAllFaculties()
+      const faculties = projectService.fetchAllFaculties()
       setAvailableFaculties(faculties)
 
       // Load project data if in edit mode
@@ -88,7 +88,7 @@ export const ProjectEditorPage = () => {
   // This function is used in editing mode only
   const loadProjectData = async () => {
     try {
-      const projectDetail = fetchDetailProject(parseInt(projectId!))
+      const projectDetail = projectService.fetchDetailProject(parseInt(projectId!))
 
       if (projectDetail) {
 
@@ -138,7 +138,7 @@ export const ProjectEditorPage = () => {
           falculty: data.falculty,
           studentIds: data.studentIds,
         }
-        await updateProject(updateData)
+        await projectService.updateProject(updateData)
         toast.success("Cập nhật dự án thành công")
       } else {
         const createData: CreateProjectRequest = {
@@ -151,7 +151,7 @@ export const ProjectEditorPage = () => {
           falculty: data.falculty,
           studentIds: data.studentIds,
         }
-        await createProject(createData)
+        await projectService.createProject(createData)
         toast.success("Tạo dự án thành công")
       }
 
