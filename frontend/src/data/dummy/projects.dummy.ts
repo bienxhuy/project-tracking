@@ -87,7 +87,7 @@ export const projectDetailDummy: ProjectDetail = {
   year: 2024,
   semester: 2,
   batch: 2,
-  falculty: "Khoa học Máy tính",
+  falculty: "Công nghệ Thông tin",
   startDate: new Date("2024-10-01"),
   endDate: new Date("2024-12-20"),
   memberCount: 4,
