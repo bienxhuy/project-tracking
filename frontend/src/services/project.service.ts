@@ -20,6 +20,7 @@ export function createProject(data: CreateProjectRequest): Promise<Project> {
       const newProject: Project = {
         id: Math.floor(Math.random() * 10000),
         title: data.title,
+        objective: data.objective,
         content: data.content,
         year: data.year,
         semester: data.semester,
@@ -48,6 +49,7 @@ export function updateProject(data: UpdateProjectRequest): Promise<Project> {
         currentBatchProjects[index] = {
           ...currentBatchProjects[index],
           title: data.title,
+          objective: data.objective,
           content: data.content,
           year: data.year,
           semester: data.semester,
