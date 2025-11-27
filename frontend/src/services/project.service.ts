@@ -3,14 +3,27 @@
 import { currentBatchProjects, projectDetailDummy } from "@/data/dummy/projects.dummy";
 import { CreateProjectRequest, UpdateProjectRequest, Project } from "@/types/project.type";
 
+// Dummy faculty data
+const faculties = [
+  "Công nghệ Thông tin",
+  "Đào tạo quốc tế",
+  "Cơ khí Chế tạo máy",
+];
+
 export function fetchTempProjects() {
   // TODO: Replace with real API call
   return currentBatchProjects;
 }
 
-export function fetchDetailProject() {
+export function fetchDetailProject(projectId: number) {
   // TODO: Replace with real API call
+  // For now, return the dummy data regardless of projectId
   return projectDetailDummy;
+}
+
+export function fetchAllFaculties(): string[] {
+  // TODO: Replace with real API call
+  return faculties;
 }
 
 export function createProject(data: CreateProjectRequest): Promise<Project> {
