@@ -9,28 +9,40 @@ import { ProgressReportCard } from "@/components/ProgressReportCard";
 import { ProgressReportEditor } from "@/components/ProgressReportEditor";
 import { Report } from "@/types/report.type";
 
+
 interface ProgressReportThreadProps {
+  taskId: number; // Required for creating reports
   reports: Report[];
   projectMembers: Array<{ id: number; name: string; initials: string }>;
   userRole: "student" | "instructor";
   isTaskLocked: boolean;
-  onReportsChanged?: () => void; // Optional callback when reports are modified
+  onReportCreated?: (newReport: Report) => void; // Pass new report to parent
+  onReportUpdated?: (updatedReport: Report) => void; // Pass updated report to parent
 }
 
+
 export const ProgressReportThread = ({
+  taskId,
   reports,
   projectMembers,
   userRole,
   isTaskLocked,
-  onReportsChanged,
+  onReportCreated,
+  onReportUpdated,
 }: ProgressReportThreadProps) => {
   const [showNewReportForm, setShowNewReportForm] = useState(false);
 
-  const handleCreateSuccess = () => {
+  const handleCreateSuccess = (newReport: Report) => {
     setShowNewReportForm(false);
-    onReportsChanged?.();
+    onReportCreated?.(newReport);
   };
 
+  // Handlers for report updates to notify parent component
+  const handleReportUpdated = (updatedReport: Report) => {
+    onReportUpdated?.(updatedReport);
+  };
+
+  // Cancel new report creation callback to hide the form
   const handleCancelNewReport = () => {
     setShowNewReportForm(false);
   };
@@ -58,6 +70,7 @@ export const ProgressReportThread = ({
               <CardContent className="pt-6">
                 <ProgressReportEditor
                   mode="create"
+                  taskId={taskId}
                   onSuccess={handleCreateSuccess}
                   onCancel={handleCancelNewReport}
                 />
@@ -81,7 +94,7 @@ export const ProgressReportThread = ({
                 projectMembers={projectMembers}
                 userRole={userRole}
                 isTaskLocked={isTaskLocked}
-                onReportUpdated={onReportsChanged}
+                onReportUpdated={handleReportUpdated}
               />
             ))}
           </div>

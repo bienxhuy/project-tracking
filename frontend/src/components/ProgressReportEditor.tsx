@@ -11,17 +11,18 @@ import { Upload } from "lucide-react";
 
 import { Attachment } from "@/types/attachment.type";
 import { FileCard } from "@/components/FileCard";
-import { updateReport as updateReportService } from "@/services/report.service";
+import { createReport, updateReport as updateReportService } from "@/services/report.service";
 
 interface ProgressReportEditorProps {
   mode: "create" | "edit";
+  taskId?: number; // Required for create mode
   reportId?: number; // Required for edit mode
   initialData?: {
     title: string;
     content: string;
     attachments: Attachment[];
   };
-  onSuccess?: () => void; // Callback after successful create/update
+  onSuccess?: (reportData: import("@/types/report.type").Report) => void; // Return report with ID from backend
   onCancel: () => void;
   submitLabel?: string;
   cancelLabel?: string;
@@ -42,6 +43,7 @@ const ACCEPTED_FILE_TYPES = [
 
 export const ProgressReportEditor = ({
   mode,
+  taskId,
   reportId,
   initialData,
   onSuccess,
@@ -50,6 +52,7 @@ export const ProgressReportEditor = ({
 }: ProgressReportEditorProps) => {
   const [attachments, setAttachments] = useState<Attachment[]>(initialData?.attachments || []);
   const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<number[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -100,33 +103,46 @@ export const ProgressReportEditor = ({
   // Remove an EXISTING attachment
   const handleRemoveExistingAttachment = (attachmentId: number) => {
     setAttachments((prev) => prev.filter((att) => att.id !== attachmentId));
+    setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
   };
 
   // On submit, handle create/update logic
   const handleSubmit = async (data: z.infer<typeof reportSchema>) => {
     setIsSubmitting(true);
     try {
+      let reportData;
+      
       if (mode === "edit" && reportId) {
-        // TODO: Upload new files and get their IDs
-        console.log("Files to upload:", newFiles);
-        await updateReportService(reportId, { 
+        // Edit mode: 
+        // 1. Upload new files to backend first
+        // 2. Send update with new title, new content, new files, removed files
+        const existingAttachmentIds = attachments.map(att => att.id);
+        reportData = await updateReportService(reportId, { 
           title: data.title, 
           content: data.content,
-          // In production, include updated attachment IDs
+          files: newFiles,
+          existingAttachmentIds,
+          removedAttachmentIds,
         });
-      } else if (mode === "create") {
-        // TODO: Upload files and create report via API
-        console.log("Creating report with files:", newFiles);
-        console.log("Report data:", { title: data.title, content: data.content, attachments });
+      } else if (mode === "create" && taskId) {
+        // Create mode: upload files and create report
+        reportData = await createReport(taskId, {
+          title: data.title,
+          content: data.content,
+          files: newFiles,
+        });
+      } else {
+        throw new Error("Invalid mode or missing required IDs");
       }
       
-      // Call success callback to update parent UI
-      onSuccess?.();
+      // Return report data with ID from backend to parent
+      onSuccess?.(reportData);
       
       // Reset form
       form.reset();
       setAttachments([]);
       setNewFiles([]);
+      setRemovedAttachmentIds([]);
       setFileError(null);
     } catch (error) {
       console.error("Failed to submit report:", error);
@@ -141,6 +157,7 @@ export const ProgressReportEditor = ({
     form.reset();
     setAttachments(initialData?.attachments || []);
     setNewFiles([]);
+    setRemovedAttachmentIds([]);
     setFileError(null);
     onCancel();
   };

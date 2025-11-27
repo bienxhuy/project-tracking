@@ -9,25 +9,25 @@ import {
   ChevronDown,
   ChevronUp,
   Edit,
-  Trash,
   FileText,
   Send,
   Lock,
-  Unlock
+  Unlock,
+  Trash
 } from "lucide-react";
 
 import { Report } from "@/types/report.type";
 import { Comment as CommentType } from "@/types/comment.type";
 import { ProgressReportEditor } from "@/components/ProgressReportEditor";
 import { FileCard } from "@/components/FileCard";
-import { fetchReportDetail, addCommentToReport, deleteCommentFromReport, deleteReport as deleteReportService, toggleReportLock as toggleReportLockService } from "@/services/report.service";
+import { fetchReportDetail, addCommentToReport, deleteCommentFromReport, toggleReportLock as toggleReportLockService } from "@/services/report.service";
 
 interface ProgressReportCardProps {
   report: Report;
   projectMembers: Array<{ id: number; name: string; initials: string }>;
   userRole: "student" | "instructor";
   isTaskLocked: boolean;
-  onReportUpdated?: () => void; // Optional callback to notify parent of changes
+  onReportUpdated?: (updatedReport: Report) => void; // Pass updated report to parent
 }
 
 export const ProgressReportCard = ({
@@ -162,23 +162,13 @@ export const ProgressReportCard = ({
   };
 
   // Handle successful update from Editor
-  const handleUpdateSuccess = () => {
+  const handleUpdateSuccess = (updatedReport: import("@/types/report.type").Report) => {
     setIsEditing(false);
-    onReportUpdated?.();
+    onReportUpdated?.(updatedReport);
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-  };
-
-  // Handle report delete
-  const handleDelete = async () => {
-    try {
-      await deleteReportService(report.id);
-      onReportUpdated?.();
-    } catch (error) {
-      console.error("Failed to delete report:", error);
-    }
   };
 
   // Handle report lock toggle
@@ -187,7 +177,7 @@ export const ProgressReportCard = ({
       await toggleReportLockService(report.id);
       report.status = report.status === "LOCKED" ? "SUBMITTED" : "LOCKED";
       setIsLocked(report.status === "LOCKED" || isTaskLocked);
-      onReportUpdated?.();
+      onReportUpdated?.(report);
     } catch (error) {
       console.error("Failed to toggle report lock:", error);
     }
@@ -242,24 +232,14 @@ export const ProgressReportCard = ({
           {!isEditing && (
             <div className="flex items-center gap-1">
               {canEdit && (
-                <>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit className="w-3 h-3" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
-                    onClick={handleDelete}
-                  >
-                    <Trash className="w-3 h-3" />
-                  </Button>
-                </>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit className="w-3 h-3" />
+                </Button>
               )}
               {canLock && (
                 <Button

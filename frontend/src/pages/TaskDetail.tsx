@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { ProgressReportThread } from "@/components/ProgressReportThread";
 import { TaskDetail } from "@/types/task.type";
+import { Report } from "@/types/report.type";
 import { fetchTaskDetail } from "@/services/task.service";
 import { projectMembers } from "@/data/dummy/task-detail.dummy";
 
@@ -152,11 +153,27 @@ export const TaskDetailPage = () => {
   };
 
   // Report handlers
-  const handleReportsChanged = () => {
-    // Refetch task details to get updated reports
-    // TODO: call backend API to refetch task
-    const updatedTask = fetchTaskDetail();
-    setTask(updatedTask);
+  // These handlers update the task's reports state when reports are created or updated
+  // Don't implement the actual API calls here; just update local state
+
+  // When a new report is created
+  const handleReportCreated = (newReport: Report) => {
+    if (!task) return;
+    setTask({
+      ...task,
+      reports: [...task.reports, newReport],
+    });
+  };
+
+  // When an existing report is updated
+  const handleReportUpdated = (updatedReport: Report) => {
+    if (!task) return;
+    setTask({
+      ...task,
+      reports: task.reports.map(r => 
+        r.id === updatedReport.id ? updatedReport : r
+      ),
+    });
   };
 
   return (
@@ -449,11 +466,13 @@ export const TaskDetailPage = () => {
           {/* Progress Reports - Right Side on larger screens, bottom on mobile */}
           <div className="w-full sm:w-3/5 order-2">
             <ProgressReportThread
+              taskId={task.id}
               reports={task.reports}
               projectMembers={projectMembers}
               userRole={userRole}
               isTaskLocked={task.isLocked}
-              onReportsChanged={handleReportsChanged}
+              onReportCreated={handleReportCreated}
+              onReportUpdated={handleReportUpdated}
             />
           </div>
         </div>
