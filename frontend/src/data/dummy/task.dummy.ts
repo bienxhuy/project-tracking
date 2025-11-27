@@ -13,7 +13,7 @@ export const tasks: Task[] = [
     ],
     startDate: new Date("2024-03-01"),
     endDate: new Date("2024-03-15"),
-    completed: false,
+    status: "IN_PROGRESS",
     isLocked: false,
   },
   {
@@ -25,7 +25,7 @@ export const tasks: Task[] = [
     ],
     startDate: new Date("2024-03-05"),
     endDate: new Date("2024-03-20"),
-    completed: false,
+    status: "IN_PROGRESS",
     isLocked: true,
   },
 ];
