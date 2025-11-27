@@ -6,6 +6,7 @@ export const currentBatchProjects: Project[] = [
   {
     id: 1,
     title: "Giám sát năng lượng GreenCampus",
+    objective: "Phát triển hệ thống IoT để giám sát và tối ưu hóa mức tiêu thụ năng lượng trong các tòa nhà khuôn viên.",
     content:
       "Cảm biến IoT và bảng điều khiển để theo dõi mức tiêu thụ năng lượng của tòa nhà và đề xuất tối ưu hóa cho phòng thí nghiệm và ký túc xá.",
     year: 2025,
@@ -23,6 +24,7 @@ export const currentBatchProjects: Project[] = [
   {
     id: 2,
     title: "DormMate — Ghép cặp bạn cùng phòng",
+    objective: "Tạo ứng dụng web để giúp sinh viên tìm kiếm bạn cùng phòng phù hợp dựa trên sở thích và tính cách.",
     content:
       "Ứng dụng web sử dụng khảo sát sở thích và điểm tương thích để giúp sinh viên tìm bạn cùng phòng phù hợp.",
     year: 2025,
@@ -40,6 +42,7 @@ export const currentBatchProjects: Project[] = [
   {
     id: 3,
     title: "Lập lịch phòng thí nghiệm & Đặt tài nguyên",
+    objective: "Xây dựng hệ thống quản lý và đặt chỗ tài nguyên phòng thí nghiệm tự động với giải quyết xung đột.",
     content:
       "Hệ thống đặt chỗ tập trung cho thiết bị phòng thí nghiệm với giải quyết xung đột và phân tích sử dụng.",
     year: 2025,
@@ -57,6 +60,7 @@ export const currentBatchProjects: Project[] = [
   {
     id: 4,
     title: "Tham quan khuôn viên bằng VR",
+    objective: "Phát triển trải nghiệm thực tế ảo để tham quan khuôn viên trường với hỗ trợ đa ngôn ngữ và tiếp cận.",
     content:
       "Các chuyến tham quan thực tế ảo có hướng dẫn về các địa danh trong khuôn viên với chế độ hỗ trợ tiếp cận và thuyết minh đa ngôn ngữ.",
     year: 2025,
@@ -76,6 +80,8 @@ export const currentBatchProjects: Project[] = [
 export const projectDetailDummy: ProjectDetail = {
   id: 1,
   title: "Hệ thống điểm danh thông minh",
+  objective:
+    "Xây dựng hệ thống điểm danh dựa trên nhận diện khuôn mặt mạnh mẽ, bảo mật quyền riêng tư, tự động hóa việc điểm danh, lưu trữ nhật ký ẩn danh cho giảng viên và cung cấp bảng điều khiển quản trị cho báo cáo và phân tích điểm danh.",
   content:
     "Theo dõi điểm danh trong lớp học dựa trên nhận diện khuôn mặt với bảng điều khiển báo cáo.",
   year: 2024,
@@ -90,8 +96,32 @@ export const projectDetailDummy: ProjectDetail = {
   status: "ACTIVE",
   isLocked: false,
   isObjDesLocked: false,
-  objective:
-    "Xây dựng hệ thống điểm danh dựa trên nhận diện khuôn mặt mạnh mẽ, bảo mật quyền riêng tư, tự động hóa việc điểm danh, lưu trữ nhật ký ẩn danh cho giảng viên và cung cấp bảng điều khiển quản trị cho báo cáo và phân tích điểm danh.",
+  students: [
+    {
+      id: 1,
+      full_name: "Nguyễn Văn An",
+      email: "nguyenvanan@student.edu.vn",
+      role: "STUDENT",
+    },
+    {
+      id: 3,
+      full_name: "Lê Hoàng Cường",
+      email: "lehoangcuong@student.edu.vn",
+      role: "STUDENT",
+    },
+    {
+      id: 7,
+      full_name: "Đỗ Văn Hùng",
+      email: "dovanhung@student.edu.vn",
+      role: "STUDENT",
+    },
+    {
+      id: 9,
+      full_name: "Ngô Quốc Khánh",
+      email: "ngoquockhanh@student.edu.vn",
+      role: "STUDENT",
+    },
+  ],
   milestones: [
     {
       id: 1,

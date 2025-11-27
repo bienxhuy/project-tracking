@@ -1,10 +1,12 @@
 // Minimal representation of a Project entity for API Calls
 
 import { Milestone } from "./milestone.type";
+import { User } from "./user.type";
 
 export interface Project {
   id: number;
   title: string;
+  objective: string;
   content: string;
   year: number;
   semester: number;
@@ -20,9 +22,9 @@ export interface Project {
 }
 
 export interface ProjectDetail extends Project {
-  objective: string;
   isObjDesLocked: boolean;
   milestones: Milestone[];
+  students: User[];
 }
 
 export const statusConfig = {
