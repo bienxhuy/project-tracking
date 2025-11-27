@@ -16,7 +16,6 @@ export function searchStudents(query: string): User[] {
   return dummyStudents.filter(
     student => 
       student.full_name.toLowerCase().includes(lowerQuery) ||
-      student.email.toLowerCase().includes(lowerQuery) ||
-      student.id.toString().includes(query)
+      student.email.toLowerCase().includes(lowerQuery)
   );
 }
