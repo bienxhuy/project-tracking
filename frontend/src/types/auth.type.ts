@@ -17,6 +17,11 @@ export interface RegisterRequest {
   displayName: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface ApiResponse<T> {
   status: number;
   message: string;
@@ -31,5 +36,6 @@ export interface AuthContextType {
   login: (credentials: LoginRequest) => Promise<void>;
   register: (userData: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
+  changePassword: (payload: ChangePasswordRequest) => Promise<void>;
   refreshUser: () => Promise<void>;
 }

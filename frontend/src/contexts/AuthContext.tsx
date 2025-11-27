@@ -1,8 +1,20 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
-import { User, UserRole } from '../types/user.type.ts';
-import { LoginRequest, RegisterRequest, AuthContextType } from '../types/auth.type.ts';
-import { authService } from '../services/auth.service.ts';
-import { UserStatus } from '../types/util.type.ts';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useMemo,
+} from "react";
+import { User, UserRole } from "../types/user.type.ts";
+import {
+  LoginRequest,
+  RegisterRequest,
+  AuthContextType,
+  ChangePasswordRequest,
+} from "../types/auth.type.ts";
+import { authService } from "../services/auth.service.ts";
+import { UserStatus } from "../types/util.type.ts";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const ACCESS_TOKEN_KEY = 'accessToken';
@@ -138,6 +150,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const changePassword = async (payload: ChangePasswordRequest) => {
+    if (!user) {
+      throw new Error('Bạn cần đăng nhập trước khi đổi mật khẩu');
+    }
+    await authService.changePassword(user.id, payload);
+    await loadUser();
+  };
+
   const refreshUser = async () => {
     await loadUser();
   };
@@ -168,6 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       register,
       logout,
+      changePassword,
       refreshUser,
       hasRole,
       isAdmin,
