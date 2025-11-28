@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+import org.hibernate.envers.RelationTargetAuditMode;
 
 import java.util.List;
 
@@ -16,6 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 @SuperBuilder
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@Audited // Enable audit tracking for Project entity
 public class Project extends ProgressEntity {
 
     @Column(name = "title", nullable = false)
@@ -49,25 +53,34 @@ public class Project extends ProgressEntity {
     @Column(name = "is_only_des_locked")
     private Boolean isOnlyDesLocked;
 
+    // Collections are not audited by default to avoid complexity
+    // Use @Audited on specific collections if needed
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<Milestone> milestones;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<Task> tasks;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<Report> reports;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<Comment> comments;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<Attachment> attachments;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<ProjectMember> members;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "instructor_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private User instructor;
 }

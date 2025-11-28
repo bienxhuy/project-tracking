@@ -1,6 +1,7 @@
 package POSE_Project_Tracking.Blog.controller;
 
 import POSE_Project_Tracking.Blog.dto.WebSocketNotificationMessage;
+import POSE_Project_Tracking.Blog.enums.ENotificationType;
 import POSE_Project_Tracking.Blog.service.WebSocketNotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,9 +67,9 @@ public class WebSocketDebugController {
             .id(999L)
             .title("🧪 Test Notification")
             .message("This is a test notification sent from debug endpoint at " + LocalDateTime.now())
-            .type("INFO")
+            .type(ENotificationType.valueOf("INFO"))
             .action("NEW_NOTIFICATION")
-            .timestamp(LocalDateTime.now().toString())
+            .timestamp(LocalDateTime.parse(LocalDateTime.now().toString()))
             .build();
         
         log.info("Sending test notification to user {}: {}", userId, message);
@@ -92,7 +93,7 @@ public class WebSocketDebugController {
             @PathVariable Integer count) {
         
         log.info("Sending test count {} to user {}", count, userId);
-        webSocketNotificationService.sendNotificationCount(userId, count);
+        webSocketNotificationService.sendNotificationCount(userId, Long.valueOf(count));
         
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");
@@ -111,9 +112,9 @@ public class WebSocketDebugController {
             .id(888L)
             .title("📢 Broadcast Test")
             .message("This is a broadcast test notification at " + LocalDateTime.now())
-            .type("INFO")
+            .type(ENotificationType.valueOf("INFO"))
             .action("NEW_NOTIFICATION")
-            .timestamp(LocalDateTime.now().toString())
+            .timestamp(LocalDateTime.parse(LocalDateTime.now().toString()))
             .build();
         
         log.info("Broadcasting test notification: {}", message);
@@ -142,9 +143,9 @@ public class WebSocketDebugController {
                 .id((long) (1000 + i))
                 .title("Test Notification #" + i)
                 .message("This is test notification number " + i + " of " + count)
-                .type("INFO")
+                .type(ENotificationType.valueOf("INFO"))
                 .action("NEW_NOTIFICATION")
-                .timestamp(LocalDateTime.now().toString())
+                .timestamp(LocalDateTime.parse(LocalDateTime.now().toString()))
                 .build();
             
             webSocketNotificationService.sendNotificationToUser(userId, message);
