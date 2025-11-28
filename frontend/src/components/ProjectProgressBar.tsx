@@ -31,7 +31,7 @@ export const ProjectProgressBar = ({ milestones, projectTotalTasks, projectId, c
             <Tooltip key={milestone.id} delayDuration={0}>
               <TooltipTrigger asChild>
                 <div
-                  className="relative h-full transition-all duration-200 cursor-pointer overflow-hidden z-0 hover:scale-200 hover:z-100 hover:border hover:border-white hover:shadow-lg hover:rounded-md"
+                  className="relative h-full transition-all duration-200 cursor-pointer overflow-hidden z-0 hover:scale-110 hover:z-100 hover:border hover:border-white hover:shadow-lg hover:rounded-md"
                   style={{ width: `${(milestone.tasksTotal / projectTotalTasks) * 100}%` }}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
