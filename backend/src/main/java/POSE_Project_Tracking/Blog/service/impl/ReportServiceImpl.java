@@ -2,26 +2,25 @@ package POSE_Project_Tracking.Blog.service.impl;
 
 import POSE_Project_Tracking.Blog.dto.req.ReportReq;
 import POSE_Project_Tracking.Blog.dto.res.ReportRes;
-import POSE_Project_Tracking.Blog.entity.Milestone;
-import POSE_Project_Tracking.Blog.entity.Project;
-import POSE_Project_Tracking.Blog.entity.Report;
-import POSE_Project_Tracking.Blog.entity.Task;
-import POSE_Project_Tracking.Blog.entity.User;
+import POSE_Project_Tracking.Blog.entity.*;
 import POSE_Project_Tracking.Blog.enums.EReportStatus;
 import POSE_Project_Tracking.Blog.exceptionHandler.CustomException;
+import POSE_Project_Tracking.Blog.mapper.AttachmentMapper;
 import POSE_Project_Tracking.Blog.mapper.ReportMapper;
-import POSE_Project_Tracking.Blog.repository.MilestoneRepository;
-import POSE_Project_Tracking.Blog.repository.ProjectRepository;
-import POSE_Project_Tracking.Blog.repository.ReportRepository;
-import POSE_Project_Tracking.Blog.repository.TaskRepository;
-import POSE_Project_Tracking.Blog.repository.UserRepository;
+import POSE_Project_Tracking.Blog.repository.*;
 import POSE_Project_Tracking.Blog.service.IReportService;
+import POSE_Project_Tracking.Blog.util.FileUtil;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,6 +29,18 @@ import static POSE_Project_Tracking.Blog.enums.ErrorCode.*;
 @Service
 @Transactional(rollbackOn = Exception.class)
 public class ReportServiceImpl implements IReportService {
+
+    // Allowed file types
+    private static final List<String> ALLOWED_FILE_TYPES = Arrays.asList(
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/zip",
+            "application/x-zip-compressed"
+    );
+
+    // Maximum file size: 50MB
+    private static final long MAX_FILE_SIZE = 50 * 1024 * 1024;
 
     @Autowired
     private ReportRepository reportRepository;
@@ -47,13 +58,102 @@ public class ReportServiceImpl implements IReportService {
     private UserRepository userRepository;
 
     @Autowired
+    private AttachmentRepository attachmentRepository;
+
+    @Autowired
     private ReportMapper reportMapper;
+
+    @Autowired
+    private AttachmentMapper attachmentMapper;
 
     @Autowired
     private SecurityUtil securityUtil;
 
+    @Autowired
+    private AttachmentUploadService attachmentUploadService;
+
+    @Value("${upload.base-url:http://localhost:8080/api/v1/uploads}")
+    private String baseUrl;
+
+    /**
+     * Validate file before upload
+     */
+    private void validateFile(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new CustomException(FILE_UPLOAD_FAILED);
+        }
+
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new CustomException(FILE_TOO_LARGE);
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_FILE_TYPES.contains(contentType)) {
+            throw new CustomException(INVALID_FILE_TYPE);
+        }
+    }
+
+    /**
+     * Upload attachments for a report
+     */
+    private void uploadAttachments(Report report, MultipartFile[] attachments) {
+        if (attachments == null || attachments.length == 0) {
+            return;
+        }
+
+        User uploadedBy = securityUtil.getCurrentUser();
+        List<Attachment> attachmentList = new ArrayList<>();
+
+        for (MultipartFile file : attachments) {
+            if (file.isEmpty()) {
+                continue;
+            }
+
+            // Validate file
+            validateFile(file);
+
+            try {
+                String fileName = file.getOriginalFilename();
+                String url = attachmentUploadService.uploadAttachment(file);
+                String fileType = file.getContentType();
+                Long fileSize = file.getSize();
+
+                // Create attachment entity
+                // For Cloudinary storage, we use original filename as file_path since actual path is in the URL
+                Attachment attachment = attachmentMapper.toEntity(
+                        fileName,
+                        fileName, // Use original filename for file_path (required by database)
+                        fileType,
+                        fileSize,
+                        url,
+                        report.getProject(),
+                        report.getMilestone(),
+                        report.getTask(),
+                        report,
+                        null,
+                        uploadedBy
+                );
+
+                attachmentList.add(attachment);
+
+            } catch (IOException e) {
+                throw new CustomException(FILE_UPLOAD_FAILED);
+            }
+        }
+
+        // Save all attachments
+        if (!attachmentList.isEmpty()) {
+            attachmentRepository.saveAll(attachmentList);
+        }
+    }
+
     @Override
     public ReportRes createReport(ReportReq reportReq) {
+        return createReport(reportReq, null);
+    }
+
+    @Override
+    public ReportRes createReport(ReportReq reportReq, MultipartFile[] attachments) {
         // Lấy author (current user)
         User author = securityUtil.getCurrentUser();
 
@@ -81,8 +181,11 @@ public class ReportServiceImpl implements IReportService {
         // Map request to entity
         Report report = reportMapper.toEntity(reportReq, project, milestone, task, author);
 
-        // Save
+        // Save report first
         report = reportRepository.save(report);
+
+        // Upload attachments if provided
+        uploadAttachments(report, attachments);
 
         return reportMapper.toResponse(report);
     }
@@ -107,10 +210,13 @@ public class ReportServiceImpl implements IReportService {
     }
 
     @Override
-    public ReportRes getReportById(Long id) {
+    public ReportRes getReportById(Long id, String include) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new CustomException(REPORT_NOT_FOUND));
 
+        if ("comments".equals(include)) {
+            return reportMapper.toResponseWithComments(report);
+        }
         return reportMapper.toResponse(report);
     }
 
@@ -142,10 +248,15 @@ public class ReportServiceImpl implements IReportService {
     }
 
     @Override
-    public List<ReportRes> getReportsByTask(Long taskId) {
+    public List<ReportRes> getReportsByTask(Long taskId, String include) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
 
+        if ("comments".equals(include)) {
+            return reportRepository.findByTask(task).stream()
+                    .map(reportMapper::toResponseWithComments)
+                    .collect(Collectors.toList());
+        }
         return reportRepository.findByTask(task).stream()
                 .map(reportMapper::toResponse)
                 .collect(Collectors.toList());
