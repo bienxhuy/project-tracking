@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -38,4 +39,8 @@ public class ProjectRes {
     private Integer totalMilestones;
     private Integer totalTasks;
     private Integer totalMembers;
+    
+    // Detailed data
+    private List<MilestoneRes> milestones;
+    private List<ProjectMemberRes> students;
 }

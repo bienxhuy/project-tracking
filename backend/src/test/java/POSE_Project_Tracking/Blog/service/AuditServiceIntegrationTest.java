@@ -40,7 +40,7 @@ class AuditServiceIntegrationTest {
         Project project = Project.builder()
             .title("Test Project for Audit")
             .content("Initial content")
-            .status(EProjectStatus.PENDING)
+            .status(EProjectStatus.ACTIVE)
             .year(2024)
             .semester(1)
             .build();
@@ -48,8 +48,8 @@ class AuditServiceIntegrationTest {
         project = projectRepository.save(project);
         Long projectId = project.getId();
         
-        // Step 2: Update project status
-        project.setStatus(EProjectStatus.IN_PROGRESS);
+        // Step 2: Update project status to LOCKED
+        project.setStatus(EProjectStatus.LOCKED);
         projectRepository.save(project);
         
         // Step 3: Update again to COMPLETED
@@ -59,7 +59,7 @@ class AuditServiceIntegrationTest {
         // Step 4: Verify audit history
         List<AuditRevisionDTO> history = auditService.getProjectHistory(projectId);
         
-        // Should have 3 revisions: INSERT, UPDATE (IN_PROGRESS), UPDATE (COMPLETED)
+        // Should have 3 revisions: INSERT, UPDATE (LOCKED), UPDATE (COMPLETED)
         assertEquals(3, history.size(), "Should have 3 revisions");
         
         // Verify first revision (INSERT)
@@ -69,14 +69,14 @@ class AuditServiceIntegrationTest {
         assertNotNull(rev1.getTimestamp());
         
         Project projectRev1 = (Project) rev1.getEntityData();
-        assertEquals(EProjectStatus.PENDING, projectRev1.getStatus());
+        assertEquals(EProjectStatus.ACTIVE, projectRev1.getStatus());
         
-        // Verify second revision (UPDATE to IN_PROGRESS)
+        // Verify second revision (UPDATE to LOCKED)
         AuditRevisionDTO rev2 = history.get(1);
         assertEquals("UPDATE", rev2.getRevisionType());
         
         Project projectRev2 = (Project) rev2.getEntityData();
-        assertEquals(EProjectStatus.IN_PROGRESS, projectRev2.getStatus());
+        assertEquals(EProjectStatus.LOCKED, projectRev2.getStatus());
         
         // Verify third revision (UPDATE to COMPLETED)
         AuditRevisionDTO rev3 = history.get(2);
@@ -92,7 +92,7 @@ class AuditServiceIntegrationTest {
         // Create project with multiple revisions
         Project project = Project.builder()
             .title("Revision Test Project")
-            .status(EProjectStatus.PENDING)
+            .status(EProjectStatus.ACTIVE)
             .year(2024)
             .semester(1)
             .build();
@@ -105,7 +105,7 @@ class AuditServiceIntegrationTest {
         int firstRevision = revisions.get(0).intValue();
         
         // Update status
-        project.setStatus(EProjectStatus.IN_PROGRESS);
+        project.setStatus(EProjectStatus.LOCKED);
         projectRepository.save(project);
         
         revisions = auditService.getRevisionNumbers(Project.class, projectId);
@@ -113,11 +113,11 @@ class AuditServiceIntegrationTest {
         
         // Retrieve project at first revision
         Project projectAtRev1 = auditService.getProjectAtRevision(projectId, firstRevision);
-        assertEquals(EProjectStatus.PENDING, projectAtRev1.getStatus());
+        assertEquals(EProjectStatus.ACTIVE, projectAtRev1.getStatus());
         
         // Retrieve project at second revision
         Project projectAtRev2 = auditService.getProjectAtRevision(projectId, secondRevision);
-        assertEquals(EProjectStatus.IN_PROGRESS, projectAtRev2.getStatus());
+        assertEquals(EProjectStatus.LOCKED, projectAtRev2.getStatus());
     }
 
     @Test
@@ -127,7 +127,7 @@ class AuditServiceIntegrationTest {
         Project project = Project.builder()
             .title("Real Workflow Project")
             .content("Project description")
-            .status(EProjectStatus.PENDING)
+            .status(EProjectStatus.ACTIVE)
             .completionPercentage(0f)
             .year(2024)
             .semester(1)
@@ -137,8 +137,7 @@ class AuditServiceIntegrationTest {
         project = projectRepository.save(project);
         Long projectId = project.getId();
         
-        // Day 2: Start working
-        project.setStatus(EProjectStatus.IN_PROGRESS);
+        // Day 2: Some progress
         project.setCompletionPercentage(25f);
         projectRepository.save(project);
         
@@ -178,7 +177,7 @@ class AuditServiceIntegrationTest {
     void testAuditCapturesUsername() {
         Project project = Project.builder()
             .title("Username Capture Test")
-            .status(EProjectStatus.PENDING)
+            .status(EProjectStatus.ACTIVE)
             .year(2024)
             .semester(1)
             .build();

@@ -1,5 +1,6 @@
 package POSE_Project_Tracking.Blog.service.impl;
 
+import POSE_Project_Tracking.Blog.config.CacheConfig;
 import POSE_Project_Tracking.Blog.dto.req.TaskReq;
 import POSE_Project_Tracking.Blog.dto.res.TaskRes;
 import POSE_Project_Tracking.Blog.entity.Milestone;
@@ -13,10 +14,14 @@ import POSE_Project_Tracking.Blog.repository.MilestoneRepository;
 import POSE_Project_Tracking.Blog.repository.ProjectRepository;
 import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
+import POSE_Project_Tracking.Blog.service.IMilestoneService;
+import POSE_Project_Tracking.Blog.service.IProjectService;
 import POSE_Project_Tracking.Blog.service.ITaskService;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -46,6 +51,12 @@ public class TaskServiceImpl implements ITaskService {
 
     @Autowired
     private SecurityUtil securityUtil;
+
+    @Autowired
+    private IProjectService projectService;
+
+    @Autowired
+    private IMilestoneService milestoneService;
 
     @Override
     public TaskRes createTask(TaskReq taskReq) {
@@ -170,6 +181,13 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, allEntries = true),
+            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true),
+            @CacheEvict(value = CacheConfig.MILESTONE_LIST_CACHE, allEntries = true),
+            @CacheEvict(value = CacheConfig.TASK_LIST_CACHE, allEntries = true),
+            @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, allEntries = true)
+    })
     public void deleteTask(Long id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
@@ -178,7 +196,17 @@ public class TaskServiceImpl implements ITaskService {
             throw new CustomException(TASK_LOCKED);
         }
 
+        // Store IDs before deleting
+        Long projectId = task.getProject().getId();
+        Long milestoneId = task.getMilestone() != null ? task.getMilestone().getId() : null;
+
         taskRepository.delete(task);
+
+        // Update completion percentages after deletion
+        projectService.updateProjectCompletion(projectId);
+        if (milestoneId != null) {
+            milestoneService.updateMilestoneCompletion(milestoneId);
+        }
     }
 
     @Override
@@ -269,6 +297,13 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, allEntries = true),
+            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true),
+            @CacheEvict(value = CacheConfig.MILESTONE_LIST_CACHE, allEntries = true),
+            @CacheEvict(value = CacheConfig.TASK_LIST_CACHE, allEntries = true),
+            @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, allEntries = true)
+    })
     public void markTaskAsCompleted(Long id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
@@ -279,5 +314,14 @@ public class TaskServiceImpl implements ITaskService {
 
         task.setStatus(ETaskStatus.COMPLETED);
         taskRepository.save(task);
+
+        // Update completion percentages
+        Long projectId = task.getProject().getId();
+        Long milestoneId = task.getMilestone() != null ? task.getMilestone().getId() : null;
+
+        projectService.updateProjectCompletion(projectId);
+        if (milestoneId != null) {
+            milestoneService.updateMilestoneCompletion(milestoneId);
+        }
     }
 }
