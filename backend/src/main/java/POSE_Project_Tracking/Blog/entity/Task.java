@@ -4,6 +4,9 @@ import POSE_Project_Tracking.Blog.enums.ETaskStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+import org.hibernate.envers.RelationTargetAuditMode;
 
 import java.util.List;
 
@@ -14,6 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+@Audited // Track task completion and assignment changes
 public class Task extends ProgressEntity {
 
     @Column(name = "title", nullable = false)
@@ -36,14 +40,18 @@ public class Task extends ProgressEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private User assignedTo;
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<Report> reports;
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<Comment> comments;
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<Attachment> attachments;
 }

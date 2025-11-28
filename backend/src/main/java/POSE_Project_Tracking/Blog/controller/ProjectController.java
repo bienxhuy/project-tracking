@@ -128,4 +128,108 @@ public class ProjectController {
         projectService.deleteProject(id);
         return new ApiResponse<>(HttpStatus.OK, "Xóa dự án thành công", null, null);
     }
+
+    // Lấy projects theo student (member)
+    @Operation(summary = "Get projects by student with filters", 
+               description = "Get all projects that a specific student is a member of, with optional year/semester/batch filters")
+    @GetMapping("/student/{studentId}")
+    public ApiResponse<List<ProjectRes>> getProjectsByStudent(
+            @PathVariable Long studentId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer semester,
+            @RequestParam(required = false) String batch) {
+        List<ProjectRes> projects = projectService.getProjectsByStudent(studentId, year, semester, batch);
+        return new ApiResponse<>(HttpStatus.OK, "Lấy danh sách dự án của sinh viên thành công", projects, null);
+    }
+
+    // Lấy projects theo student và status
+    @Operation(summary = "Get projects by student and status with filters", 
+               description = "Get projects that a specific student is a member of, filtered by status and optional year/semester/batch")
+    @GetMapping("/student/{studentId}/status/{status}")
+    public ApiResponse<List<ProjectRes>> getProjectsByStudentAndStatus(
+            @PathVariable Long studentId,
+            @PathVariable EProjectStatus status,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer semester,
+            @RequestParam(required = false) String batch) {
+        List<ProjectRes> projects = projectService.getProjectsByStudentAndStatus(studentId, status, year, semester, batch);
+        return new ApiResponse<>(HttpStatus.OK, "Lấy danh sách dự án của sinh viên theo trạng thái thành công", projects, null);
+    }
+
+    // Lấy các dự án của current user (student đang đăng nhập)
+    @Operation(summary = "Get my projects with filters", 
+               description = "Get all projects that the current user is a member of, with optional year/semester/batch filters. Defaults to current academic period.")
+    @GetMapping("/my-projects")
+    public ApiResponse<List<ProjectRes>> getMyProjects(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer semester,
+            @RequestParam(required = false) String batch) {
+        List<ProjectRes> projects = projectService.getMyProjects(year, semester, batch);
+        return new ApiResponse<>(HttpStatus.OK, "Lấy danh sách dự án của tôi thành công", projects, null);
+    }
+
+    // Lấy các dự án của current user theo status
+    @Operation(summary = "Get my projects by status with filters", 
+               description = "Get projects that the current user is a member of, filtered by status and optional year/semester/batch. Defaults to current academic period.")
+    @GetMapping("/my-projects/status/{status}")
+    public ApiResponse<List<ProjectRes>> getMyProjectsByStatus(
+            @PathVariable EProjectStatus status,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer semester,
+            @RequestParam(required = false) String batch) {
+        List<ProjectRes> projects = projectService.getMyProjectsByStatus(status, year, semester, batch);
+        return new ApiResponse<>(HttpStatus.OK, "Lấy danh sách dự án của tôi theo trạng thái thành công", projects, null);
+    }
+
+    // Lấy tất cả dự án với filters
+    @Operation(summary = "Get all projects with filters", 
+               description = "Get all projects with optional year/semester/batch filters. Defaults to current academic period.")
+    @GetMapping("/filter")
+    public ApiResponse<List<ProjectRes>> getAllProjectsWithFilters(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer semester,
+            @RequestParam(required = false) String batch) {
+        List<ProjectRes> projects = projectService.getAllProjectsWithFilters(year, semester, batch);
+        return new ApiResponse<>(HttpStatus.OK, "Lấy danh sách dự án với bộ lọc thành công", projects, null);
+    }
+
+    // ========== ENDPOINTS WITHOUT FILTERS (GET ALL) ==========
+
+    // Lấy TẤT CẢ projects của student (không filter)
+    @Operation(summary = "Get all projects by student (no filters)", 
+               description = "Get ALL projects that a specific student is a member of, across all years/semesters/batches")
+    @GetMapping("/student/{studentId}/all")
+    public ApiResponse<List<ProjectRes>> getAllProjectsByStudent(@PathVariable Long studentId) {
+        List<ProjectRes> projects = projectService.getAllProjectsByStudent(studentId);
+        return new ApiResponse<>(HttpStatus.OK, "Lấy tất cả dự án của sinh viên thành công", projects, null);
+    }
+
+    // Lấy TẤT CẢ projects của student theo status (không filter year/semester/batch)
+    @Operation(summary = "Get all projects by student and status (no filters)", 
+               description = "Get ALL projects that a specific student is a member of, filtered only by status")
+    @GetMapping("/student/{studentId}/all/status/{status}")
+    public ApiResponse<List<ProjectRes>> getAllProjectsByStudentAndStatus(
+            @PathVariable Long studentId,
+            @PathVariable EProjectStatus status) {
+        List<ProjectRes> projects = projectService.getAllProjectsByStudentAndStatus(studentId, status);
+        return new ApiResponse<>(HttpStatus.OK, "Lấy tất cả dự án của sinh viên theo trạng thái thành công", projects, null);
+    }
+
+    // Lấy TẤT CẢ projects của current user (không filter)
+    @Operation(summary = "Get all my projects (no filters)", 
+               description = "Get ALL projects that the current user is a member of, across all years/semesters/batches")
+    @GetMapping("/my-projects/all")
+    public ApiResponse<List<ProjectRes>> getAllMyProjects() {
+        List<ProjectRes> projects = projectService.getAllMyProjects();
+        return new ApiResponse<>(HttpStatus.OK, "Lấy tất cả dự án của tôi thành công", projects, null);
+    }
+
+    // Lấy TẤT CẢ projects của current user theo status (không filter year/semester/batch)
+    @Operation(summary = "Get all my projects by status (no filters)", 
+               description = "Get ALL projects that the current user is a member of, filtered only by status")
+    @GetMapping("/my-projects/all/status/{status}")
+    public ApiResponse<List<ProjectRes>> getAllMyProjectsByStatus(@PathVariable EProjectStatus status) {
+        List<ProjectRes> projects = projectService.getAllMyProjectsByStatus(status);
+        return new ApiResponse<>(HttpStatus.OK, "Lấy tất cả dự án của tôi theo trạng thái thành công", projects, null);
+    }
 }

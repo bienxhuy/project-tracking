@@ -12,6 +12,7 @@ import POSE_Project_Tracking.Blog.repository.ProjectRepository;
 import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.IProjectService;
+import POSE_Project_Tracking.Blog.util.AcademicYearUtil;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.aop.framework.AopProxyUtils;
@@ -129,15 +130,13 @@ public class ProjectServiceImpl implements IProjectService {
             @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, allEntries = true)
     })
     public ProjectRes createProject(ProjectReq projectReq) {
-        // Lấy instructor
-        User instructor = userRepository.findById(projectReq.getInstructorId())
-                .orElseThrow(() -> new CustomException(USER_NON_EXISTENT));
+        // Lấy current user làm instructor
+        User currentUser = securityUtil.getCurrentUser();
 
         // Map request to entity
-        Project project = projectMapper.toEntity(projectReq, instructor);
+        Project project = projectMapper.toEntity(projectReq, currentUser);
 
-        // Set createdBy từ current user
-        User currentUser = securityUtil.getCurrentUser();
+        // Set createdBy cũng là current user
         project.setCreatedBy(currentUser);
 
         // Save
@@ -181,13 +180,18 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     @Cacheable(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "'detailed_' + #id")
     public ProjectRes getProjectWithDetails(Long id) {
-        Project project = projectRepository.findByIdWithMembers(id)
+        Project project = projectRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
 
-        // Force lazy loading
-        project.getMilestones().size();
-        project.getTasks().size();
-
+        // Force lazy loading of collections separately to avoid MultipleBagFetchException
+        // Hibernate cannot fetch multiple bags in one query
+        if (project.getMilestones() != null) {
+            project.getMilestones().size();
+        }
+        if (project.getMembers() != null) {
+            project.getMembers().size();
+        }
+        
         return projectMapper.toResponse(project);
     }
 
@@ -289,5 +293,120 @@ public class ProjectServiceImpl implements IProjectService {
         }
 
         projectRepository.save(project);
+    }
+
+    @Override
+    public List<ProjectRes> getProjectsByStudent(Long studentId, Integer year, Integer semester, String batch) {
+        // Use current academic year/semester/batch as defaults if not provided
+        Integer effectiveYear = year != null ? year : AcademicYearUtil.getCurrentYear();
+        Integer effectiveSemester = semester != null ? semester : AcademicYearUtil.getCurrentSemester();
+        String effectiveBatch = batch != null ? batch : AcademicYearUtil.getCurrentBatch();
+
+        return projectRepository.findProjectsByMemberUserIdWithFilters(
+                studentId, effectiveYear, effectiveSemester, effectiveBatch
+        ).stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProjectRes> getProjectsByStudentAndStatus(Long studentId, EProjectStatus status, 
+                                                          Integer year, Integer semester, String batch) {
+        // Use current academic year/semester/batch as defaults if not provided
+        Integer effectiveYear = year != null ? year : AcademicYearUtil.getCurrentYear();
+        Integer effectiveSemester = semester != null ? semester : AcademicYearUtil.getCurrentSemester();
+        String effectiveBatch = batch != null ? batch : AcademicYearUtil.getCurrentBatch();
+
+        return projectRepository.findProjectsByMemberUserIdAndStatusWithFilters(
+                studentId, status, effectiveYear, effectiveSemester, effectiveBatch
+        ).stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, 
+               key = "'my_projects_' + #root.target.securityUtil.getCurrentUser().id + '_' + #year + '_' + #semester + '_' + #batch")
+    public List<ProjectRes> getMyProjects(Integer year, Integer semester, String batch) {
+        User currentUser = securityUtil.getCurrentUser();
+        
+        // Use current academic year/semester/batch as defaults if not provided
+        Integer effectiveYear = year != null ? year : AcademicYearUtil.getCurrentYear();
+        Integer effectiveSemester = semester != null ? semester : AcademicYearUtil.getCurrentSemester();
+        String effectiveBatch = batch != null ? batch : AcademicYearUtil.getCurrentBatch();
+
+        return projectRepository.findProjectsByMemberUserIdWithFilters(
+                currentUser.getId(), effectiveYear, effectiveSemester, effectiveBatch
+        ).stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, 
+               key = "'my_projects_' + #root.target.securityUtil.getCurrentUser().id + '_' + #status + '_' + #year + '_' + #semester + '_' + #batch")
+    public List<ProjectRes> getMyProjectsByStatus(EProjectStatus status, Integer year, Integer semester, String batch) {
+        User currentUser = securityUtil.getCurrentUser();
+        
+        // Use current academic year/semester/batch as defaults if not provided
+        Integer effectiveYear = year != null ? year : AcademicYearUtil.getCurrentYear();
+        Integer effectiveSemester = semester != null ? semester : AcademicYearUtil.getCurrentSemester();
+        String effectiveBatch = batch != null ? batch : AcademicYearUtil.getCurrentBatch();
+
+        return projectRepository.findProjectsByMemberUserIdAndStatusWithFilters(
+                currentUser.getId(), status, effectiveYear, effectiveSemester, effectiveBatch
+        ).stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, 
+               key = "'all_projects_' + #year + '_' + #semester + '_' + #batch")
+    public List<ProjectRes> getAllProjectsWithFilters(Integer year, Integer semester, String batch) {
+        // Use current academic year/semester/batch as defaults if not provided
+        Integer effectiveYear = year != null ? year : AcademicYearUtil.getCurrentYear();
+        Integer effectiveSemester = semester != null ? semester : AcademicYearUtil.getCurrentSemester();
+        String effectiveBatch = batch != null ? batch : AcademicYearUtil.getCurrentBatch();
+
+        return projectRepository.findAllWithFilters(
+                effectiveYear, effectiveSemester, effectiveBatch
+        ).stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all_projects_student_' + #studentId")
+    public List<ProjectRes> getAllProjectsByStudent(Long studentId) {
+        return projectRepository.findProjectsByMemberUserId(studentId).stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all_projects_student_' + #studentId + '_' + #status")
+    public List<ProjectRes> getAllProjectsByStudentAndStatus(Long studentId, EProjectStatus status) {
+        return projectRepository.findProjectsByMemberUserIdAndStatus(studentId, status).stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all_my_projects_' + #root.target.securityUtil.getCurrentUser().id")
+    public List<ProjectRes> getAllMyProjects() {
+        User currentUser = securityUtil.getCurrentUser();
+        return projectRepository.findProjectsByMemberUserId(currentUser.getId()).stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all_my_projects_' + #root.target.securityUtil.getCurrentUser().id + '_' + #status")
+    public List<ProjectRes> getAllMyProjectsByStatus(EProjectStatus status) {
+        User currentUser = securityUtil.getCurrentUser();
+        return projectRepository.findProjectsByMemberUserIdAndStatus(currentUser.getId(), status).stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
     }
 }

@@ -74,11 +74,9 @@ class ProjectServiceImplTest {
     @Test
     void createProject_validRequest_createsProject() {
         ProjectReq req = new ProjectReq();
-        req.setInstructorId(1L);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(instructor));
-        when(projectMapper.toEntity(req, instructor)).thenReturn(project);
         when(securityUtil.getCurrentUser()).thenReturn(currentUser);
+        when(projectMapper.toEntity(req, currentUser)).thenReturn(project);
         when(projectRepository.save(any(Project.class))).thenReturn(project);
         when(projectMapper.toResponse(project)).thenReturn(new ProjectRes());
 
@@ -87,16 +85,7 @@ class ProjectServiceImplTest {
         assertNotNull(result);
         verify(projectRepository).save(project);
         assertEquals(currentUser, project.getCreatedBy());
-    }
-
-    @Test
-    void createProject_instructorNotFound_throwsException() {
-        ProjectReq req = new ProjectReq();
-        req.setInstructorId(999L);
-
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThrows(CustomException.class, () -> service.createProject(req));
+        assertEquals(currentUser, project.getInstructor());
     }
 
     @Test

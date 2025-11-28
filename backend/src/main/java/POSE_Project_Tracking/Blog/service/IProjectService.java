@@ -33,4 +33,24 @@ public interface IProjectService {
     void unlockProject(Long id);
     
     void updateProjectCompletion(Long id);
+
+    // Student projects with filters
+    List<ProjectRes> getProjectsByStudent(Long studentId, Integer year, Integer semester, String batch);
+
+    List<ProjectRes> getProjectsByStudentAndStatus(Long studentId, EProjectStatus status, Integer year, Integer semester, String batch);
+
+    List<ProjectRes> getMyProjects(Integer year, Integer semester, String batch);
+
+    List<ProjectRes> getMyProjectsByStatus(EProjectStatus status, Integer year, Integer semester, String batch);
+
+    List<ProjectRes> getAllProjectsWithFilters(Integer year, Integer semester, String batch);
+
+    // Student/Instructor projects without filters (get all)
+    List<ProjectRes> getAllProjectsByStudent(Long studentId);
+
+    List<ProjectRes> getAllProjectsByStudentAndStatus(Long studentId, EProjectStatus status);
+
+    List<ProjectRes> getAllMyProjects();
+
+    List<ProjectRes> getAllMyProjectsByStatus(EProjectStatus status);
 }
