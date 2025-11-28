@@ -18,15 +18,17 @@ import {
 
 import { Report } from "@/types/report.type";
 import { Comment as CommentType } from "@/types/comment.type";
+import { BaseUser } from "@/types/user.type";
 import { ProgressReportEditor } from "@/components/ProgressReportEditor";
 import { FileCard } from "@/components/FileCard";
 import { reportService } from "@/services/report.service";
 import { commentService } from "@/services/comment.service";
+import { getInitials } from "@/utils/user.utils";
 import { toast } from "sonner";
 
 interface ProgressReportCardProps {
   report: Report;
-  projectMembers: Array<{ id: number; name: string; initials: string }>;
+  projectMembers: BaseUser[];
   userRole: "student" | "instructor";
   isTaskLocked: boolean;
   onReportUpdated?: (updatedReport: Report) => void; // Pass updated report to parent
@@ -119,14 +121,14 @@ export const ProgressReportCard = ({
   };
 
   // Insert mention
-  const insertMention = (member: { id: number; name: string }) => {
+  const insertMention = (member: { id: number; displayName: string }) => {
     const textBeforeCursor = commentText.substring(0, cursorPosition);
     const textAfterCursor = commentText.substring(cursorPosition);
     const lastAtIndex = textBeforeCursor.lastIndexOf("@");
 
     const newText =
       textBeforeCursor.substring(0, lastAtIndex) +
-      `@${member.name} ` +
+      `@${member.displayName} ` +
       textAfterCursor;
 
     setCommentText(newText);
@@ -141,7 +143,7 @@ export const ProgressReportCard = ({
 
   // Filter members for mention dropdown
   const filteredMembers = projectMembers.filter(member =>
-    member.name.toLowerCase().includes(mentionSearch)
+    member.displayName.toLowerCase().includes(mentionSearch)
   );
 
   // Handle comment submit
@@ -343,13 +345,13 @@ export const ProgressReportCard = ({
                   <div key={comment.id} className="flex gap-2">
                     <Avatar className="w-7 h-7">
                       <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                        {comment.commenter.initials}
+                        {getInitials(comment.commenter.displayName)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground">
-                          {comment.commenter.name}
+                          {comment.commenter.displayName}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {comment.createdDate.toLocaleString("vi-VN")}
@@ -398,12 +400,12 @@ export const ProgressReportCard = ({
                         className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary text-left"
                         onClick={() => insertMention(member)}
                       >
-                        <Avatar className="w-6 h-6">
-                          <AvatarFallback className="text-xs">
-                            {member.initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm text-foreground">{member.name}</span>
+                      <Avatar className="w-6 h-6">
+                        <AvatarFallback className="text-xs">
+                          {getInitials(member.displayName)}
+                        </AvatarFallback>
+                      </Avatar>
+                        <span className="text-sm text-foreground">{member.displayName}</span>
                       </button>
                     ))}
                   </div>

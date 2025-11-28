@@ -16,7 +16,9 @@ import { useNavigate } from "react-router-dom";
 
 import { taskSchema } from "@/zod_schema/task.schema";
 import { Task } from "@/types/task.type";
+import { BaseUser } from "@/types/user.type";
 import { taskService } from "@/services/task.service";
+import { getInitials } from "@/utils/user.utils";
 import { toast } from "sonner";
 
 interface TaskCardProps {
@@ -25,7 +27,7 @@ interface TaskCardProps {
   milestoneId: number;
   title?: string;
   description?: string;
-  assignees?: Array<{ id: number; name: string; initials: string }>;
+  assignees?: BaseUser[];
   startDate?: Date;
   endDate?: Date;
   completed?: boolean;
@@ -37,7 +39,7 @@ interface TaskCardProps {
   onUpdated?: (task: Task) => void;
   onDeleted?: (taskId: number) => void;
   autoFocus?: boolean;
-  availableMembers?: Array<{ id: number; name: string; initials: string }>;
+  availableMembers?: BaseUser[];
 }
 
 export const TaskCard = ({
@@ -225,7 +227,7 @@ export const TaskCard = ({
                   {assignees.slice(0, 3).map((assignee) => (
                     <Avatar key={assignee.id} className="w-5 h-5 border-2 border-card">
                       <AvatarFallback className="bg-primary text-primary-foreground text-[10px]">
-                        {assignee.initials}
+                        {getInitials(assignee.displayName)}
                       </AvatarFallback>
                     </Avatar>
                   ))}
@@ -383,10 +385,10 @@ export const TaskCard = ({
                     >
                       <Avatar className="w-4 h-4">
                         <AvatarFallback className="text-[8px]">
-                          {member.initials}
+                          {getInitials(member.displayName)}
                         </AvatarFallback>
                       </Avatar>
-                      <span>{member.name}</span>
+                      <span>{member.displayName}</span>
                       {selectedAssignees.includes(member.id) && (
                         <X className="w-3 h-3" />
                       )}

@@ -1,14 +1,15 @@
 // Simulated TaskDetail data from BE
 
 import { TaskDetail } from "@/types/task.type";
+import { BaseUser } from "@/types/user.type";
 
 export const taskDetail: TaskDetail = {
   id: 1,
   title: "Thiết kế cơ sở dữ liệu",
   description: "Tạo và tối ưu hóa schema cơ sở dữ liệu cho hệ thống quản lý dự án, bao gồm các bảng: projects, milestones, tasks, users, reports, comments và các mối quan hệ giữa chúng.",
   assignees: [
-    { id: 1, name: "Nguyễn Văn A", initials: "NA" },
-    { id: 2, name: "Trần Thị B", initials: "TB" },
+    { id: 1, displayName: "Nguyễn Văn A", email: "nguyenvana@example.com", role: "STUDENT" },
+    { id: 2, displayName: "Trần Thị B", email: "tranthib@example.com", role: "STUDENT" },
   ],
   startDate: new Date("2024-03-01"),
   endDate: new Date("2024-03-15"),
@@ -50,10 +51,10 @@ export const taskDetail: TaskDetail = {
 };
 
 // Available project members for tagging in comments
-export const projectMembers = [
-  { id: 1, name: "Nguyễn Văn A", initials: "NA" },
-  { id: 2, name: "Trần Thị B", initials: "TB" },
-  { id: 3, name: "Lê Văn C", initials: "LC" },
-  { id: 4, name: "Phạm Thị D", initials: "PD" },
-  { id: 10, name: "GV. Lê Văn Giảng", initials: "LG" },
+export const projectMembers: BaseUser[] = [
+  { id: 1, displayName: "Nguyễn Văn A", email: "nguyenvana@example.com", role: "STUDENT" },
+  { id: 2, displayName: "Trần Thị B", email: "tranthib@example.com", role: "STUDENT" },
+  { id: 3, displayName: "Lê Văn C", email: "levanc@example.com", role: "STUDENT" },
+  { id: 4, displayName: "Phạm Thị D", email: "phamthid@example.com", role: "STUDENT" },
+  { id: 10, displayName: "GV. Lê Văn Giảng", email: "levangiang@example.com", role: "INSTRUCTOR" },
 ];

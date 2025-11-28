@@ -1,6 +1,7 @@
 // Minimal representation of a task data for API calls
 
 import { Report } from "./report.type";
+import { BaseUser } from "./user.type";
 
 export interface Task {
   id: number;
@@ -10,7 +11,7 @@ export interface Task {
   endDate: Date;
   status: "IN_PROGRESS" | "COMPLETED";
   isLocked: boolean;
-  assignees: Array<{ id: number; name: string; initials: string }>;
+  assignees: BaseUser[];
 }
 
 export interface TaskDetail extends Task {

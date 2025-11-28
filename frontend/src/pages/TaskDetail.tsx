@@ -20,6 +20,7 @@ import { TaskDetail } from "@/types/task.type";
 import { Report } from "@/types/report.type";
 import { taskService } from "@/services/task.service";
 import { projectMembers } from "@/data/dummy/task-detail.dummy";
+import { getInitials } from "@/utils/user.utils";
 import { toast } from "sonner";
 
 import { taskSchema } from "@/zod_schema/task.schema";
@@ -434,7 +435,7 @@ export const TaskDetailPage = () => {
                                   );
                                 }}
                               />
-                              <span className="text-sm text-foreground">{member.name}</span>
+                              <span className="text-sm text-foreground">{member.displayName}</span>
                             </div>
                           ))}
                         </div>
@@ -509,11 +510,11 @@ export const TaskDetailPage = () => {
                         <div key={assignee.id} className="flex items-center gap-3">
                           <Avatar className="w-8 h-8">
                             <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                              {assignee.initials}
+                              {getInitials(assignee.displayName)}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm font-medium text-foreground">
-                            {assignee.name}
+                            {assignee.displayName}
                           </span>
                         </div>
                       ))}

@@ -18,6 +18,7 @@ import { TaskCard } from "@/components/TaskCard";
 
 import { MilestoneDetail } from "@/types/milestone.type";
 import { Task } from "@/types/task.type";
+import { BaseUser } from "@/types/user.type";
 import { milestoneService } from "@/services/milestone.service";
 import { taskService } from "@/services/task.service";
 import { milestoneSchema } from "@/zod_schema/milestone.schema";
@@ -41,11 +42,11 @@ export const MilestoneDetailPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // TODO: Replace with actual project members from API
-  const availableMembers = [
-    { id: 1, name: "Nguyễn Văn A", initials: "NA" },
-    { id: 2, name: "Trần Thị B", initials: "TB" },
-    { id: 3, name: "Lê Văn C", initials: "LC" },
-    { id: 4, name: "Phạm Thị D", initials: "PD" },
+  const availableMembers: BaseUser[] = [
+    { id: 1, displayName: "Nguyễn Văn A", email: "nguyenvana@example.com", role: "STUDENT" },
+    { id: 2, displayName: "Trần Thị B", email: "tranthib@example.com", role: "STUDENT" },
+    { id: 3, displayName: "Lê Văn C", email: "levanc@example.com", role: "STUDENT" },
+    { id: 4, displayName: "Phạm Thị D", email: "phamthid@example.com", role: "STUDENT" },
   ];
 
   // Initialize form with react-hook-form and zod

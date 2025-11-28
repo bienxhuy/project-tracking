@@ -8,12 +8,13 @@ import { Plus } from "lucide-react";
 import { ProgressReportCard } from "@/components/ProgressReportCard";
 import { ProgressReportEditor } from "@/components/ProgressReportEditor";
 import { Report } from "@/types/report.type";
+import { BaseUser } from "@/types/user.type";
 
 
 interface ProgressReportThreadProps {
   taskId: number; // Required for creating reports
   reports: Report[];
-  projectMembers: Array<{ id: number; name: string; initials: string }>;
+  projectMembers: BaseUser[];
   userRole: "student" | "instructor";
   isTaskLocked: boolean;
   onReportCreated?: (newReport: Report) => void; // Pass new report to parent
