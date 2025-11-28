@@ -34,6 +34,46 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT p FROM Project p LEFT JOIN FETCH p.members WHERE p.id = :id")
     Optional<Project> findByIdWithMembers(@Param("id") Long id);
 
+    @Query("SELECT p FROM Project p WHERE p.id = :id")
+    Optional<Project> findByIdWithDetails(@Param("id") Long id);
+
     @Query("SELECT p FROM Project p WHERE p.instructor.id = :instructorId AND p.status = :status")
     List<Project> findByInstructorIdAndStatus(@Param("instructorId") Long instructorId, @Param("status") EProjectStatus status);
+
+    @Query("SELECT DISTINCT p FROM Project p JOIN p.members pm WHERE pm.user.id = :userId")
+    List<Project> findProjectsByMemberUserId(@Param("userId") Long userId);
+
+    @Query("SELECT DISTINCT p FROM Project p JOIN p.members pm WHERE pm.user.id = :userId AND p.status = :status")
+    List<Project> findProjectsByMemberUserIdAndStatus(@Param("userId") Long userId, @Param("status") EProjectStatus status);
+
+    @Query("SELECT DISTINCT p FROM Project p JOIN p.members pm WHERE pm.user.id = :userId " +
+           "AND (:year IS NULL OR p.year = :year) " +
+           "AND (:semester IS NULL OR p.semester = :semester) " +
+           "AND (:batch IS NULL OR p.batch = :batch)")
+    List<Project> findProjectsByMemberUserIdWithFilters(
+            @Param("userId") Long userId,
+            @Param("year") Integer year,
+            @Param("semester") Integer semester,
+            @Param("batch") String batch);
+
+    @Query("SELECT DISTINCT p FROM Project p JOIN p.members pm WHERE pm.user.id = :userId " +
+           "AND p.status = :status " +
+           "AND (:year IS NULL OR p.year = :year) " +
+           "AND (:semester IS NULL OR p.semester = :semester) " +
+           "AND (:batch IS NULL OR p.batch = :batch)")
+    List<Project> findProjectsByMemberUserIdAndStatusWithFilters(
+            @Param("userId") Long userId,
+            @Param("status") EProjectStatus status,
+            @Param("year") Integer year,
+            @Param("semester") Integer semester,
+            @Param("batch") String batch);
+
+    @Query("SELECT p FROM Project p WHERE " +
+           "(:year IS NULL OR p.year = :year) " +
+           "AND (:semester IS NULL OR p.semester = :semester) " +
+           "AND (:batch IS NULL OR p.batch = :batch)")
+    List<Project> findAllWithFilters(
+            @Param("year") Integer year,
+            @Param("semester") Integer semester,
+            @Param("batch") String batch);
 }

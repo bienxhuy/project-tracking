@@ -1,6 +1,8 @@
 package POSE_Project_Tracking.Blog.mapper;
 
 import POSE_Project_Tracking.Blog.dto.req.ProjectReq;
+import POSE_Project_Tracking.Blog.dto.res.MilestoneRes;
+import POSE_Project_Tracking.Blog.dto.res.ProjectMemberRes;
 import POSE_Project_Tracking.Blog.dto.res.ProjectRes;
 import POSE_Project_Tracking.Blog.entity.Project;
 import POSE_Project_Tracking.Blog.entity.User;
@@ -8,8 +10,9 @@ import POSE_Project_Tracking.Blog.enums.EProjectStatus;
 import org.mapstruct.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {MilestoneMapper.class, ProjectMemberMapper.class})
 public interface ProjectMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -56,5 +59,7 @@ public interface ProjectMapper {
     @Mapping(target = "totalMilestones", expression = "java(project.getMilestones() != null ? project.getMilestones().size() : 0)")
     @Mapping(target = "totalTasks", expression = "java(project.getTasks() != null ? project.getTasks().size() : 0)")
     @Mapping(target = "totalMembers", expression = "java(project.getMembers() != null ? project.getMembers().size() : 0)")
+    @Mapping(target = "milestones", source = "milestones")
+    @Mapping(target = "students", source = "members")
     ProjectRes toResponse(Project project);
 }

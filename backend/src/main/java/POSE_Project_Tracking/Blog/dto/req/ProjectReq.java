@@ -33,7 +33,4 @@ public class ProjectReq {
     private LocalDate startDate;
 
     private LocalDate endDate;
-
-    @NotNull(message = "ID giảng viên không được để trống")
-    private Long instructorId;
 }
