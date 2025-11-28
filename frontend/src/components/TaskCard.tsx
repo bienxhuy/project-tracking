@@ -16,6 +16,8 @@ import { useNavigate } from "react-router-dom";
 
 import { taskSchema } from "@/zod_schema/task.schema";
 import { Task } from "@/types/task.type";
+import { taskService } from "@/services/task.service";
+import { toast } from "sonner";
 
 interface TaskCardProps {
   id?: number;
@@ -28,6 +30,7 @@ interface TaskCardProps {
   endDate?: Date;
   completed?: boolean;
   isLocked?: boolean;
+  userRole?: "student" | "instructor";
   onToggle?: () => void;
   onCancel?: () => void;
   onCreated?: (task: Task) => void;
@@ -48,6 +51,7 @@ export const TaskCard = ({
   endDate,
   completed = false,
   isLocked = false,
+  userRole = "student",
   onToggle,
   onCancel,
   onCreated,
@@ -57,7 +61,6 @@ export const TaskCard = ({
   availableMembers = [],
 }: TaskCardProps) => {
   const navigate = useNavigate();
-  const [userRole] = useState<"student" | "instructor">("student");
   
   // Ref for title input to focus when entering edit/create mode
   const titleRef = useRef<HTMLInputElement>(null);
@@ -117,9 +120,20 @@ export const TaskCard = ({
   };
 
   // Handle delete
-  const handleDelete = () => {
-    if (id && onDeleted) {
-      onDeleted(id);
+  const handleDelete = async () => {
+    if (!id) return;
+    
+    try {
+      const response = await taskService.deleteTask(id);
+      
+      if (response.status === 200) {
+        onDeleted?.(id);
+        toast.success("Xóa nhiệm vụ thành công");
+      } else {
+        toast.error(response.message || "Không thể xóa nhiệm vụ");
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi xóa nhiệm vụ");
     }
   };
 
@@ -135,36 +149,45 @@ export const TaskCard = ({
   };
 
   // On form submit
-  const onSubmit = (data: z.infer<typeof taskSchema>) => {
-    // Get selected members details
-    const selectedMembers = availableMembers.filter(m => selectedAssignees.includes(m.id));
-    
-    if (isNew) {
-      const created: Task = {
-        id: Math.random(),
-        title: data.title,
-        description: data.description || "",
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
-        status: "IN_PROGRESS",
-        isLocked: false,
-        assignees: selectedMembers,
-      };
-      onCreated?.(created);
-    } else {
-      const updated: Task = {
-        id: id!,
-        title: data.title,
-        description: data.description || "",
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
-        status: completed ? "COMPLETED" : "IN_PROGRESS",
-        isLocked: isLocked,
-        assignees: selectedMembers,
-      };
-      onUpdated?.(updated);
+  const onSubmit = async (data: z.infer<typeof taskSchema>) => {
+    try {
+      if (isNew) {
+        // Create new task via API
+        const response = await taskService.createTask(milestoneId, {
+          title: data.title,
+          description: data.description || "",
+          startDate: data.startDate,
+          endDate: data.endDate,
+          assigneeIds: selectedAssignees,
+        });
+
+        if (response.status === 201 && response.data) {
+          onCreated?.(response.data);
+          toast.success("Tạo nhiệm vụ thành công");
+        } else {
+          toast.error(response.message || "Không thể tạo nhiệm vụ");
+        }
+      } else {
+        // Update existing task via API
+        const response = await taskService.updateTask(id!, {
+          title: data.title,
+          description: data.description || "",
+          startDate: data.startDate,
+          endDate: data.endDate,
+          assigneeIds: selectedAssignees,
+        });
+
+        if (response.status === 200 && response.data) {
+          onUpdated?.(response.data);
+          toast.success("Cập nhật nhiệm vụ thành công");
+          setIsEditing(false);
+        } else {
+          toast.error(response.message || "Không thể cập nhật nhiệm vụ");
+        }
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi lưu nhiệm vụ");
     }
-    setIsEditing(false);
   };
 
   const handleClick = () => {

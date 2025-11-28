@@ -16,3 +16,27 @@ export interface Task {
 export interface TaskDetail extends Task {
   reports: Array<Report>;
 }
+
+export interface CreateTaskRequest {
+  title: string;
+  description: string;
+  startDate: string; // ISO date format
+  endDate: string;
+  assigneeIds: number[];
+}
+
+export interface UpdateTaskRequest {
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  assigneeIds: number[];
+}
+
+export interface ToggleTaskStatusRequest {
+  status: "IN_PROGRESS" | "COMPLETED";
+}
+
+export interface ToggleTaskLockRequest {
+  isLocked: boolean;
+}
