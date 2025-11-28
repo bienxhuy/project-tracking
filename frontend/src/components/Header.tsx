@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { fetchNotifications } from "@/services/notification.service";
 import { Notification } from "@/types/notification.type";
 import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
+import { useNavigate } from "react-router-dom";
 
 // Notification displaying types
 const notificationTypes = [
@@ -32,6 +33,7 @@ export const Header = () => {
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const { logout } = useAuth();
   const { addToast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch notifications when the component mounts
@@ -72,10 +74,10 @@ export const Header = () => {
         {/*Logo*/}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center cursor-pointer">
+            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center cursor-pointer" onClick={() => navigate("/")}>
               <img src={logo} alt="Logo" />
             </div>
-            <h1 className="text-xl font-extrabold text-balance tracking-tight cursor-pointer">UTEPs</h1>
+            <h1 className="text-xl font-extrabold text-balance tracking-tight cursor-pointer" onClick={() => navigate("/")}>UTEPs</h1>
           </div>
         </div>
 
