@@ -27,9 +27,18 @@ public class ProjectRes {
     private LocalDate startDate;
     private LocalDate endDate;
     private Boolean isLocked;
-    private Boolean isOnlyDesLocked;
+    private Boolean isObjDesLocked;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    // Lock information
+    private Long lockedById;
+    private String lockedByName;
+    private LocalDateTime lockedAt;
+    
+    // Creator information
+    private Long createdById;
+    private String createdByName;
     
     // Instructor info
     private Long instructorId;
@@ -42,5 +51,5 @@ public class ProjectRes {
     
     // Detailed data
     private List<MilestoneRes> milestones;
-    private List<ProjectMemberRes> students;
+    private List<AssignedUserRes> students;
 }

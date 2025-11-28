@@ -84,11 +84,21 @@ public class MilestoneServiceImpl implements IMilestoneService {
     }
 
     @Override
-    public MilestoneRes getMilestoneById(Long id) {
-        Milestone milestone = milestoneRepository.findById(id)
-                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
-
-        return milestoneMapper.toResponse(milestone);
+    public MilestoneRes getMilestoneById(Long id, String include) {
+        Milestone milestone;
+        
+        // Check if need to include tasks
+        boolean includeTasks = include != null && include.contains("tasks");
+        
+        if (includeTasks) {
+            milestone = milestoneRepository.findByIdWithTasks(id)
+                    .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
+            return milestoneMapper.toResponseWithTasks(milestone);
+        } else {
+            milestone = milestoneRepository.findById(id)
+                    .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
+            return milestoneMapper.toResponse(milestone);
+        }
     }
 
     @Override
@@ -110,13 +120,22 @@ public class MilestoneServiceImpl implements IMilestoneService {
     }
 
     @Override
-    public List<MilestoneRes> getMilestonesByProject(Long projectId) {
+    public List<MilestoneRes> getMilestonesByProject(Long projectId, String include) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
 
-        return milestoneRepository.findByProject(project).stream()
-                .map(milestoneMapper::toResponse)
-                .collect(Collectors.toList());
+        // Check if need to include tasks
+        boolean includeTasks = include != null && include.contains("tasks");
+        
+        if (includeTasks) {
+            return milestoneRepository.findByProjectIdWithTasks(projectId).stream()
+                    .map(milestoneMapper::toResponseWithTasks)
+                    .collect(Collectors.toList());
+        } else {
+            return milestoneRepository.findByProject(project).stream()
+                    .map(milestoneMapper::toResponse)
+                    .collect(Collectors.toList());
+        }
     }
 
     @Override
@@ -139,30 +158,24 @@ public class MilestoneServiceImpl implements IMilestoneService {
     }
 
     @Override
-    public void lockMilestone(Long id, Long userId) {
+    public MilestoneRes toggleMilestoneLock(Long id, Boolean isLocked) {
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(USER_NON_EXISTENT));
+        User currentUser = securityUtil.getCurrentUser();
+        
+        milestone.setLocked(isLocked);
+        
+        if (Boolean.TRUE.equals(isLocked)) {
+            milestone.setLockedBy(currentUser);
+            milestone.setLockedAt(LocalDateTime.now());
+        } else {
+            milestone.setLockedBy(null);
+            milestone.setLockedAt(null);
+        }
 
-        milestone.setLocked(true);
-        milestone.setLockedBy(user);
-        milestone.setLockedAt(LocalDateTime.now());
-
-        milestoneRepository.save(milestone);
-    }
-
-    @Override
-    public void unlockMilestone(Long id) {
-        Milestone milestone = milestoneRepository.findById(id)
-                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
-
-        milestone.setLocked(false);
-        milestone.setLockedBy(null);
-        milestone.setLockedAt(null);
-
-        milestoneRepository.save(milestone);
+        milestone = milestoneRepository.save(milestone);
+        return milestoneMapper.toResponse(milestone);
     }
 
     @Override

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -23,7 +24,8 @@ public class TaskReq {
 
     private Long milestoneId;
 
-    private Long assigneeId;
+    // Multiple assignees support
+    private List<Long> assigneeIds;
 
     private LocalDate startDate;
 

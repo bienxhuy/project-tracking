@@ -28,9 +28,15 @@ public interface IProjectService {
     
     void deleteProject(Long id);
     
-    void lockProject(Long id, Long userId);
+    void lockProject(Long id);
     
     void unlockProject(Long id);
+
+    void lockProjectContent(Long id);
+
+    void unlockProjectContent(Long id);
+
+    ProjectRes updateProjectContent(Long id, String objective, String content);
     
     void updateProjectCompletion(Long id);
 

@@ -4,11 +4,14 @@ import POSE_Project_Tracking.Blog.config.CacheConfig;
 import POSE_Project_Tracking.Blog.dto.req.ProjectReq;
 import POSE_Project_Tracking.Blog.dto.res.ProjectRes;
 import POSE_Project_Tracking.Blog.entity.Project;
+import POSE_Project_Tracking.Blog.entity.ProjectMember;
 import POSE_Project_Tracking.Blog.entity.User;
 import POSE_Project_Tracking.Blog.enums.EProjectStatus;
+import POSE_Project_Tracking.Blog.enums.EUserRole;
 import POSE_Project_Tracking.Blog.exceptionHandler.CustomException;
 import POSE_Project_Tracking.Blog.mapper.ProjectMapper;
 import POSE_Project_Tracking.Blog.repository.ProjectRepository;
+import POSE_Project_Tracking.Blog.repository.ProjectMemberRepository;
 import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.IProjectService;
@@ -45,6 +48,9 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+    private ProjectMemberRepository projectMemberRepository;
 
     @Autowired
     private ProjectMapper projectMapper;
@@ -139,8 +145,13 @@ public class ProjectServiceImpl implements IProjectService {
         // Set createdBy cũng là current user
         project.setCreatedBy(currentUser);
 
-        // Save
+        // Save project first to get ID
         project = projectRepository.save(project);
+
+        // Add student members if studentIds provided
+        if (projectReq.getStudentIds() != null && !projectReq.getStudentIds().isEmpty()) {
+            addProjectMembers(project, projectReq.getStudentIds());
+        }
 
         return projectMapper.toResponse(project);
     }
@@ -162,6 +173,22 @@ public class ProjectServiceImpl implements IProjectService {
 
         // Update only allowed fields
         projectMapper.updateEntityFromRequest(projectReq, project);
+
+        // Update project members if studentIds provided
+        if (projectReq.getStudentIds() != null) {
+            // Clear all existing members (orphanRemoval = true will delete them from DB)
+            if (project.getMembers() != null) {
+                project.getMembers().clear();
+            }
+
+            // Save to trigger orphan removal
+            project = projectRepository.save(project);
+
+            // Add new members
+            if (!projectReq.getStudentIds().isEmpty()) {
+                addProjectMembers(project, projectReq.getStudentIds());
+            }
+        }
 
         project = projectRepository.save(project);
 
@@ -252,21 +279,29 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    public void lockProject(Long id, Long userId) {
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
+            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
+    })
+    public void lockProject(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(USER_NON_EXISTENT));
+        // Get current authenticated user
+        User currentUser = securityUtil.getCurrentUser();
 
         project.setLocked(true);
-        project.setLockedBy(user);
+        project.setLockedBy(currentUser);
         project.setLockedAt(LocalDateTime.now());
 
         projectRepository.save(project);
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
+            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
+    })
     public void unlockProject(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -276,6 +311,66 @@ public class ProjectServiceImpl implements IProjectService {
         project.setLockedAt(null);
 
         projectRepository.save(project);
+    }
+
+    @Override
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
+            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
+    })
+    public void lockProjectContent(Long id) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
+
+        // Get current authenticated user
+        User currentUser = securityUtil.getCurrentUser();
+
+        project.setIsObjDesLocked(true);
+        project.setLockedBy(currentUser);
+        project.setLockedAt(LocalDateTime.now());
+
+        projectRepository.save(project);
+    }
+
+    @Override
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
+            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
+    })
+    public void unlockProjectContent(Long id) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
+
+        project.setIsObjDesLocked(false);
+
+        projectRepository.save(project);
+    }
+
+    @Override
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
+            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
+    })
+    public ProjectRes updateProjectContent(Long id, String objective, String content) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
+
+        // Check if content is locked
+        if (Boolean.TRUE.equals(project.getIsObjDesLocked())) {
+            throw new CustomException(PROJECT_LOCKED, "Project objective and content are locked");
+        }
+
+        // Update only objective and content
+        if (objective != null) {
+            project.setObjectives(objective);
+        }
+        if (content != null) {
+            project.setContent(content);
+        }
+
+        project = projectRepository.save(project);
+
+        return projectMapper.toResponse(project);
     }
 
     @Override
@@ -408,5 +503,41 @@ public class ProjectServiceImpl implements IProjectService {
         return projectRepository.findProjectsByMemberUserIdAndStatus(currentUser.getId(), status).stream()
                 .map(projectMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Helper method to add student members to a project
+     * @param project The project to add members to
+     * @param studentIds List of student user IDs
+     */
+    private void addProjectMembers(Project project, List<Long> studentIds) {
+        if (studentIds == null || studentIds.isEmpty()) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        for (Long studentId : studentIds) {
+            // Find user by ID
+            User student = userRepository.findById(studentId)
+                    .orElseThrow(() -> new CustomException(USER_NON_EXISTENT));
+
+            // Verify user is a student
+            if (student.getRole() != EUserRole.STUDENT) {
+                throw new CustomException(INSTRUCTOR_CANNOT_BE_ASSIGNED_TASK, 
+                    "User with ID " + studentId + " is not a student and cannot be added to project");
+            }
+
+            // Create project member
+            ProjectMember member = ProjectMember.builder()
+                    .project(project)
+                    .user(student)
+                    .role(EUserRole.STUDENT)
+                    .joinedAt(now)
+                    .isActive(true)
+                    .build();
+
+            projectMemberRepository.save(member);
+        }
     }
 }

@@ -1,6 +1,7 @@
 package POSE_Project_Tracking.Blog.controller;
 
 import POSE_Project_Tracking.Blog.dto.req.ProjectReq;
+import POSE_Project_Tracking.Blog.dto.req.UpdateContentReq;
 import POSE_Project_Tracking.Blog.dto.res.ApiResponse;
 import POSE_Project_Tracking.Blog.dto.res.ProjectRes;
 import POSE_Project_Tracking.Blog.enums.EProjectStatus;
@@ -103,8 +104,8 @@ public class ProjectController {
 
     // Khóa project
     @PatchMapping("/{id}/lock")
-    public ApiResponse<Void> lockProject(@PathVariable Long id, @RequestParam Long userId) {
-        projectService.lockProject(id, userId);
+    public ApiResponse<Void> lockProject(@PathVariable Long id) {
+        projectService.lockProject(id);
         return new ApiResponse<>(HttpStatus.OK, "Khóa dự án thành công", null, null);
     }
 
@@ -113,6 +114,39 @@ public class ProjectController {
     public ApiResponse<Void> unlockProject(@PathVariable Long id) {
         projectService.unlockProject(id);
         return new ApiResponse<>(HttpStatus.OK, "Mở khóa dự án thành công", null, null);
+    }
+
+    // Lock project content (objective & description only)
+    @Operation(summary = "Lock project content", 
+               description = "Lock project objective and description (Instructor only)")
+    @PatchMapping("/{id}/content/lock")
+    public ApiResponse<Void> lockProjectContent(@PathVariable Long id) {
+        projectService.lockProjectContent(id);
+        return new ApiResponse<>(HttpStatus.OK, "Khóa nội dung dự án thành công", null, null);
+    }
+
+    // Unlock project content (objective & description only)
+    @Operation(summary = "Unlock project content", 
+               description = "Unlock project objective and description (Instructor only)")
+    @PatchMapping("/{id}/content/unlock")
+    public ApiResponse<Void> unlockProjectContent(@PathVariable Long id) {
+        projectService.unlockProjectContent(id);
+        return new ApiResponse<>(HttpStatus.OK, "Mở khóa nội dung dự án thành công", null, null);
+    }
+
+    // Update project content (objective & description only)
+    @Operation(summary = "Update project objective and content", 
+               description = "Update project objective and description (Student)")
+    @PatchMapping("/{id}/content")
+    public ApiResponse<ProjectRes> updateProjectContent(
+            @PathVariable Long id,
+            @RequestBody UpdateContentReq updateContentReq) {
+        ProjectRes project = projectService.updateProjectContent(
+                id, 
+                updateContentReq.getObjective(), 
+                updateContentReq.getContent()
+        );
+        return new ApiResponse<>(HttpStatus.OK, "Cập nhật nội dung dự án thành công", project, null);
     }
 
     // Cập nhật completion percentage

@@ -38,10 +38,14 @@ public class Task extends ProgressEntity {
     @JoinColumn(name = "milestone_id")
     private Milestone milestone;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_to_id")
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "task_assignees",
+        joinColumns = @JoinColumn(name = "task_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
-    private User assignedTo;
+    private List<User> assignedUsers;
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     @NotAudited
