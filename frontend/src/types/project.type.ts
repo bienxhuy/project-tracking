@@ -10,7 +10,7 @@ export interface Project {
   content: string;
   year: number;
   semester: number;
-  batch: number;
+  batch: string;
   falculty: string;
   startDate: Date;
   endDate: Date;
@@ -38,7 +38,7 @@ export interface CreateProjectRequest {
   content: string;
   year: number;
   semester: number;
-  batch: number;
+  batch: string;
   falculty: string;
   startDate: Date;
   endDate: Date;
@@ -51,7 +51,7 @@ export interface UpdateProjectRequest {
   content: string;
   year: number;
   semester: number;
-  batch: number;
+  batch: string;
   falculty: string;
   startDate: Date;
   endDate: Date;

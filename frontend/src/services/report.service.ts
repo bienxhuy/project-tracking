@@ -10,6 +10,16 @@ import {
   ToggleReportLockRequest,
 } from "@/types/report.type";
 
+/**
+ * Helper function to parse date strings to Date objects in Report
+ */
+function parseReportDates<T extends Report | ReportDetail>(report: any): T {
+  return {
+    ...report,
+    submittedAt: new Date(report.submittedAt),
+  };
+}
+
 class ReportService {
   /**
    * Get all reports for a task
@@ -18,6 +28,9 @@ class ReportService {
     const response = await apiClient.get<ApiResponse<Report[]>>(
       `/api/v1/tasks/${taskId}/reports`
     );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = response.data.data.map(report => parseReportDates<Report>(report));
+    }
     return response.data;
   }
 
@@ -28,6 +41,9 @@ class ReportService {
     const response = await apiClient.get<ApiResponse<ReportDetail>>(
       `/api/v1/reports/${reportId}`
     );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseReportDates<ReportDetail>(response.data.data);
+    }
     return response.data;
   }
 
@@ -56,6 +72,9 @@ class ReportService {
         },
       }
     );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseReportDates<Report>(response.data.data);
+    }
     return response.data;
   }
 
@@ -94,6 +113,9 @@ class ReportService {
         },
       }
     );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseReportDates<Report>(response.data.data);
+    }
     return response.data;
   }
 
@@ -108,6 +130,9 @@ class ReportService {
       `/api/v1/reports/${reportId}/lock`,
       data
     );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseReportDates<Report>(response.data.data);
+    }
     return response.data;
   }
 }

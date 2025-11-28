@@ -7,6 +7,7 @@ interface Milestone {
   title: string;
   completionPercentage: number;
   tasksTotal: number;
+  tasksCompleted: number;
   color?: string;
 }
 
@@ -22,6 +23,13 @@ export const ProjectProgressBar = ({ milestones, projectTotalTasks, projectId, c
 
   // State to track which milestone segment is hovered
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // Replace milestone completionPercentage 
+  // TODO: Fix back to completionPercentage calculation when BE is fixed
+  milestones = milestones.map(milestone => ({
+    ...milestone,
+    completionPercentage: milestone.tasksTotal === 0 ? 0 : Math.round((milestone.tasksCompleted / milestone.tasksTotal) * 100)
+  }));
 
   return (
     <TooltipProvider>

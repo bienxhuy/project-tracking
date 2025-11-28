@@ -78,7 +78,7 @@ export const ProgressReportCard = ({
       setIsLoadingComments(true);
       try {
         const response = await reportService.getReportById(report.id);
-        if (response.status === 200 && response.data) {
+        if (response.status === "success" && response.data) {
           setComments(response.data.comments);
           setCommentsLoaded(true);
         } else {
@@ -159,7 +159,7 @@ export const ProgressReportCard = ({
         mentions: mentionedUsers,
       });
       
-      if (response.status === 201 && response.data) {
+      if (response.status === "success" && response.data) {
         setComments([...comments, response.data]);
         setCommentText("");
         setMentionedUsers([]);
@@ -177,7 +177,7 @@ export const ProgressReportCard = ({
     try {
       const response = await commentService.deleteComment(commentId);
       
-      if (response.status === 200) {
+      if (response.status === "success") {
         setComments(comments.filter(c => c.id !== commentId));
         toast.success("Xóa bình luận thành công");
       } else {
@@ -206,7 +206,7 @@ export const ProgressReportCard = ({
         isLocked: newLockStatus,
       });
       
-      if (response.status === 200 && response.data) {
+      if (response.status === "success" && response.data) {
         report.status = response.data.status;
         setIsLocked(report.status === "LOCKED" || isTaskLocked);
         onReportUpdated?.(report);

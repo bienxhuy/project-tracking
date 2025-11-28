@@ -46,7 +46,7 @@ export const ProjectDetailPage = () => {
         setIsLoading(true);
         const response = await projectService.getProjectById(Number(id));
         
-        if (response.status === 200 && response.data) {
+        if (response.status === "success" && response.data) {
           setProject(response.data);
         } else {
           toast.error(response.message || "Không thể tải thông tin dự án");
@@ -116,7 +116,7 @@ export const ProjectDetailPage = () => {
         content: editedContent,
       });
       
-      if (response.status === 200) {
+      if (response.status === "success") {
         setProject({ ...project, objectives: editedObjective, content: editedContent });
         setIsEditing(false);
         setEditedObjective("");
@@ -134,16 +134,16 @@ export const ProjectDetailPage = () => {
   const handleToggleLock = async () => {
     try {
       if (project.isObjDesLocked) {
-        const response = await projectService.unlockProject(Number(id));
-        if (response.status === 200) {
+        const response = await projectService.unlockProjectContent(Number(id));
+        if (response.status === "success") {
           setProject({ ...project, isObjDesLocked: false });
           toast.success("Đã mở khóa nội dung");
         } else {
           toast.error(response.message || "Không thể mở khóa nội dung");
         }
       } else {
-        const response = await projectService.lockProject(Number(id));
-        if (response.status === 200) {
+        const response = await projectService.lockProjectContent(Number(id));
+        if (response.status === "success") {
           setProject({ ...project, isObjDesLocked: true });
           toast.success("Đã khóa nội dung");
         } else {
@@ -335,7 +335,10 @@ export const ProjectDetailPage = () => {
                   description={milestone.description}
                   startDate={milestone.startDate}
                   endDate={milestone.endDate}
-                  completionPercentage={milestone.completionPercentage}
+                  // TODO: Fix completionPercentage calculation in BE
+                  completionPercentage={
+                    milestone.tasksTotal === 0 ? 
+                    0 : Math.round((milestone.tasksCompleted / milestone.tasksTotal) * 100)}
                   tasksTotal={milestone.tasksTotal}
                   tasksCompleted={milestone.tasksCompleted}
                   status={milestone.status}

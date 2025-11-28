@@ -91,3 +91,17 @@ export interface BaseUser {
   email: string;
   role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
 }
+
+// Interface for project member from API response
+export interface ProjectMemberResponse {
+  id: number;
+  role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
+  isActive: boolean;
+  joinedAt: string;
+  projectId: number;
+  projectTitle: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  userAvatar: string | null;
+}

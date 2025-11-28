@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { projectService } from "@/services/project.service"
 import { fetchAllYears } from "@/services/semester.service"
+import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,6 +27,8 @@ const dateSortOptions = {
 
 
 export const StudentDashboard = () => {
+  const { user } = useAuth();
+  
   // Current displayed projects
   const [projects, setProjects] = useState<Project[]>([]);
   // Available years for filtering
@@ -51,13 +54,21 @@ export const StudentDashboard = () => {
     setYears(availableYears);
   }, [])
 
-  const loadProjects = async (filters?: { year?: number; semester?: number; batch?: number }) => {
+  const loadProjects = async (filters?: { year?: number; semester?: number; batch?: string }) => {
+    if (!user?.id) {
+      const errorMessage = 'Không tìm thấy thông tin người dùng';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       setIsLoading(true);
       setError(null);
-      const response = await projectService.getStudentProjects(filters);
+      const response = await projectService.getStudentProjects(user.id, filters);
       
-      if (response.status !== 200) {
+      if (response.status !== "success") {
         throw new Error('Không thể tải danh sách dự án');
       }
       
@@ -90,11 +101,11 @@ export const StudentDashboard = () => {
 
   // Fetch projects based on filters
   const fetchProjectsBasedOnFilter = async () => {
-    const filters: { year?: number; semester?: number; batch?: number } = {};
+    const filters: { year?: number; semester?: number; batch?: string } = {};
     
     if (selectedYear) filters.year = parseInt(selectedYear);
     if (selectedSemester) filters.semester = parseInt(selectedSemester);
-    if (selectedBatch) filters.batch = parseInt(selectedBatch);
+    if (selectedBatch) filters.batch = selectedBatch;
     
     await loadProjects(filters);
   }

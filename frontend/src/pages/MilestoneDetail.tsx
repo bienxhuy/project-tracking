@@ -21,6 +21,7 @@ import { Task } from "@/types/task.type";
 import { BaseUser } from "@/types/user.type";
 import { milestoneService } from "@/services/milestone.service";
 import { taskService } from "@/services/task.service";
+import { projectService } from "@/services/project.service";
 import { milestoneSchema } from "@/zod_schema/milestone.schema";
 import { toast } from "sonner";
 
@@ -37,17 +38,10 @@ export const MilestoneDetailPage = () => {
   const userRole = user?.role === "INSTRUCTOR" ? "instructor" : "student";
   const [isMilestoneLocked, setIsMilestoneLocked] = useState<boolean>(false);
   const [milestone, setMilestone] = useState<MilestoneDetail | null>(null);
+  const [availableMembers, setAvailableMembers] = useState<BaseUser[]>([]);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [creatingTask, setCreatingTask] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // TODO: Replace with actual project members from API
-  const availableMembers: BaseUser[] = [
-    { id: 1, displayName: "Nguyễn Văn A", email: "nguyenvana@example.com", role: "STUDENT" },
-    { id: 2, displayName: "Trần Thị B", email: "tranthib@example.com", role: "STUDENT" },
-    { id: 3, displayName: "Lê Văn C", email: "levanc@example.com", role: "STUDENT" },
-    { id: 4, displayName: "Phạm Thị D", email: "phamthid@example.com", role: "STUDENT" },
-  ];
 
   // Initialize form with react-hook-form and zod
   const form = useForm<MilestoneFormValues>({
@@ -65,10 +59,10 @@ export const MilestoneDetailPage = () => {
     const fetchMilestoneDetail = async () => {
       try {
         setIsLoading(true);
-        const response = await milestoneService.getMilestoneById(mId);
+        const response = await milestoneService.getMilestoneById(mId, true);
         
-        if (response.status === 200 && response.data) {
-          setMilestone(response.data);
+        if (response.status === "success" && response.data) {
+          setMilestone(response.data as MilestoneDetail);
           setIsMilestoneLocked(response.data.isLocked);
 
           // Reset form with fetched data
@@ -90,6 +84,23 @@ export const MilestoneDetailPage = () => {
 
     fetchMilestoneDetail();
   }, [mId, form]);
+
+  // Fetch project members on mount
+  useEffect(() => {
+    const fetchProjectMembers = async () => {
+      if (!projectId) return;
+      
+      try {
+        const members = await projectService.getProjectMembers(Number(projectId));
+        setAvailableMembers(members);
+      } catch (error) {
+        console.error("Không thể tải danh sách thành viên:", error);
+        toast.error("Không thể tải danh sách thành viên dự án");
+      }
+    };
+
+    fetchProjectMembers();
+  }, [projectId]);
 
   // Handle case where milestone is not found or loading
   if (isLoading) {
@@ -128,7 +139,7 @@ export const MilestoneDetailPage = () => {
         endDate: data.endDate,
       });
 
-      if (response.status === 200 && response.data) {
+      if (response.status === "success" && response.data) {
         setMilestone({
           ...milestone,
           title: response.data.title,
@@ -166,13 +177,11 @@ export const MilestoneDetailPage = () => {
       if (!task) return;
       
       const newStatus: "COMPLETED" | "IN_PROGRESS" = task.status === "COMPLETED" ? "IN_PROGRESS" : "COMPLETED";
-      const response = await taskService.toggleTaskStatus(taskId, {
-        status: newStatus,
-      });
+      const response = await taskService.toggleTaskStatus(taskId, newStatus);
 
-      if (response.status === 200 && response.data) {
+      if (response.status === "success") {
         const updatedTasks = milestone.tasks.map(t => 
-          t.id === taskId ? { ...t, status: response.data.status } : t
+          t.id === taskId ? { ...t, status: newStatus } : t
         );
         setMilestone({ ...milestone, tasks: updatedTasks });
         toast.success(
@@ -218,7 +227,7 @@ export const MilestoneDetailPage = () => {
         isLocked: !isMilestoneLocked,
       });
 
-      if (response.status === 200 && response.data) {
+      if (response.status === "success" && response.data) {
         setIsMilestoneLocked(response.data.isLocked);
         toast.success(
           response.data.isLocked

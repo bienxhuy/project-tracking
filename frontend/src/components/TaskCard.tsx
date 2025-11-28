@@ -128,7 +128,7 @@ export const TaskCard = ({
     try {
       const response = await taskService.deleteTask(id);
       
-      if (response.status === 200) {
+      if (response.status === "success") {
         onDeleted?.(id);
         toast.success("Xóa nhiệm vụ thành công");
       } else {
@@ -155,7 +155,9 @@ export const TaskCard = ({
     try {
       if (isNew) {
         // Create new task via API
-        const response = await taskService.createTask(milestoneId, {
+        const response = await taskService.createTask({
+          milestoneId: milestoneId,
+          projectId: projectId,
           title: data.title,
           description: data.description || "",
           startDate: data.startDate,
@@ -163,7 +165,7 @@ export const TaskCard = ({
           assigneeIds: selectedAssignees,
         });
 
-        if (response.status === 201 && response.data) {
+        if (response.status === "success" && response.data) {
           onCreated?.(response.data);
           toast.success("Tạo nhiệm vụ thành công");
         } else {
@@ -179,7 +181,7 @@ export const TaskCard = ({
           assigneeIds: selectedAssignees,
         });
 
-        if (response.status === 200 && response.data) {
+        if (response.status === "success" && response.data) {
           onUpdated?.(response.data);
           toast.success("Cập nhật nhiệm vụ thành công");
           setIsEditing(false);
