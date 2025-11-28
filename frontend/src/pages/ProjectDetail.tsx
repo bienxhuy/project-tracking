@@ -97,7 +97,7 @@ export const ProjectDetailPage = () => {
 
   // Event handlers for content editing
   const handleStartEditing = () => {
-    setEditedObjective(project.objective);
+    setEditedObjective(project.objectives);
     setEditedContent(project.content);
     setIsEditing(true);
   };
@@ -112,12 +112,12 @@ export const ProjectDetailPage = () => {
   const handleSaveContent = async () => {
     try {
       const response = await projectService.updateProjectContent(Number(id), {
-        objective: editedObjective,
+        objectives: editedObjective,
         content: editedContent,
       });
       
       if (response.status === 200) {
-        setProject({ ...project, objective: editedObjective, content: editedContent });
+        setProject({ ...project, objectives: editedObjective, content: editedContent });
         setIsEditing(false);
         setEditedObjective("");
         setEditedContent("");
@@ -215,7 +215,7 @@ export const ProjectDetailPage = () => {
                   className="min-h-[80px]"
                 />
               ) : (
-                <p className="text-foreground">{project.objective}</p>
+                <p className="text-foreground">{project.objectives}</p>
               )}
             </div>
             <Separator />

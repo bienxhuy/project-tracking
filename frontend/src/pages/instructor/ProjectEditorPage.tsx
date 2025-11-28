@@ -53,7 +53,7 @@ export const ProjectEditorPage = () => {
     resolver: zodResolver(projectSchema),
     defaultValues: {
       title: "",
-      objective: "",
+      objectives: "",
       content: "",
       year: 0,
       semester: 0,
@@ -97,7 +97,7 @@ export const ProjectEditorPage = () => {
 
         // Set form values individually to ensure proper type handling
         form.setValue('title', projectDetail.title)
-        form.setValue('objective', projectDetail.objective)
+        form.setValue('objectives', projectDetail.objectives)
         form.setValue('content', projectDetail.content)
         form.setValue('year', projectDetail.year)
         form.setValue('semester', projectDetail.semester)
@@ -133,7 +133,7 @@ export const ProjectEditorPage = () => {
       if (isEditMode) {
         const updateData: UpdateProjectRequest = {
           title: data.title,
-          objective: data.objective,
+          objectives: data.objectives,
           content: data.content,
           year: data.year,
           semester: data.semester,
@@ -148,7 +148,7 @@ export const ProjectEditorPage = () => {
       } else {
         const createData: CreateProjectRequest = {
           title: data.title,
-          objective: data.objective,
+          objectives: data.objectives,
           content: data.content,
           year: data.year,
           semester: data.semester,
@@ -227,7 +227,7 @@ export const ProjectEditorPage = () => {
                 {/* Objectives */}
                 <FormField
                   control={form.control}
-                  name="objective"
+                  name="objectives"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>

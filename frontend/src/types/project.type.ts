@@ -6,7 +6,7 @@ import { BaseUser } from "./user.type";
 export interface Project {
   id: number;
   title: string;
-  objective: string;
+  objectives: string;
   content: string;
   year: number;
   semester: number;
@@ -34,7 +34,7 @@ export const statusConfig = {
 
 export interface CreateProjectRequest {
   title: string;
-  objective: string;
+  objectives: string;
   content: string;
   year: number;
   semester: number;
@@ -47,7 +47,7 @@ export interface CreateProjectRequest {
 
 export interface UpdateProjectRequest {
   title: string;
-  objective: string;
+  objectives: string;
   content: string;
   year: number;
   semester: number;
@@ -80,6 +80,6 @@ export interface PagedProjects {
 }
 
 export interface UpdateProjectContentRequest {
-  objective: string;
+  objectives: string;
   content: string;
 }
