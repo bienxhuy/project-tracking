@@ -30,6 +30,8 @@ import POSE_Project_Tracking.Blog.repository.MilestoneRepository;
 import POSE_Project_Tracking.Blog.repository.ProjectRepository;
 import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
+import POSE_Project_Tracking.Blog.service.IMilestoneService;
+import POSE_Project_Tracking.Blog.service.IProjectService;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,6 +54,12 @@ class TaskServiceImplTest {
 
     @Mock
     private SecurityUtil securityUtil;
+
+    @Mock
+    private IProjectService projectService;
+
+    @Mock
+    private IMilestoneService milestoneService;
 
     @InjectMocks
     private TaskServiceImpl service;
@@ -89,7 +97,7 @@ class TaskServiceImplTest {
 
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(userRepository.findAllById(List.of(1L))).thenReturn(List.of(user));
-        when(taskMapper.toEntity(any(), any(), any())).thenReturn(task);
+        when(taskMapper.toEntity(req, project, List.of(user))).thenReturn(task);
         when(securityUtil.getCurrentUser()).thenReturn(currentUser);
         when(taskRepository.save(any(Task.class))).thenReturn(task);
         when(taskMapper.toResponse(task)).thenReturn(new TaskRes());
@@ -166,6 +174,7 @@ class TaskServiceImplTest {
 
         service.assignTask(1L, 1L);
 
+        // Verify that user is added to assignedUsers list
         assertTrue(task.getAssignedUsers().contains(user));
         verify(taskRepository).save(task);
     }
