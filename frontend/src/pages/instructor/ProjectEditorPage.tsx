@@ -31,7 +31,7 @@ import { StudentSelector } from "@/components/StudentSelector"
 import { BaseUser } from "@/types/user.type"
 import { CreateProjectRequest, UpdateProjectRequest } from "@/types/project.type"
 import { projectService } from "@/services/project.service"
-import { fetchAllYears } from "@/services/semester.service"
+import { fetchAllYears, fetchAllFaculties } from "@/services/semester.service"
 import { projectSchema } from "@/zod_schema/project.schema"
 
 type ProjectFormValues = z.infer<typeof projectSchema>
@@ -71,12 +71,7 @@ export const ProjectEditorPage = () => {
       const years = fetchAllYears()
       setAvailableYears(years)
 
-      // TODO: Replace with API call when faculty endpoint is available
-      const faculties = [
-        "Công nghệ Thông tin",
-        "Đào tạo quốc tế",
-        "Cơ khí Chế tạo máy",
-      ]
+      const faculties = fetchAllFaculties()
       setAvailableFaculties(faculties)
 
       // Load project data if in edit mode
