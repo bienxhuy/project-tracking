@@ -54,12 +54,17 @@ public interface ProjectMapper {
     @Mapping(target = "members", ignore = true)
     void updateEntityFromRequest(ProjectReq projectReq, @MappingTarget Project project);
 
+    @Mapping(target = "isLocked", source = "locked")
     @Mapping(target = "instructorId", source = "instructor.id")
     @Mapping(target = "instructorName", source = "instructor.displayName")
+    @Mapping(target = "lockedById", source = "lockedBy.id")
+    @Mapping(target = "lockedByName", source = "lockedBy.displayName")
+    @Mapping(target = "createdById", source = "createdBy.id")
+    @Mapping(target = "createdByName", source = "createdBy.displayName")
     @Mapping(target = "totalMilestones", expression = "java(project.getMilestones() != null ? project.getMilestones().size() : 0)")
     @Mapping(target = "totalTasks", expression = "java(project.getTasks() != null ? project.getTasks().size() : 0)")
     @Mapping(target = "totalMembers", expression = "java(project.getMembers() != null ? project.getMembers().size() : 0)")
-    @Mapping(target = "milestones", source = "milestones")
+    @Mapping(target = "milestones", source = "milestones", qualifiedByName = "toResponse")
     @Mapping(target = "students", source = "members")
     ProjectRes toResponse(Project project);
 }

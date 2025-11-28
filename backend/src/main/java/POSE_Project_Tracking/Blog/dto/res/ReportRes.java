@@ -20,6 +20,12 @@ public class ReportRes {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
+    // Lock information
+    private Boolean isLocked;
+    private Long lockedById;
+    private String lockedByName;
+    private LocalDateTime lockedAt;
+    
     // Project info
     private Long projectId;
     private String projectTitle;

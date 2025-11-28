@@ -153,29 +153,34 @@ class MilestoneServiceImplTest {
     }
 
     @Test
-    void lockMilestone_validRequest_locksMilestone() {
+    void toggleMilestoneLock_lockMilestone_locksMilestone() {
         when(milestoneRepository.findById(1L)).thenReturn(Optional.of(milestone));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(securityUtil.getCurrentUser()).thenReturn(currentUser);
         when(milestoneRepository.save(any(Milestone.class))).thenReturn(milestone);
+        when(milestoneMapper.toResponse(milestone)).thenReturn(new MilestoneRes());
 
-        service.lockMilestone(1L, 1L);
+        MilestoneRes result = service.toggleMilestoneLock(1L, true);
 
+        assertNotNull(result);
         assertTrue(milestone.getLocked());
-        assertEquals(user, milestone.getLockedBy());
+        assertEquals(currentUser, milestone.getLockedBy());
         assertNotNull(milestone.getLockedAt());
         verify(milestoneRepository).save(milestone);
     }
 
     @Test
-    void unlockMilestone_lockedMilestone_unlocksMilestone() {
+    void toggleMilestoneLock_unlockMilestone_unlocksMilestone() {
         milestone.setLocked(true);
         milestone.setLockedBy(user);
 
         when(milestoneRepository.findById(1L)).thenReturn(Optional.of(milestone));
+        when(securityUtil.getCurrentUser()).thenReturn(currentUser);
         when(milestoneRepository.save(any(Milestone.class))).thenReturn(milestone);
+        when(milestoneMapper.toResponse(milestone)).thenReturn(new MilestoneRes());
 
-        service.unlockMilestone(1L);
+        MilestoneRes result = service.toggleMilestoneLock(1L, false);
 
+        assertNotNull(result);
         assertEquals(false, milestone.getLocked());
         assertEquals(null, milestone.getLockedBy());
         assertEquals(null, milestone.getLockedAt());
@@ -221,7 +226,7 @@ class MilestoneServiceImplTest {
         when(milestoneRepository.findById(1L)).thenReturn(Optional.of(milestone));
         when(milestoneMapper.toResponse(milestone)).thenReturn(new MilestoneRes());
 
-        MilestoneRes result = service.getMilestoneById(1L);
+        MilestoneRes result = service.getMilestoneById(1L, null);
 
         assertNotNull(result);
         verify(milestoneRepository).findById(1L);
@@ -231,7 +236,19 @@ class MilestoneServiceImplTest {
     void getMilestoneById_nonExistingMilestone_throwsException() {
         when(milestoneRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(CustomException.class, () -> service.getMilestoneById(999L));
+        assertThrows(CustomException.class, () -> service.getMilestoneById(999L, null));
+    }
+
+    @Test
+    void getMilestoneById_withIncludeTasks_returnsMilestoneWithTasks() {
+        when(milestoneRepository.findByIdWithTasks(1L)).thenReturn(Optional.of(milestone));
+        when(milestoneMapper.toResponseWithTasks(milestone)).thenReturn(new MilestoneRes());
+
+        MilestoneRes result = service.getMilestoneById(1L, "tasks");
+
+        assertNotNull(result);
+        verify(milestoneRepository).findByIdWithTasks(1L);
+        verify(milestoneMapper).toResponseWithTasks(milestone);
     }
 }
 

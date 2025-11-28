@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 @SuperBuilder
 @Audited // Track report submissions and grade changes
-public class Report extends BaseEntity {
+public class Report extends ProgressEntity {
 
     @Column(name = "title", nullable = false)
     private String title;

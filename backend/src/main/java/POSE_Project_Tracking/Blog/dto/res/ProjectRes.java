@@ -31,6 +31,15 @@ public class ProjectRes {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
+    // Lock information
+    private Long lockedById;
+    private String lockedByName;
+    private LocalDateTime lockedAt;
+    
+    // Creator information
+    private Long createdById;
+    private String createdByName;
+    
     // Instructor info
     private Long instructorId;
     private String instructorName;

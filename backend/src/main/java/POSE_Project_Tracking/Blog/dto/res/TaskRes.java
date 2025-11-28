@@ -23,6 +23,15 @@ public class TaskRes {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
+    // Lock information
+    private Long lockedById;
+    private String lockedByName;
+    private LocalDateTime lockedAt;
+    
+    // Creator information
+    private Long createdById;
+    private String createdByName;
+    
     // Project info
     private Long projectId;
     private String projectTitle;

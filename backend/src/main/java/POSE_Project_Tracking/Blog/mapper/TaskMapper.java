@@ -45,10 +45,15 @@ public interface TaskMapper {
     @Mapping(target = "attachments", ignore = true)
     void updateEntityFromRequest(TaskReq taskReq, @MappingTarget Task task);
 
+    @Mapping(target = "isLocked", source = "locked")
     @Mapping(target = "projectId", source = "project.id")
     @Mapping(target = "projectTitle", source = "project.title")
     @Mapping(target = "assignedToId", source = "assignedTo.id")
     @Mapping(target = "assignedToName", source = "assignedTo.displayName")
+    @Mapping(target = "lockedById", source = "lockedBy.id")
+    @Mapping(target = "lockedByName", source = "lockedBy.displayName")
+    @Mapping(target = "createdById", source = "createdBy.id")
+    @Mapping(target = "createdByName", source = "createdBy.displayName")
     @Mapping(target = "totalReports", expression = "java(task.getReports() != null ? task.getReports().size() : 0)")
     @Mapping(target = "totalComments", expression = "java(task.getComments() != null ? task.getComments().size() : 0)")
     TaskRes toResponse(Task task);

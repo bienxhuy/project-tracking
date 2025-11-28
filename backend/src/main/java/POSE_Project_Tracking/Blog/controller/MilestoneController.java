@@ -28,15 +28,19 @@ public class MilestoneController {
 
     // Lấy milestone theo ID
     @GetMapping("/{id}")
-    public ApiResponse<MilestoneRes> getMilestoneById(@PathVariable Long id) {
-        MilestoneRes milestone = milestoneService.getMilestoneById(id);
+    public ApiResponse<MilestoneRes> getMilestoneById(
+            @PathVariable Long id,
+            @RequestParam(required = false) String include) {
+        MilestoneRes milestone = milestoneService.getMilestoneById(id, include);
         return new ApiResponse<>(HttpStatus.OK, "Lấy thông tin milestone thành công", milestone, null);
     }
 
     // Lấy milestones theo project
     @GetMapping("/project/{projectId}")
-    public ApiResponse<List<MilestoneRes>> getMilestonesByProject(@PathVariable Long projectId) {
-        List<MilestoneRes> milestones = milestoneService.getMilestonesByProject(projectId);
+    public ApiResponse<List<MilestoneRes>> getMilestonesByProject(
+            @PathVariable Long projectId,
+            @RequestParam(required = false) String include) {
+        List<MilestoneRes> milestones = milestoneService.getMilestonesByProject(projectId, include);
         return new ApiResponse<>(HttpStatus.OK, "Lấy danh sách milestone của dự án thành công", milestones, null);
     }
 
@@ -77,6 +81,18 @@ public class MilestoneController {
     public ApiResponse<Void> updateMilestoneCompletion(@PathVariable Long id) {
         milestoneService.updateMilestoneCompletion(id);
         return new ApiResponse<>(HttpStatus.OK, "Cập nhật tiến độ milestone thành công", null, null);
+    }
+
+    // Lock/Unlock milestone
+    @PatchMapping("/{id}/lock")
+    public ApiResponse<MilestoneRes> toggleMilestoneLock(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Boolean> request) {
+        Boolean isLocked = request.get("isLocked");
+        MilestoneRes milestone = milestoneService.toggleMilestoneLock(id, isLocked);
+        return new ApiResponse<>(HttpStatus.OK, 
+                isLocked ? "Khóa milestone thành công" : "Mở khóa milestone thành công", 
+                milestone, null);
     }
 
     // Xóa milestone
