@@ -231,3 +231,283 @@ INSERT INTO project_members (id, project_id, user_id, role, joined_at, is_active
     (4058, 1020, 6, 'INSTRUCTOR', '2024-11-17 09:00:00', TRUE, NOW(), NOW()),
     (4059, 1020, 49, 'STUDENT', '2024-11-24 10:00:00', TRUE, NOW(), NOW()),
     (4060, 1020, 50, 'STUDENT', '2024-11-26 11:00:00', TRUE, NOW(), NOW());
+
+-- Reports (60 entries)
+-- Reports can be linked to projects, milestones, or tasks
+-- Status: SUBMITTED or LOCKED
+INSERT INTO reports (id, title, content, status, submitted_at, submitted_by_id, project_id, milestone_id, task_id, author_id, report_date, start_date, end_date, is_locked, locked_by_id, locked_at, created_by_id, created_at, updated_at) VALUES
+    -- Reports for Project 1001 (PoseCare Telehealth Platform)
+    (5001, 'Weekly Progress Report - Week 1', 'Completed initial requirements gathering and stakeholder interviews. Identified key features for video consultations.', 'SUBMITTED', '2025-01-15 17:00:00', 11, 1001, 2001, 3001, 11, '2025-01-15', '2025-01-08', '2025-01-15', FALSE, NULL, NULL, 11, '2025-01-15 10:00:00', NOW()),
+    (5002, 'Weekly Progress Report - Week 2', 'Finished wireframe designs for dashboard. Started implementation of user authentication module.', 'SUBMITTED', '2025-01-22 17:00:00', 12, 1001, 2001, 3001, 12, '2025-01-22', '2025-01-15', '2025-01-22', FALSE, NULL, NULL, 12, '2025-01-22 10:00:00', NOW()),
+    (5003, 'Milestone Review Report', 'Completed Discovery & Planning phase. Ready to proceed with implementation.', 'SUBMITTED', '2025-02-20 16:00:00', 11, 1001, 2001, NULL, 11, '2025-02-20', '2025-02-15', '2025-02-22', FALSE, NULL, NULL, 11, '2025-02-20 10:00:00', NOW()),
+    (5004, 'Implementation Progress Report', 'Core video consultation feature is 70% complete. Integration with payment gateway pending.', 'SUBMITTED', '2025-03-10 17:00:00', 12, 1001, 2002, 3002, 12, '2025-03-10', '2025-03-01', '2025-03-15', FALSE, NULL, NULL, 12, '2025-03-10 10:00:00', NOW()),
+    
+    -- Reports for Project 1002 (Campus Navigator AR)
+    (5005, 'Initial Planning Report', 'Completed campus mapping and identified key navigation points. AR overlay designs approved.', 'SUBMITTED', '2025-01-22 17:00:00', 13, 1002, 2003, 3003, 13, '2025-01-22', '2025-01-15', '2025-01-22', FALSE, NULL, NULL, 13, '2025-01-22 10:00:00', NOW()),
+    (5006, 'AR Prototype Report', 'Successfully implemented basic AR navigation. Testing with focus groups scheduled for next week.', 'SUBMITTED', '2025-03-20 17:00:00', 14, 1002, 2004, 3004, 14, '2025-03-20', '2025-03-10', '2025-03-25', FALSE, NULL, NULL, 14, '2025-03-20 10:00:00', NOW()),
+    
+    -- Reports for Project 1003 (Smart Studio Scheduler)
+    (5007, 'Requirements Analysis Report', 'Gathered requirements from 15 studio users. Identified key scheduling conflicts.', 'SUBMITTED', '2025-01-27 17:00:00', 15, 1003, 2005, 3005, 15, '2025-01-27', '2025-01-20', '2025-01-27', FALSE, NULL, NULL, 15, '2025-01-27 10:00:00', NOW()),
+    (5008, 'Scheduler Algorithm Report', 'Developed optimization algorithm for room assignments. Reduces conflicts by 85%.', 'SUBMITTED', '2025-03-25 17:00:00', 16, 1003, 2006, 3006, 16, '2025-03-25', '2025-03-15', '2025-03-30', FALSE, NULL, NULL, 16, '2025-03-25 10:00:00', NOW()),
+    
+    -- Reports for Project 1004 (AI Posture Coach)
+    (5009, 'Research Phase Report', 'Completed literature review on computer vision for posture analysis. Selected pose estimation model.', 'SUBMITTED', '2025-02-01 17:00:00', 17, 1004, 2007, 3007, 17, '2025-02-01', '2025-01-25', '2025-02-01', FALSE, NULL, NULL, 17, '2025-02-01 10:00:00', NOW()),
+    (5010, 'MVP Development Report', 'Posture scoring model achieves 92% accuracy. Mobile app prototype ready for user testing.', 'SUBMITTED', '2025-03-28 17:00:00', 18, 1004, 2008, 3008, 18, '2025-03-28', '2025-03-20', '2025-04-01', FALSE, NULL, NULL, 18, '2025-03-28 10:00:00', NOW()),
+    
+    -- Reports for Project 1005 (Virtual Lab Companion)
+    (5011, 'Lab Protocols Documentation', 'Documented 25 standard lab procedures. Created digital protocol templates.', 'SUBMITTED', '2025-02-08 17:00:00', 19, 1005, 2009, 3009, 19, '2025-02-08', '2025-02-01', '2025-02-08', FALSE, NULL, NULL, 19, '2025-02-08 10:00:00', NOW()),
+    (5012, 'MR Interface Testing Report', 'Mixed reality interface tested with 10 students. Positive feedback received.', 'SUBMITTED', '2025-03-30 17:00:00', 20, 1005, 2010, 3010, 20, '2025-03-30', '2025-03-25', '2025-04-05', FALSE, NULL, NULL, 20, '2025-03-30 10:00:00', NOW()),
+    
+    -- Reports for Project 1006 (Sustainability Tracker) - COMPLETED
+    (5013, 'Final Project Report', 'Completed all planned features. App launched successfully with 500+ active users.', 'LOCKED', '2025-01-25 17:00:00', 21, 1006, 2012, 3012, 21, '2025-01-25', '2025-01-20', '2025-01-30', TRUE, 3, '2025-01-26 09:00:00', 21, '2025-01-25 10:00:00', NOW()),
+    (5014, 'Project Retrospective', 'Lessons learned and future improvements identified. Project met all success criteria.', 'LOCKED', '2025-01-28 17:00:00', 22, 1006, 2012, 3012, 22, '2025-01-28', '2025-01-25', '2025-01-30', TRUE, 8, '2025-01-29 09:00:00', 22, '2025-01-28 10:00:00', NOW()),
+    
+    -- Reports for Project 1007 (Motion Capture Analytics)
+    (5015, 'Data Collection Report', 'Collected 200+ motion capture samples. Data preprocessing pipeline established.', 'SUBMITTED', '2024-10-15 17:00:00', 23, 1007, 2013, 3013, 23, '2024-10-15', '2024-10-01', '2024-10-15', FALSE, NULL, NULL, 23, '2024-10-15 10:00:00', NOW()),
+    (5016, 'Analytics Dashboard Report', 'Dashboard prototype completed. Real-time visualization working correctly.', 'SUBMITTED', '2024-11-20 17:00:00', 24, 1007, 2014, 3014, 24, '2024-11-20', '2024-11-15', '2024-11-25', FALSE, NULL, NULL, 24, '2024-11-20 10:00:00', NOW()),
+    
+    -- Reports for Project 1008 (Learning Journey Hub)
+    (5017, 'Competency Mapping Report', 'Mapped 50+ competencies to learning outcomes. Rubric templates created.', 'SUBMITTED', '2024-10-20 17:00:00', 25, 1008, 2015, 3015, 25, '2024-10-20', '2024-10-15', '2024-10-20', FALSE, NULL, NULL, 25, '2024-10-20 10:00:00', NOW()),
+    (5018, 'Reflection Feature Report', 'Implemented reflection journal feature. AI summary generation integrated.', 'SUBMITTED', '2024-11-25 17:00:00', 26, 1008, 2016, 3016, 26, '2024-11-25', '2024-11-20', '2024-11-30', FALSE, NULL, NULL, 26, '2024-11-25 10:00:00', NOW()),
+    
+    -- Reports for Project 1009 (Pose Robotics Interface)
+    (5019, 'ROS Integration Report', 'Successfully integrated with ROS middleware. Low latency communication achieved.', 'SUBMITTED', '2024-10-25 17:00:00', 27, 1009, 2017, 3017, 27, '2024-10-25', '2024-10-20', '2024-10-25', FALSE, NULL, NULL, 27, '2024-10-25 10:00:00', NOW()),
+    (5020, 'Safety System Report', 'Implemented safety envelopes for robot control. All tests passed.', 'SUBMITTED', '2024-12-01 17:00:00', 28, 1009, 2018, 3018, 28, '2024-12-01', '2024-11-25', '2024-12-05', FALSE, NULL, NULL, 28, '2024-12-01 10:00:00', NOW()),
+    
+    -- Reports for Project 1010 (Research Paper CoPilot)
+    (5021, 'Citation Database Report', 'Integrated with 5 major citation databases. Citation parser working accurately.', 'SUBMITTED', '2024-10-28 17:00:00', 29, 1010, 2019, 3019, 29, '2024-10-28', '2024-10-22', '2024-10-28', FALSE, NULL, NULL, 29, '2024-10-28 10:00:00', NOW()),
+    (5022, 'AI Writing Assistant Report', 'LaTeX template generator completed. Grammar checking feature integrated.', 'SUBMITTED', '2024-12-10 17:00:00', 30, 1010, 2020, 3020, 30, '2024-12-10', '2024-12-05', '2024-12-16', FALSE, NULL, NULL, 30, '2024-12-10 10:00:00', NOW()),
+    
+    -- Reports for Project 1011 (Fitness Gamification Portal) - COMPLETED
+    (5023, 'Gamification System Report', 'Implemented badge system and leaderboards. User engagement increased by 40%.', 'LOCKED', '2024-12-15 17:00:00', 31, 1011, 2022, 3022, 31, '2024-12-15', '2024-12-10', '2024-12-20', TRUE, 5, '2024-12-16 09:00:00', 31, '2024-12-15 10:00:00', NOW()),
+    (5024, 'Final Evaluation Report', 'Project successfully completed. All objectives met. Ready for production.', 'LOCKED', '2024-12-18 17:00:00', 32, 1011, 2022, 3022, 32, '2024-12-18', '2024-12-15', '2024-12-20', TRUE, 5, '2024-12-19 09:00:00', 32, '2024-12-18 10:00:00', NOW()),
+    
+    -- Reports for Project 1012 (Accessibility Insight Dashboard)
+    (5025, 'Survey Integration Report', 'Connected 3 survey platforms. Data aggregation pipeline working.', 'SUBMITTED', '2024-11-05 17:00:00', 33, 1012, 2023, 3023, 33, '2024-11-05', '2024-11-01', '2024-11-05', FALSE, NULL, NULL, 33, '2024-11-05 10:00:00', NOW()),
+    (5026, 'Visualization Dashboard Report', 'Heatmaps and charts implemented. Real-time updates functioning correctly.', 'SUBMITTED', '2024-12-20 17:00:00', 34, 1012, 2024, 3024, 34, '2024-12-20', '2024-12-15', '2024-12-25', FALSE, NULL, NULL, 34, '2024-12-20 10:00:00', NOW()),
+    
+    -- Reports for Project 1013 (Smart Attendance Vision)
+    (5027, 'Computer Vision Model Report', 'Trained gait recognition model. Accuracy: 94% on test dataset.', 'SUBMITTED', '2024-11-10 17:00:00', 35, 1013, 2025, 3025, 35, '2024-11-10', '2024-11-05', '2024-11-10', FALSE, NULL, NULL, 35, '2024-11-10 10:00:00', NOW()),
+    (5028, 'Privacy Compliance Report', 'Implemented encryption for attendance logs. GDPR compliance verified.', 'SUBMITTED', '2024-12-25 17:00:00', 36, 1013, 2026, 3026, 36, '2024-12-25', '2024-12-20', '2024-12-30', FALSE, NULL, NULL, 36, '2024-12-25 10:00:00', NOW()),
+    
+    -- Reports for Project 1014 (Peer Mentorship Hub)
+    (5029, 'Matching Algorithm Report', 'Developed compatibility scoring algorithm. Tested with 100 student pairs.', 'SUBMITTED', '2024-11-15 17:00:00', 37, 1014, 2027, 3027, 37, '2024-11-15', '2024-11-10', '2024-11-15', FALSE, NULL, NULL, 37, '2024-11-15 10:00:00', NOW()),
+    (5030, 'Learning Playlist Report', 'Created 20 structured learning playlists. Integration with LMS completed.', 'SUBMITTED', '2025-01-02 17:00:00', 38, 1014, 2028, 3028, 38, '2025-01-02', '2024-12-28', '2025-01-04', FALSE, NULL, NULL, 38, '2025-01-02 10:00:00', NOW()),
+    
+    -- Reports for Project 1015 (Wellness Pulse Monitor)
+    (5031, 'Sensor Integration Report', 'Integrated with 3 wearable device APIs. Data sync working reliably.', 'SUBMITTED', '2024-11-18 17:00:00', 39, 1015, 2029, 3029, 39, '2024-11-18', '2024-11-15', '2024-11-18', FALSE, NULL, NULL, 39, '2024-11-18 10:00:00', NOW()),
+    (5032, 'Alert System Report', 'Implemented proactive health alerts. Counselor notification system active.', 'SUBMITTED', '2024-12-30 17:00:00', 40, 1015, 2030, 3030, 40, '2024-12-30', '2024-12-25', '2025-01-01', FALSE, NULL, NULL, 40, '2024-12-30 10:00:00', NOW()),
+    
+    -- Reports for Project 1016 (Collaborative Whiteboard AI)
+    (5033, 'Real-time Collaboration Report', 'WebSocket implementation complete. Multi-user editing working smoothly.', 'SUBMITTED', '2024-11-20 17:00:00', 41, 1016, 2031, 3031, 41, '2024-11-20', '2024-11-18', '2024-11-20', FALSE, NULL, NULL, 41, '2024-11-20 10:00:00', NOW()),
+    (5034, 'AI Transcription Report', 'Sketch-to-text conversion working. Action item detection accuracy: 87%.', 'LOCKED', '2024-12-20 17:00:00', 42, 1016, 2032, 3032, 42, '2024-12-20', '2024-12-15', '2024-12-25', TRUE, 2, '2024-12-21 09:00:00', 42, '2024-12-20 10:00:00', NOW()),
+    
+    -- Reports for Project 1017 (Capstone Portfolio Vault)
+    (5035, 'Portfolio Template Report', 'Created 10 portfolio templates. Drag-and-drop interface implemented.', 'SUBMITTED', '2024-11-25 17:00:00', 43, 1017, 2033, 3033, 43, '2024-11-25', '2024-11-20', '2024-11-25', FALSE, NULL, NULL, 43, '2024-11-25 10:00:00', NOW()),
+    (5036, 'Approval Workflow Report', 'Multi-level approval system working. Reviewer assignment automated.', 'SUBMITTED', '2025-01-10 17:00:00', 44, 1017, 2034, 3034, 44, '2025-01-10', '2025-01-05', '2025-01-15', FALSE, NULL, NULL, 44, '2025-01-10 10:00:00', NOW()),
+    
+    -- Reports for Project 1018 (Lab Inventory Assistant)
+    (5037, 'Barcode Scanner Report', 'Mobile barcode scanning working. Inventory updates in real-time.', 'SUBMITTED', '2024-11-28 17:00:00', 45, 1018, 2035, 3035, 45, '2024-11-28', '2024-11-25', '2024-11-28', FALSE, NULL, NULL, 45, '2024-11-28 10:00:00', NOW()),
+    (5038, 'Expiry Alert Report', 'Automated expiry alerts implemented. Purchase order integration pending.', 'SUBMITTED', '2025-01-15 17:00:00', 46, 1018, 2036, 3036, 46, '2025-01-15', '2025-01-10', '2025-01-20', FALSE, NULL, NULL, 46, '2025-01-15 10:00:00', NOW()),
+    
+    -- Reports for Project 1019 (AI Feedback Studio)
+    (5039, 'Audio Analysis Report', 'Implemented pitch and timing analysis. Feedback generation in progress.', 'SUBMITTED', '2024-12-05 17:00:00', 47, 1019, 2037, 3037, 47, '2024-12-05', '2024-12-01', '2024-12-05', FALSE, NULL, NULL, 47, '2024-12-05 10:00:00', NOW()),
+    (5040, 'Feedback UI Report', 'User-friendly feedback interface completed. Faculty review system integrated.', 'SUBMITTED', '2025-01-20 17:00:00', 48, 1019, 2038, 3038, 48, '2025-01-20', '2025-01-15', '2025-01-25', FALSE, NULL, NULL, 48, '2025-01-20 10:00:00', NOW()),
+    
+    -- Reports for Project 1020 (Internship Matching Engine)
+    (5041, 'Skill Assessment Report', 'Skill telemetry system implemented. Employer profile matching working.', 'SUBMITTED', '2024-12-10 17:00:00', 49, 1020, 2039, 3039, 49, '2024-12-10', '2024-12-05', '2024-12-10', FALSE, NULL, NULL, 49, '2024-12-10 10:00:00', NOW()),
+    (5042, 'Matching Algorithm Report', 'Compatibility scoring algorithm completed. Tested with 50 student-employer pairs.', 'SUBMITTED', '2025-01-25 17:00:00', 50, 1020, 2040, 3040, 50, '2025-01-25', '2025-01-20', '2025-01-30', FALSE, NULL, NULL, 50, '2025-01-25 10:00:00', NOW()),
+    
+    -- Additional milestone-level reports
+    (5043, 'Quarterly Progress Summary', 'Q1 progress summary for PoseCare Telehealth Platform. All milestones on track.', 'SUBMITTED', '2025-03-31 17:00:00', 11, 1001, 2002, NULL, 11, '2025-03-31', '2025-03-25', '2025-04-05', FALSE, NULL, NULL, 11, '2025-03-31 10:00:00', NOW()),
+    (5044, 'Technical Architecture Review', 'Architecture review completed. Scalability improvements identified.', 'SUBMITTED', '2025-02-28 17:00:00', 13, 1002, 2003, NULL, 13, '2025-02-28', '2025-02-20', '2025-03-01', FALSE, NULL, NULL, 13, '2025-02-28 10:00:00', NOW()),
+    (5045, 'User Testing Results', 'User testing completed with 30 participants. Positive feedback received.', 'SUBMITTED', '2025-04-05 17:00:00', 15, 1003, 2006, NULL, 15, '2025-04-05', '2025-03-30', '2025-04-10', FALSE, NULL, NULL, 15, '2025-04-05 10:00:00', NOW()),
+    (5046, 'Security Audit Report', 'Security audit completed. All vulnerabilities patched.', 'SUBMITTED', '2025-03-15 17:00:00', 17, 1004, 2008, NULL, 17, '2025-03-15', '2025-03-10', '2025-03-20', FALSE, NULL, NULL, 17, '2025-03-15 10:00:00', NOW()),
+    (5047, 'Performance Optimization', 'Performance optimizations applied. Response time reduced by 60%.', 'SUBMITTED', '2024-11-30 17:00:00', 23, 1007, 2014, NULL, 23, '2024-11-30', '2024-11-25', '2024-12-05', FALSE, NULL, NULL, 23, '2024-11-30 10:00:00', NOW()),
+    (5048, 'Integration Testing Report', 'All integration tests passed. System ready for staging deployment.', 'SUBMITTED', '2024-12-15 17:00:00', 27, 1009, 2018, NULL, 27, '2024-12-15', '2024-12-10', '2024-12-20', FALSE, NULL, NULL, 27, '2024-12-15 10:00:00', NOW()),
+    (5049, 'Documentation Update', 'Updated API documentation. Developer guides published.', 'SUBMITTED', '2024-12-22 17:00:00', 29, 1010, 2020, NULL, 29, '2024-12-22', '2024-12-18', '2024-12-25', FALSE, NULL, NULL, 29, '2024-12-22 10:00:00', NOW()),
+    (5050, 'Production Deployment Report', 'System deployed to production successfully. Monitoring in place.', 'LOCKED', '2024-12-20 17:00:00', 31, 1011, 2022, NULL, 31, '2024-12-20', '2024-12-18', '2024-12-22', TRUE, 5, '2024-12-21 09:00:00', 31, '2024-12-20 10:00:00', NOW()),
+    
+    -- Project-level reports (no milestone or task)
+    (5051, 'Project Kickoff Summary', 'Kickoff meeting summary for PoseCare Telehealth Platform project.', 'SUBMITTED', '2025-01-10 17:00:00', 11, 1001, NULL, NULL, 11, '2025-01-10', '2025-01-08', '2025-01-15', FALSE, NULL, NULL, 11, '2025-01-10 10:00:00', NOW()),
+    (5052, 'Stakeholder Feedback Summary', 'Compiled feedback from 10 stakeholders. Priorities adjusted accordingly.', 'SUBMITTED', '2025-02-15 17:00:00', 13, 1002, NULL, NULL, 13, '2025-02-15', '2025-02-10', '2025-02-20', FALSE, NULL, NULL, 13, '2025-02-15 10:00:00', NOW()),
+    (5053, 'Risk Assessment Report', 'Identified 5 potential risks. Mitigation strategies documented.', 'SUBMITTED', '2025-01-25 17:00:00', 15, 1003, NULL, NULL, 15, '2025-01-25', '2025-01-20', '2025-01-30', FALSE, NULL, NULL, 15, '2025-01-25 10:00:00', NOW()),
+    (5054, 'Budget Review Report', 'Budget review completed. All expenses within allocated limits.', 'SUBMITTED', '2025-03-01 17:00:00', 17, 1004, NULL, NULL, 17, '2025-03-01', '2025-02-25', '2025-03-05', FALSE, NULL, NULL, 17, '2025-03-01 10:00:00', NOW()),
+    (5055, 'Team Performance Review', 'Team performance review for Virtual Lab Companion project.', 'SUBMITTED', '2025-04-01 17:00:00', 19, 1005, NULL, NULL, 19, '2025-04-01', '2025-03-28', '2025-04-05', FALSE, NULL, NULL, 19, '2025-04-01 10:00:00', NOW()),
+    (5056, 'Final Project Presentation', 'Prepared final presentation for Sustainability Tracker project showcase.', 'LOCKED', '2025-01-28 17:00:00', 21, 1006, NULL, NULL, 21, '2025-01-28', '2025-01-25', '2025-01-30', TRUE, 8, '2025-01-29 09:00:00', 21, '2025-01-28 10:00:00', NOW()),
+    (5057, 'Lessons Learned Document', 'Documented key lessons learned from Motion Capture Analytics project.', 'SUBMITTED', '2024-12-05 17:00:00', 23, 1007, NULL, NULL, 23, '2024-12-05', '2024-12-01', '2024-12-10', FALSE, NULL, NULL, 23, '2024-12-05 10:00:00', NOW()),
+    (5058, 'Future Roadmap', 'Outlined future enhancements for Learning Journey Hub.', 'SUBMITTED', '2024-12-20 17:00:00', 25, 1008, NULL, NULL, 25, '2024-12-20', '2024-12-15', '2024-12-25', FALSE, NULL, NULL, 25, '2024-12-20 10:00:00', NOW()),
+    (5059, 'Partnership Opportunities', 'Identified 3 potential industry partnerships for Pose Robotics Interface.', 'SUBMITTED', '2025-01-05 17:00:00', 27, 1009, NULL, NULL, 27, '2025-01-05', '2025-01-01', '2025-01-10', FALSE, NULL, NULL, 27, '2025-01-05 10:00:00', NOW()),
+    (5060, 'Publication Proposal', 'Prepared research paper proposal for Research Paper CoPilot findings.', 'SUBMITTED', '2025-01-08 17:00:00', 29, 1010, NULL, NULL, 29, '2025-01-08', '2025-01-05', '2025-01-12', FALSE, NULL, NULL, 29, '2025-01-08 10:00:00', NOW());
+
+-- Comments (120 entries)
+-- Comments can be linked to projects, milestones, tasks, or reports
+-- Some comments are replies (have parent_comment_id)
+INSERT INTO comments (id, content, project_id, milestone_id, task_id, report_id, author_id, parent_comment_id, created_at, updated_at) VALUES
+    -- Comments for Project 1001
+    (6001, 'Great progress on the requirements gathering! Looking forward to seeing the wireframes.', 1001, NULL, NULL, NULL, 3, NULL, '2025-01-15 18:00:00', NOW()),
+    (6002, 'Thanks! Wireframes will be ready by end of week.', 1001, NULL, NULL, NULL, 11, 6001, '2025-01-15 18:30:00', NOW()),
+    (6003, 'The authentication module looks solid. Consider adding OAuth support for future integration.', 1001, NULL, NULL, NULL, 3, NULL, '2025-01-22 18:00:00', NOW()),
+    (6004, 'Good suggestion! We''ll add it to the backlog.', 1001, NULL, NULL, NULL, 12, 6003, '2025-01-22 18:15:00', NOW()),
+    (6005, 'Excellent work on the milestone review. All deliverables met expectations.', 1001, 2001, NULL, NULL, 3, NULL, '2025-02-20 17:00:00', NOW()),
+    (6006, 'The video consultation feature is coming along nicely. Keep up the good work!', 1001, NULL, 3002, NULL, 3, NULL, '2025-03-10 18:00:00', NOW()),
+    
+    -- Comments for Project 1002
+    (6007, 'The AR navigation concept is innovative! How are you handling indoor positioning?', 1002, NULL, NULL, NULL, 4, NULL, '2025-01-22 18:00:00', NOW()),
+    (6008, 'We''re using a combination of beacons and Wi-Fi triangulation. I can share the details in the next report.', 1002, NULL, NULL, NULL, 13, 6007, '2025-01-22 18:30:00', NOW()),
+    (6009, 'The prototype looks impressive! Consider adding voice navigation for accessibility.', 1002, NULL, NULL, NULL, 4, NULL, '2025-03-20 18:00:00', NOW()),
+    (6010, 'Great idea! We''ll explore adding that feature.', 1002, NULL, NULL, NULL, 14, 6009, '2025-03-20 18:30:00', NOW()),
+    
+    -- Comments for Project 1003
+    (6011, 'The scheduling algorithm is very efficient. Well done!', 1003, NULL, NULL, NULL, 5, NULL, '2025-01-27 18:00:00', NOW()),
+    (6012, 'Thank you! We spent significant time optimizing it.', 1003, NULL, NULL, NULL, 15, 6011, '2025-01-27 18:30:00', NOW()),
+    (6013, '85% conflict reduction is outstanding! Can you share the algorithm details?', 1003, NULL, NULL, NULL, 5, NULL, '2025-03-25 18:00:00', NOW()),
+    (6014, 'I''ll include it in the technical documentation.', 1003, NULL, NULL, NULL, 16, 6013, '2025-03-25 18:45:00', NOW()),
+    
+    -- Comments for Project 1004
+    (6015, 'The posture analysis model accuracy is excellent! What dataset did you use for training?', 1004, NULL, NULL, NULL, 6, NULL, '2025-02-01 18:00:00', NOW()),
+    (6016, 'We used a combination of public datasets and our own collected data. About 10,000 samples total.', 1004, NULL, NULL, NULL, 17, 6015, '2025-02-01 18:30:00', NOW()),
+    (6017, 'The mobile app prototype is user-friendly. Great UX design!', 1004, NULL, NULL, NULL, 6, NULL, '2025-03-28 18:00:00', NOW()),
+    
+    -- Comments for Project 1005
+    (6018, 'The digital protocol templates are very comprehensive. Good work!', 1005, NULL, NULL, NULL, 7, NULL, '2025-02-08 18:00:00', NOW()),
+    (6019, 'Thank you! We''ve covered 25 standard procedures so far.', 1005, NULL, NULL, NULL, 19, 6018, '2025-02-08 18:30:00', NOW()),
+    (6020, 'The MR interface testing results are promising. Excellent progress!', 1005, NULL, NULL, NULL, 7, NULL, '2025-03-30 18:00:00', NOW()),
+    
+    -- Comments for Project 1006 (COMPLETED)
+    (6021, 'Congratulations on completing the project! The app launch was very successful.', 1006, NULL, NULL, NULL, 8, NULL, '2025-01-25 18:00:00', NOW()),
+    (6022, 'Thank you! It was a great learning experience.', 1006, NULL, NULL, NULL, 21, 6021, '2025-01-25 18:30:00', NOW()),
+    (6023, 'The retrospective is insightful. Well documented lessons learned.', 1006, NULL, NULL, NULL, 8, NULL, '2025-01-28 18:00:00', NOW()),
+    
+    -- Comments on Reports
+    (6024, 'This report is well-structured. Good job!', NULL, NULL, NULL, 5001, 3, NULL, '2025-01-15 19:00:00', NOW()),
+    (6025, 'Thanks for the feedback!', NULL, NULL, NULL, 5001, 11, 6024, '2025-01-15 19:15:00', NOW()),
+    (6026, 'The progress is impressive. Keep it up!', NULL, NULL, NULL, 5002, 3, NULL, '2025-01-22 19:00:00', NOW()),
+    (6027, 'Excellent milestone review. All requirements met.', NULL, NULL, NULL, 5003, 3, NULL, '2025-02-20 18:00:00', NOW()),
+    (6028, 'The implementation details are clear. Well documented.', NULL, NULL, NULL, 5004, 3, NULL, '2025-03-10 19:00:00', NOW()),
+    (6029, 'Great work on the AR prototype!', NULL, NULL, NULL, 5006, 4, NULL, '2025-03-20 19:00:00', NOW()),
+    (6030, 'The algorithm explanation is thorough. Excellent technical writing.', NULL, NULL, NULL, 5008, 5, NULL, '2025-03-25 19:00:00', NOW()),
+    (6031, 'Congratulations on the project completion!', NULL, NULL, NULL, 5013, 8, NULL, '2025-01-25 19:00:00', NOW()),
+    (6032, 'The retrospective provides valuable insights.', NULL, NULL, NULL, 5014, 8, NULL, '2025-01-28 19:00:00', NOW()),
+    
+    -- Comments for Project 1007
+    (6033, 'The motion capture data collection is extensive. Good work!', 1007, NULL, NULL, NULL, 9, NULL, '2024-10-15 18:00:00', NOW()),
+    (6034, 'Thanks! We collected over 200 samples.', 1007, NULL, NULL, NULL, 23, 6033, '2024-10-15 18:30:00', NOW()),
+    (6035, 'The analytics dashboard looks professional. Great visualization!', 1007, NULL, NULL, NULL, 9, NULL, '2024-11-20 18:00:00', NOW()),
+    
+    -- Comments for Project 1008
+    (6036, 'The competency mapping is comprehensive. Well done!', 1008, NULL, NULL, NULL, 10, NULL, '2024-10-20 18:00:00', NOW()),
+    (6037, 'Thank you! We mapped 50+ competencies.', 1008, NULL, NULL, NULL, 25, 6036, '2024-10-20 18:30:00', NOW()),
+    (6038, 'The AI summary feature is impressive. How accurate is it?', 1008, NULL, NULL, NULL, 10, NULL, '2024-11-25 18:00:00', NOW()),
+    (6039, 'Initial testing shows about 85% accuracy. We''re working on improving it.', 1008, NULL, NULL, NULL, 26, 6038, '2024-11-25 18:45:00', NOW()),
+    
+    -- Comments for Project 1009
+    (6040, 'The ROS integration is technically sound. Excellent work!', 1009, NULL, NULL, NULL, 3, NULL, '2024-10-25 18:00:00', NOW()),
+    (6041, 'Thanks! The low latency was a key requirement.', 1009, NULL, NULL, NULL, 27, 6040, '2024-10-25 18:30:00', NOW()),
+    (6042, 'Safety is paramount. Good to see it prioritized.', 1009, NULL, NULL, NULL, 3, NULL, '2024-12-01 18:00:00', NOW()),
+    
+    -- Comments for Project 1010
+    (6043, 'The citation integration is seamless. Great work!', 1010, NULL, NULL, NULL, 4, NULL, '2024-10-28 18:00:00', NOW()),
+    (6044, 'Thank you! We integrated 5 major databases.', 1010, NULL, NULL, NULL, 29, 6043, '2024-10-28 18:30:00', NOW()),
+    (6045, 'The LaTeX generator will save a lot of time. Excellent feature!', 1010, NULL, NULL, NULL, 4, NULL, '2024-12-10 18:00:00', NOW()),
+    
+    -- Comments for Project 1011 (COMPLETED)
+    (6046, 'The gamification features are engaging. Great job!', 1011, NULL, NULL, NULL, 5, NULL, '2024-12-15 18:00:00', NOW()),
+    (6047, '40% engagement increase is fantastic!', 1011, NULL, NULL, NULL, 5, NULL, '2024-12-15 18:15:00', NOW()),
+    (6048, 'Congratulations on the successful completion!', 1011, NULL, NULL, NULL, 5, NULL, '2024-12-18 18:00:00', NOW()),
+    
+    -- Comments for Project 1012
+    (6049, 'The survey integration is working well. Good progress!', 1012, NULL, NULL, NULL, 6, NULL, '2024-11-05 18:00:00', NOW()),
+    (6050, 'Thanks! We connected 3 survey platforms.', 1012, NULL, NULL, NULL, 33, 6049, '2024-11-05 18:30:00', NOW()),
+    (6051, 'The heatmaps provide clear insights. Excellent visualization!', 1012, NULL, NULL, NULL, 6, NULL, '2024-12-20 18:00:00', NOW()),
+    
+    -- Comments for Project 1013
+    (6052, '94% accuracy is impressive for gait recognition!', 1013, NULL, NULL, NULL, 7, NULL, '2024-11-10 18:00:00', NOW()),
+    (6053, 'Thank you! We trained on a large dataset.', 1013, NULL, NULL, NULL, 35, 6052, '2024-11-10 18:30:00', NOW()),
+    (6054, 'Privacy compliance is crucial. Good to see it addressed.', 1013, NULL, NULL, NULL, 7, NULL, '2024-12-25 18:00:00', NOW()),
+    
+    -- Comments for Project 1014
+    (6055, 'The matching algorithm sounds promising. Well done!', 1014, NULL, NULL, NULL, 8, NULL, '2024-11-15 18:00:00', NOW()),
+    (6056, 'Thanks! We tested it with 100 pairs.', 1014, NULL, NULL, NULL, 37, 6055, '2024-11-15 18:30:00', NOW()),
+    (6057, 'The learning playlists are well-structured. Great resource!', 1014, NULL, NULL, NULL, 8, NULL, '2025-01-02 18:00:00', NOW()),
+    
+    -- Comments for Project 1015
+    (6058, 'The wearable integration is seamless. Good work!', 1015, NULL, NULL, NULL, 9, NULL, '2024-11-18 18:00:00', NOW()),
+    (6059, 'Thank you! We integrated with 3 device APIs.', 1015, NULL, NULL, NULL, 39, 6058, '2024-11-18 18:30:00', NOW()),
+    (6060, 'The alert system will be very helpful for student wellness.', 1015, NULL, NULL, NULL, 9, NULL, '2024-12-30 18:00:00', NOW()),
+    
+    -- Comments for Project 1016
+    (6061, 'The real-time collaboration is working smoothly. Excellent!', 1016, NULL, NULL, NULL, 10, NULL, '2024-11-20 18:00:00', NOW()),
+    (6062, 'Thanks! WebSocket implementation was challenging but worth it.', 1016, NULL, NULL, NULL, 41, 6061, '2024-11-20 18:30:00', NOW()),
+    (6063, '87% accuracy for action item detection is good. Can it be improved?', 1016, NULL, NULL, NULL, 10, NULL, '2024-12-20 18:00:00', NOW()),
+    (6064, 'Yes, we''re working on improving it with more training data.', 1016, NULL, NULL, NULL, 42, 6063, '2024-12-20 18:45:00', NOW()),
+    
+    -- Comments for Project 1017
+    (6065, 'The portfolio templates look professional. Great design!', 1017, NULL, NULL, NULL, 3, NULL, '2024-11-25 18:00:00', NOW()),
+    (6066, 'Thank you! We created 10 templates.', 1017, NULL, NULL, NULL, 43, 6065, '2024-11-25 18:30:00', NOW()),
+    (6067, 'The approval workflow is well-designed. Good progress!', 1017, NULL, NULL, NULL, 3, NULL, '2025-01-10 18:00:00', NOW()),
+    
+    -- Comments for Project 1018
+    (6068, 'The barcode scanning is working perfectly. Well done!', 1018, NULL, NULL, NULL, 4, NULL, '2024-11-28 18:00:00', NOW()),
+    (6069, 'Thanks! Real-time updates make inventory management much easier.', 1018, NULL, NULL, NULL, 45, 6068, '2024-11-28 18:30:00', NOW()),
+    (6070, 'The expiry alerts will prevent waste. Great feature!', 1018, NULL, NULL, NULL, 4, NULL, '2025-01-15 18:00:00', NOW()),
+    
+    -- Comments for Project 1019
+    (6071, 'The audio analysis is technically impressive. Good work!', 1019, NULL, NULL, NULL, 5, NULL, '2024-12-05 18:00:00', NOW()),
+    (6072, 'Thank you! Pitch and timing analysis were the key features.', 1019, NULL, NULL, NULL, 47, 6071, '2024-12-05 18:30:00', NOW()),
+    (6073, 'The feedback interface is user-friendly. Excellent UX!', 1019, NULL, NULL, NULL, 5, NULL, '2025-01-20 18:00:00', NOW()),
+    
+    -- Comments for Project 1020
+    (6074, 'The skill assessment system is comprehensive. Well done!', 1020, NULL, NULL, NULL, 6, NULL, '2024-12-10 18:00:00', NOW()),
+    (6075, 'Thanks! We wanted to make it thorough.', 1020, NULL, NULL, NULL, 49, 6074, '2024-12-10 18:30:00', NOW()),
+    (6076, 'The matching algorithm results are promising. Good progress!', 1020, NULL, NULL, NULL, 6, NULL, '2025-01-25 18:00:00', NOW()),
+    
+    -- Comments on Milestones
+    (6077, 'This milestone was completed ahead of schedule. Excellent work!', NULL, 2001, NULL, NULL, 3, NULL, '2025-02-20 17:30:00', NOW()),
+    (6078, 'Thank you! The team worked hard on it.', NULL, 2001, NULL, NULL, 11, 6077, '2025-02-20 18:00:00', NOW()),
+    (6079, 'The milestone deliverables are comprehensive. Well documented.', NULL, 2002, NULL, NULL, 3, NULL, '2025-03-25 18:00:00', NOW()),
+    (6080, 'Good progress on this milestone. Keep it up!', NULL, 2003, NULL, NULL, 4, NULL, '2025-02-28 18:00:00', NOW()),
+    (6081, 'All requirements met. Approved to proceed.', NULL, 2004, NULL, NULL, 4, NULL, '2025-03-20 18:00:00', NOW()),
+    (6082, 'Excellent milestone completion!', NULL, 2012, NULL, NULL, 8, NULL, '2025-01-25 18:00:00', NOW()),
+    
+    -- Comments on Tasks
+    (6083, 'This task is progressing well. Good job!', NULL, NULL, 3001, NULL, 3, NULL, '2025-01-20 18:00:00', NOW()),
+    (6084, 'Thanks for the feedback!', NULL, NULL, 3001, NULL, 11, 6083, '2025-01-20 18:30:00', NOW()),
+    (6085, 'The task is almost complete. Just need to finalize testing.', NULL, NULL, 3002, NULL, 12, NULL, '2025-03-20 18:00:00', NOW()),
+    (6086, 'Great to hear! Looking forward to the final results.', NULL, NULL, 3002, NULL, 3, 6085, '2025-03-20 18:30:00', NOW()),
+    (6087, 'Task completed successfully. Well done!', NULL, NULL, 3011, NULL, 8, NULL, '2024-09-26 18:00:00', NOW()),
+    (6088, 'Thank you! It was a challenging task.', NULL, NULL, 3011, NULL, 21, 6087, '2024-09-26 18:30:00', NOW()),
+    (6089, 'Good progress on this task. Keep going!', NULL, NULL, 3015, NULL, 10, NULL, '2024-10-05 18:00:00', NOW()),
+    (6090, 'Will do! Thanks for the encouragement.', NULL, NULL, 3015, NULL, 25, 6089, '2024-10-05 18:30:00', NOW()),
+    
+    -- Additional comments on reports
+    (6091, 'This report provides excellent insights. Well written!', NULL, NULL, NULL, 5015, 9, NULL, '2024-10-15 19:00:00', NOW()),
+    (6092, 'The data collection methodology is sound.', NULL, NULL, NULL, 5015, 9, NULL, '2024-10-15 19:15:00', NOW()),
+    (6093, 'Great progress report! Keep up the good work.', NULL, NULL, NULL, 5017, 10, NULL, '2024-10-20 19:00:00', NOW()),
+    (6094, 'The competency mapping is thorough. Excellent work!', NULL, NULL, NULL, 5017, 10, NULL, '2024-10-20 19:15:00', NOW()),
+    (6095, 'This report is very informative. Good documentation.', NULL, NULL, NULL, 5019, 3, NULL, '2024-10-25 19:00:00', NOW()),
+    (6096, 'The ROS integration details are clear. Well explained.', NULL, NULL, NULL, 5019, 3, NULL, '2024-10-25 19:15:00', NOW()),
+    (6097, 'Excellent report! The citation integration is impressive.', NULL, NULL, NULL, 5021, 4, NULL, '2024-10-28 19:00:00', NOW()),
+    (6098, 'Good work on the documentation. Very thorough.', NULL, NULL, NULL, 5022, 4, NULL, '2024-12-10 19:00:00', NOW()),
+    (6099, 'The gamification features are well-documented. Great job!', NULL, NULL, NULL, 5023, 5, NULL, '2024-12-15 19:00:00', NOW()),
+    (6100, 'Congratulations on the successful completion!', NULL, NULL, NULL, 5024, 5, NULL, '2024-12-18 19:00:00', NOW()),
+    (6101, 'The survey integration is working well. Good progress!', NULL, NULL, NULL, 5025, 6, NULL, '2024-11-05 19:00:00', NOW()),
+    (6102, 'The visualization dashboard looks professional. Excellent work!', NULL, NULL, NULL, 5026, 6, NULL, '2024-12-20 19:00:00', NOW()),
+    (6103, '94% accuracy is impressive! Great work on the model.', NULL, NULL, NULL, 5027, 7, NULL, '2024-11-10 19:00:00', NOW()),
+    (6104, 'Privacy compliance is crucial. Good to see it addressed properly.', NULL, NULL, NULL, 5028, 7, NULL, '2024-12-25 19:00:00', NOW()),
+    (6105, 'The matching algorithm is well-explained. Good technical writing.', NULL, NULL, NULL, 5029, 8, NULL, '2024-11-15 19:00:00', NOW()),
+    (6106, 'The learning playlists are comprehensive. Great resource!', NULL, NULL, NULL, 5030, 8, NULL, '2025-01-02 19:00:00', NOW()),
+    (6107, 'Excellent integration work! The wearable APIs are well-integrated.', NULL, NULL, NULL, 5031, 9, NULL, '2024-11-18 19:00:00', NOW()),
+    (6108, 'The alert system will be very helpful. Good feature!', NULL, NULL, NULL, 5032, 9, NULL, '2024-12-30 19:00:00', NOW()),
+    (6109, 'Real-time collaboration is working smoothly. Excellent implementation!', NULL, NULL, NULL, 5033, 10, NULL, '2024-11-20 19:00:00', NOW()),
+    (6110, 'The AI transcription is impressive. Good progress!', NULL, NULL, NULL, 5034, 10, NULL, '2024-12-20 19:00:00', NOW()),
+    (6111, 'The portfolio templates look professional. Great design work!', NULL, NULL, NULL, 5035, 3, NULL, '2024-11-25 19:00:00', NOW()),
+    (6112, 'The approval workflow is well-designed. Good progress!', NULL, NULL, NULL, 5036, 3, NULL, '2025-01-10 19:00:00', NOW()),
+    (6113, 'Barcode scanning is working perfectly. Well done!', NULL, NULL, NULL, 5037, 4, NULL, '2024-11-28 19:00:00', NOW()),
+    (6114, 'The expiry alerts are a great feature. Will prevent waste.', NULL, NULL, NULL, 5038, 4, NULL, '2025-01-15 19:00:00', NOW()),
+    (6115, 'The audio analysis is technically impressive. Good work!', NULL, NULL, NULL, 5039, 5, NULL, '2024-12-05 19:00:00', NOW()),
+    (6116, 'The feedback interface is user-friendly. Excellent UX design!', NULL, NULL, NULL, 5040, 5, NULL, '2025-01-20 19:00:00', NOW()),
+    (6117, 'The skill assessment system is comprehensive. Well done!', NULL, NULL, NULL, 5041, 6, NULL, '2024-12-10 19:00:00', NOW()),
+    (6118, 'The matching algorithm results are promising. Good progress!', NULL, NULL, NULL, 5042, 6, NULL, '2025-01-25 19:00:00', NOW()),
+    (6119, 'This quarterly summary is comprehensive. Well done!', NULL, NULL, NULL, 5043, 3, NULL, '2025-03-31 19:00:00', NOW()),
+    (6120, 'The technical architecture review is thorough. Excellent documentation!', NULL, NULL, NULL, 5044, 4, NULL, '2025-02-28 19:00:00', NOW());
