@@ -138,8 +138,8 @@ class ReportServiceImplTest {
     }
 
     @Test
-    void updateReport_approvedReport_throwsException() {
-        report.setStatus(EReportStatus.APPROVED);
+    void updateReport_lockedReport_throwsException() {
+        report.setStatus(EReportStatus.LOCKED);
         ReportReq req = new ReportReq();
 
         when(reportRepository.findById(1L)).thenReturn(Optional.of(report));
@@ -160,8 +160,8 @@ class ReportServiceImplTest {
     }
 
     @Test
-    void deleteReport_approvedReport_throwsException() {
-        report.setStatus(EReportStatus.APPROVED);
+    void deleteReport_lockedReport_throwsException() {
+        report.setStatus(EReportStatus.LOCKED);
 
         when(reportRepository.findById(1L)).thenReturn(Optional.of(report));
         when(securityUtil.getCurrentUser()).thenReturn(author);
@@ -171,24 +171,14 @@ class ReportServiceImplTest {
     }
 
     @Test
-    void approveReport_existingReport_approvesReport() {
+    void lockReport_existingReport_locksReport() {
         when(reportRepository.findById(1L)).thenReturn(Optional.of(report));
+        when(securityUtil.getCurrentUser()).thenReturn(author);
         when(reportRepository.save(any(Report.class))).thenReturn(report);
 
-        service.approveReport(1L);
+        service.lockReport(1L);
 
-        assertEquals(EReportStatus.APPROVED, report.getStatus());
-        verify(reportRepository).save(report);
-    }
-
-    @Test
-    void rejectReport_existingReport_rejectsReport() {
-        when(reportRepository.findById(1L)).thenReturn(Optional.of(report));
-        when(reportRepository.save(any(Report.class))).thenReturn(report);
-
-        service.rejectReport(1L);
-
-        assertEquals(EReportStatus.REJECTED, report.getStatus());
+        assertEquals(EReportStatus.LOCKED, report.getStatus());
         verify(reportRepository).save(report);
     }
 
