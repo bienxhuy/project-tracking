@@ -69,6 +69,40 @@ public class FileUtil {
         return uniqueFilename;
     }
 
+    /**
+     * Store attachment file (PDF, DOC, DOCX, ZIP, etc.)
+     * This method doesn't validate file type - validation should be done before calling
+     */
+    public static String storeAttachmentFile(MultipartFile file) throws IOException {
+        if (file.getOriginalFilename() == null || file.isEmpty()) {
+            throw new IOException("Invalid file");
+        }
+
+        String filename = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+
+        // Add UUID to ensure unique filename
+        String uniqueFilename = UUID.randomUUID() + "_" + filename;
+
+        // Use absolute path from configuration
+        Path uploadPath = Paths.get(UploadPathHolder.uploadDir)
+                               .toAbsolutePath()
+                               .normalize();
+
+        // Create directory if not exists
+        Files.createDirectories(uploadPath);
+
+        // Create target file
+        Path targetPath = uploadPath.resolve(uniqueFilename);
+        System.out.println(">>> Check attachment upload path: " + targetPath);
+        
+        // Save file to disk
+        try (InputStream inputStream = file.getInputStream()) {
+            Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        return uniqueFilename;
+    }
+
     public static String storePreviewFile(MultipartFile file) throws IOException {
         if (!isImageFile(file) || file.getOriginalFilename() == null) {
             throw new IOException("Invalid image format");

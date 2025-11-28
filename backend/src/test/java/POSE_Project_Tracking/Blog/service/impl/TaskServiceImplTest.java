@@ -86,6 +86,7 @@ class TaskServiceImplTest {
         task.setStatus(ETaskStatus.IN_PROGRESS);
         task.setLocked(false);
         task.setProject(project);
+        task.setAssignedUsers(new java.util.ArrayList<>());
     }
 
     @Test
@@ -165,6 +166,8 @@ class TaskServiceImplTest {
 
     @Test
     void assignTask_validRequest_assignsTask() {
+        task.setAssignedUsers(new java.util.ArrayList<>());
+        
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(taskRepository.save(any(Task.class))).thenReturn(task);

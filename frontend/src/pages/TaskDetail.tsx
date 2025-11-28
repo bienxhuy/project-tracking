@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { ArrowLeft, Calendar, Edit, Lock, Unlock, Trash, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,8 +18,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ProgressReportThread } from "@/components/ProgressReportThread";
 import { TaskDetail } from "@/types/task.type";
 import { Report } from "@/types/report.type";
-import { fetchTaskDetail } from "@/services/task.service";
+import { taskService } from "@/services/task.service";
 import { projectMembers } from "@/data/dummy/task-detail.dummy";
+import { getInitials } from "@/utils/user.utils";
+import { toast } from "sonner";
 
 import { taskSchema } from "@/zod_schema/task.schema";
 import { z } from "zod";
@@ -34,12 +37,13 @@ export const TaskDetailPage = () => {
     taskId: string;
   }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  // TODO: replace with actual auth
-  const [userRole] = useState<"student" | "instructor">("student");
+  const userRole = user?.role === "INSTRUCTOR" ? "instructor" : "student";
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Initialize form
   const form = useForm<TaskFormValues>({
@@ -55,19 +59,44 @@ export const TaskDetailPage = () => {
 
   // Fetch task detail on mount
   useEffect(() => {
-    // TODO: replace with actual API call
-    const data = fetchTaskDetail();
-    setTask(data);
-    setSelectedAssignees(data.assignees.map((a) => a.id));
+    const fetchTaskDetail = async () => {
+      try {
+        setIsLoading(true);
+        const response = await taskService.getTaskById(Number(taskId));
+        
+        if (response.status === 200 && response.data) {
+          setTask(response.data);
+          setSelectedAssignees(response.data.assignees.map((a) => a.id));
 
-    form.reset({
-      title: data.title,
-      description: data.description,
-      startDate: data.startDate.toISOString().split("T")[0],
-      endDate: data.endDate.toISOString().split("T")[0],
-      assigneeIds: data.assignees.map((a) => a.id),
-    });
+          form.reset({
+            title: response.data.title,
+            description: response.data.description,
+            startDate: new Date(response.data.startDate).toISOString().split("T")[0],
+            endDate: new Date(response.data.endDate).toISOString().split("T")[0],
+            assigneeIds: response.data.assignees.map((a) => a.id),
+          });
+        } else {
+          toast.error(response.message || "Không thể tải thông tin nhiệm vụ");
+        }
+      } catch (error) {
+        toast.error("Đã xảy ra lỗi khi tải thông tin nhiệm vụ");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTaskDetail();
   }, [taskId, form]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-extrabold text-foreground mb-4">Đang tải...</h1>
+        </div>
+      </div>
+    );
+  }
 
   if (!task) {
     return (
@@ -93,29 +122,41 @@ export const TaskDetailPage = () => {
   const canLock = userRole === "instructor";
 
   // Handle task update
-  const handleSaveEdit = (data: TaskFormValues) => {
-    const selectedMembers = projectMembers.filter((m) =>
-      selectedAssignees.includes(m.id)
-    );
+  const handleSaveEdit = async (data: TaskFormValues) => {
+    try {
+      const response = await taskService.updateTask(Number(taskId), {
+        title: data.title,
+        description: data.description,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        assigneeIds: selectedAssignees,
+      });
 
-    setTask({
-      ...task,
-      title: data.title,
-      description: data.description,
-      startDate: new Date(data.startDate),
-      endDate: new Date(data.endDate),
-      assignees: selectedMembers,
-    });
-    setIsEditing(false);
-    // TODO: call backend API to update task
+      if (response.status === 200 && response.data) {
+        setTask({
+          ...task,
+          title: response.data.title,
+          description: response.data.description,
+          startDate: new Date(response.data.startDate),
+          endDate: new Date(response.data.endDate),
+          assignees: response.data.assignees,
+        });
+        setIsEditing(false);
+        toast.success("Cập nhật nhiệm vụ thành công");
+      } else {
+        toast.error(response.message || "Không thể cập nhật nhiệm vụ");
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi cập nhật nhiệm vụ");
+    }
   };
 
   const handleCancelEdit = () => {
     form.reset({
       title: task.title,
       description: task.description,
-      startDate: task.startDate.toISOString().split("T")[0],
-      endDate: task.endDate.toISOString().split("T")[0],
+      startDate: new Date(task.startDate).toISOString().split("T")[0],
+      endDate: new Date(task.endDate).toISOString().split("T")[0],
       assigneeIds: task.assignees.map((a) => a.id),
     });
     setSelectedAssignees(task.assignees.map((a) => a.id));
@@ -123,22 +164,66 @@ export const TaskDetailPage = () => {
   };
 
   // Handle task completion toggle for students
-  const handleToggleComplete = () => {
-    const newStatus = isCompleted ? "IN_PROGRESS" : "COMPLETED";
-    setTask({ ...task, status: newStatus });
-    // TODO: call backend API to toggle status
+  const handleToggleComplete = async () => {
+    try {
+      const newStatus = isCompleted ? "IN_PROGRESS" : "COMPLETED";
+      const response = await taskService.toggleTaskStatus(Number(taskId), {
+        status: newStatus,
+      });
+
+      if (response.status === 200 && response.data) {
+        setTask({ ...task, status: response.data.status });
+        toast.success(
+          newStatus === "COMPLETED"
+            ? "Đã đánh dấu hoàn thành"
+            : "Đã đánh dấu đang tiến hành"
+        );
+      } else {
+        toast.error(response.message || "Không thể thay đổi trạng thái");
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi thay đổi trạng thái");
+    }
   };
 
   // Handle task lock toggle for instructor
-  const handleToggleLock = () => {
-    setTask({ ...task, isLocked: !task.isLocked });
-    // TODO: call backend API to toggle lock
+  const handleToggleLock = async () => {
+    try {
+      const response = await taskService.toggleTaskLock(Number(taskId), {
+        isLocked: !task.isLocked,
+      });
+
+      if (response.status === 200 && response.data) {
+        setTask({ ...task, isLocked: response.data.isLocked });
+        toast.success(
+          response.data.isLocked
+            ? "Đã khóa nhiệm vụ thành công"
+            : "Đã mở khóa nhiệm vụ thành công"
+        );
+      } else {
+        toast.error(response.message || "Không thể thay đổi trạng thái khóa");
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi thay đổi trạng thái khóa");
+    }
   };
 
   // Handle task delete
-  const handleDelete = () => {
-    // TODO: confirm and delete task via API
-    navigate(`/project/${projectId}/milestone/${milestoneId}`);
+  const handleDelete = async () => {
+    if (!confirm("Bạn có chắc chắn muốn xóa nhiệm vụ này?")) return;
+    
+    try {
+      const response = await taskService.deleteTask(Number(taskId));
+
+      if (response.status === 200) {
+        toast.success("Xóa nhiệm vụ thành công");
+        navigate(`/project/${projectId}/milestone/${milestoneId}`);
+      } else {
+        toast.error(response.message || "Không thể xóa nhiệm vụ");
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi xóa nhiệm vụ");
+    }
   };
 
   // Toggle assignee selection for update form
@@ -350,7 +435,7 @@ export const TaskDetailPage = () => {
                                   );
                                 }}
                               />
-                              <span className="text-sm text-foreground">{member.name}</span>
+                              <span className="text-sm text-foreground">{member.displayName}</span>
                             </div>
                           ))}
                         </div>
@@ -425,11 +510,11 @@ export const TaskDetailPage = () => {
                         <div key={assignee.id} className="flex items-center gap-3">
                           <Avatar className="w-8 h-8">
                             <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                              {assignee.initials}
+                              {getInitials(assignee.displayName)}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm font-medium text-foreground">
-                            {assignee.name}
+                            {assignee.displayName}
                           </span>
                         </div>
                       ))}

@@ -2,15 +2,35 @@
 
 import { Attachment } from "./attachment.type";
 import { Comment } from "./comment.type";
+import { BaseUser } from "./user.type";
 
 export interface Report {
   id: number;
   title: string;
   content: string;
+  reporter: BaseUser;
   attachments: Attachment[];
   status: "SUBMITTED" | "LOCKED";
 }
 
 export interface ReportDetail extends Report {
   comments: Comment[];
+}
+
+export interface CreateReportRequest {
+  title: string;
+  content: string;
+  files: File[];
+}
+
+export interface UpdateReportRequest {
+  title: string;
+  content: string;
+  files: File[];
+  existingAttachmentIds: number[];
+  removedAttachmentIds: number[];
+}
+
+export interface ToggleReportLockRequest {
+  isLocked: boolean;
 }

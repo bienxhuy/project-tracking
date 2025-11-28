@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { X, Search, UserPlus } from "lucide-react"
 import { BaseUser } from "@/types/user.type"
 import { searchStudents } from "@/services/user.service"
+import { getInitials } from "@/utils/user.utils"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -44,14 +45,6 @@ export const StudentSelector = ({ selectedStudents, onStudentsChange }: StudentS
     onStudentsChange(selectedStudents.filter((s) => s.id !== studentId))
   }
 
-  const getInitials = (name: string) => {
-    const parts = name.split(" ")
-    if (parts.length >= 2) {
-      return parts[0][0] + parts[parts.length - 1][0]
-    }
-    return name.substring(0, 2)
-  }
-
   return (
     <div className="space-y-4">
       {/* Search Input */}
@@ -77,14 +70,14 @@ export const StudentSelector = ({ selectedStudents, onStudentsChange }: StudentS
                   className="flex items-center justify-between p-3 hover:bg-gray-100 rounded-md cursor-pointer transition-colors"
                   onClick={() => addStudent(student)}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="text-xs">
-                        {getInitials(student.full_name)}
+                        {getInitials(student.displayName)}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-sm font-medium">{student.full_name}</p>
+                      <p className="text-sm font-medium">{student.displayName}</p>
                       <p className="text-xs text-muted-foreground">{student.email}</p>
                     </div>
                   </div>
@@ -115,11 +108,11 @@ export const StudentSelector = ({ selectedStudents, onStudentsChange }: StudentS
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="text-xs">
-                      {getInitials(student.full_name)}
+                      {getInitials(student.displayName)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium">{student.full_name}</p>
+                    <p className="text-sm font-medium">{student.displayName}</p>
                     <p className="text-xs text-muted-foreground">{student.email}</p>
                   </div>
                 </div>

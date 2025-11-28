@@ -73,7 +73,7 @@ public interface TaskMapper {
     @Mapping(target = "createdById", source = "createdBy.id")
     @Mapping(target = "createdByName", source = "createdBy.displayName")
     @Mapping(target = "assignedUsers", source = "assignedUsers")
-    @Mapping(target = "reports", source = "task.reports")
+    @Mapping(target = "reports", source = "task.reports", qualifiedByName = "toResponseSimple")
     @Mapping(target = "totalReports", expression = "java(task.getReports() != null ? task.getReports().size() : 0)")
     @Mapping(target = "totalComments", expression = "java(task.getComments() != null ? task.getComments().size() : 0)")
     TaskRes toResponseWithReports(Task task);

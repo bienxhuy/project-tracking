@@ -31,8 +31,6 @@ public interface IUserService {
 
     UserRes updateUserStatus(Long id, EUserStatus status);
 
-    UserRes updateUserAvatar(Long id, MultipartFile avatar) throws IOException;
-
     User findByUsernameOrEmail(String id);
 
     List<UserRes> findUsersByIds(List<Long> ids);

@@ -1,6 +1,5 @@
 package POSE_Project_Tracking.Blog.dto.req;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
@@ -24,8 +23,5 @@ public class UserReq {
 
     @NotBlank(message = "Tên hiển thị không được để trống")
     private String displayName;
-
-    @Nullable
-    private String avatar;
 
 }

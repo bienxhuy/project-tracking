@@ -37,6 +37,5 @@ public interface ProjectMemberMapper {
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "userName", source = "user.displayName")
     @Mapping(target = "userEmail", source = "user.email")
-    @Mapping(target = "userAvatar", source = "user.avatar")
     ProjectMemberRes toResponse(ProjectMember member);
 }

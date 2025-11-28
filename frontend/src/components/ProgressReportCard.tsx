@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,13 +19,17 @@ import {
 
 import { Report } from "@/types/report.type";
 import { Comment as CommentType } from "@/types/comment.type";
+import { BaseUser } from "@/types/user.type";
 import { ProgressReportEditor } from "@/components/ProgressReportEditor";
 import { FileCard } from "@/components/FileCard";
-import { fetchReportDetail, addCommentToReport, deleteCommentFromReport, toggleReportLock as toggleReportLockService } from "@/services/report.service";
+import { reportService } from "@/services/report.service";
+import { commentService } from "@/services/comment.service";
+import { getInitials } from "@/utils/user.utils";
+import { toast } from "sonner";
 
 interface ProgressReportCardProps {
   report: Report;
-  projectMembers: Array<{ id: number; name: string; initials: string }>;
+  projectMembers: BaseUser[];
   userRole: "student" | "instructor";
   isTaskLocked: boolean;
   onReportUpdated?: (updatedReport: Report) => void; // Pass updated report to parent
@@ -37,6 +42,8 @@ export const ProgressReportCard = ({
   isTaskLocked,
   onReportUpdated,
 }: ProgressReportCardProps) => {
+  const { user } = useAuth();
+  
   // General state of the card
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -59,7 +66,8 @@ export const ProgressReportCard = ({
 
   // State to determine permissions
   const [isLocked, setIsLocked] = useState<boolean>(report.status === "LOCKED" || isTaskLocked);
-  const canEdit = userRole === "student" && !isLocked;
+  const isReporter = user?.id === report.reporter.id;
+  const canEdit = isReporter && !isLocked;
   const canLock = userRole === "instructor";
 
   // Fetch report details (comments) when expanding for the first time
@@ -69,11 +77,15 @@ export const ProgressReportCard = ({
     if (!isExpanded && !commentsLoaded) {
       setIsLoadingComments(true);
       try {
-        const reportDetail = await fetchReportDetail(report.id);
-        setComments(reportDetail.comments);
-        setCommentsLoaded(true);
+        const response = await reportService.getReportById(report.id);
+        if (response.status === 200 && response.data) {
+          setComments(response.data.comments);
+          setCommentsLoaded(true);
+        } else {
+          toast.error(response.message || "Không thể tải bình luận");
+        }
       } catch (error) {
-        console.error("Failed to fetch report details:", error);
+        toast.error("Đã xảy ra lỗi khi tải bình luận");
       } finally {
         setIsLoadingComments(false);
       }
@@ -113,14 +125,14 @@ export const ProgressReportCard = ({
   };
 
   // Insert mention
-  const insertMention = (member: { id: number; name: string }) => {
+  const insertMention = (member: { id: number; displayName: string }) => {
     const textBeforeCursor = commentText.substring(0, cursorPosition);
     const textAfterCursor = commentText.substring(cursorPosition);
     const lastAtIndex = textBeforeCursor.lastIndexOf("@");
 
     const newText =
       textBeforeCursor.substring(0, lastAtIndex) +
-      `@${member.name} ` +
+      `@${member.displayName} ` +
       textAfterCursor;
 
     setCommentText(newText);
@@ -135,29 +147,44 @@ export const ProgressReportCard = ({
 
   // Filter members for mention dropdown
   const filteredMembers = projectMembers.filter(member =>
-    member.name.toLowerCase().includes(mentionSearch)
+    member.displayName.toLowerCase().includes(mentionSearch)
   );
 
   // Handle comment submit
   const handleSubmitComment = async () => {
     if (!commentText.trim()) return;
     try {
-      const newComment = await addCommentToReport(report.id, commentText, mentionedUsers);
-      setComments([...comments, newComment]);
-      setCommentText("");
-      setMentionedUsers([]);
+      const response = await commentService.addComment(report.id, {
+        content: commentText,
+        mentions: mentionedUsers,
+      });
+      
+      if (response.status === 201 && response.data) {
+        setComments([...comments, response.data]);
+        setCommentText("");
+        setMentionedUsers([]);
+        toast.success("Thêm bình luận thành công");
+      } else {
+        toast.error(response.message || "Không thể thêm bình luận");
+      }
     } catch (error) {
-      console.error("Failed to add comment:", error);
+      toast.error("Đã xảy ra lỗi khi thêm bình luận");
     }
   };
 
   // Handle comment delete
   const handleDeleteCommentLocal = async (commentId: number) => {
     try {
-      await deleteCommentFromReport(report.id, commentId);
-      setComments(comments.filter(c => c.id !== commentId));
+      const response = await commentService.deleteComment(commentId);
+      
+      if (response.status === 200) {
+        setComments(comments.filter(c => c.id !== commentId));
+        toast.success("Xóa bình luận thành công");
+      } else {
+        toast.error(response.message || "Không thể xóa bình luận");
+      }
     } catch (error) {
-      console.error("Failed to delete comment:", error);
+      toast.error("Đã xảy ra lỗi khi xóa bình luận");
     }
   };
 
@@ -174,12 +201,25 @@ export const ProgressReportCard = ({
   // Handle report lock toggle
   const handleToggleLock = async () => {
     try {
-      await toggleReportLockService(report.id);
-      report.status = report.status === "LOCKED" ? "SUBMITTED" : "LOCKED";
-      setIsLocked(report.status === "LOCKED" || isTaskLocked);
-      onReportUpdated?.(report);
+      const newLockStatus = report.status === "LOCKED" ? false : true;
+      const response = await reportService.toggleReportLock(report.id, {
+        isLocked: newLockStatus,
+      });
+      
+      if (response.status === 200 && response.data) {
+        report.status = response.data.status;
+        setIsLocked(report.status === "LOCKED" || isTaskLocked);
+        onReportUpdated?.(report);
+        toast.success(
+          newLockStatus
+            ? "Đã khóa báo cáo thành công"
+            : "Đã mở khóa báo cáo thành công"
+        );
+      } else {
+        toast.error(response.message || "Không thể thay đổi trạng thái khóa");
+      }
     } catch (error) {
-      console.error("Failed to toggle report lock:", error);
+      toast.error("Đã xảy ra lỗi khi thay đổi trạng thái khóa");
     }
   };
 
@@ -209,6 +249,15 @@ export const ProgressReportCard = ({
                       <Lock className="w-3 h-3" />
                     </Badge>
                   )}
+                </div>
+                {/* Reporter Information */}
+                <div className="flex items-center gap-2 mb-2">
+                  <Avatar className="w-6 h-6">
+                    <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                      {getInitials(report.reporter.displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-muted-foreground">{report.reporter.displayName}</span>
                 </div>
                 {/* Show content preview */}
                 {!isExpanded && (
@@ -309,13 +358,13 @@ export const ProgressReportCard = ({
                   <div key={comment.id} className="flex gap-2">
                     <Avatar className="w-7 h-7">
                       <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                        {comment.commenter.initials}
+                        {getInitials(comment.commenter.displayName)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground">
-                          {comment.commenter.name}
+                          {comment.commenter.displayName}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {comment.createdDate.toLocaleString("vi-VN")}
@@ -325,7 +374,7 @@ export const ProgressReportCard = ({
                         <p className="text-sm text-foreground whitespace-pre-wrap">
                           {comment.content}
                         </p>
-                        {!isLocked && (
+                        {!isLocked && user?.id === comment.commenter.id && (
                           <Button
                             size="icon"
                             variant="ghost"
@@ -364,12 +413,12 @@ export const ProgressReportCard = ({
                         className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary text-left"
                         onClick={() => insertMention(member)}
                       >
-                        <Avatar className="w-6 h-6">
-                          <AvatarFallback className="text-xs">
-                            {member.initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm text-foreground">{member.name}</span>
+                      <Avatar className="w-6 h-6">
+                        <AvatarFallback className="text-xs">
+                          {getInitials(member.displayName)}
+                        </AvatarFallback>
+                      </Avatar>
+                        <span className="text-sm text-foreground">{member.displayName}</span>
                       </button>
                     ))}
                   </div>

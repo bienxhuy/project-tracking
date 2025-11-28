@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { ArrowLeft, Calendar, CheckCircle2, Clock, Plus, Edit, Lock, Unlock, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,8 +18,11 @@ import { TaskCard } from "@/components/TaskCard";
 
 import { MilestoneDetail } from "@/types/milestone.type";
 import { Task } from "@/types/task.type";
-import { fetchTempMilestoneDetail } from "@/services/milestone.service";
+import { BaseUser } from "@/types/user.type";
+import { milestoneService } from "@/services/milestone.service";
+import { taskService } from "@/services/task.service";
 import { milestoneSchema } from "@/zod_schema/milestone.schema";
+import { toast } from "sonner";
 
 type MilestoneFormValues = z.infer<typeof milestoneSchema>;
 
@@ -28,20 +32,21 @@ export const MilestoneDetailPage = () => {
   const pId = Number(projectId);
   const mId = Number(milestoneId);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  // TODO: replace with actual auth
-  const [userRole] = useState<"student" | "instructor">("student");
+  const userRole = user?.role === "INSTRUCTOR" ? "instructor" : "student";
   const [isMilestoneLocked, setIsMilestoneLocked] = useState<boolean>(false);
   const [milestone, setMilestone] = useState<MilestoneDetail | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [creatingTask, setCreatingTask] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // TODO: Replace with actual project members from API
-  const availableMembers = [
-    { id: 1, name: "Nguyễn Văn A", initials: "NA" },
-    { id: 2, name: "Trần Thị B", initials: "TB" },
-    { id: 3, name: "Lê Văn C", initials: "LC" },
-    { id: 4, name: "Phạm Thị D", initials: "PD" },
+  const availableMembers: BaseUser[] = [
+    { id: 1, displayName: "Nguyễn Văn A", email: "nguyenvana@example.com", role: "STUDENT" },
+    { id: 2, displayName: "Trần Thị B", email: "tranthib@example.com", role: "STUDENT" },
+    { id: 3, displayName: "Lê Văn C", email: "levanc@example.com", role: "STUDENT" },
+    { id: 4, displayName: "Phạm Thị D", email: "phamthid@example.com", role: "STUDENT" },
   ];
 
   // Initialize form with react-hook-form and zod
@@ -57,27 +62,52 @@ export const MilestoneDetailPage = () => {
 
   // Fetch milestone detail on mount
   useEffect(() => {
-    // TODO: replace with actual API call
-    const data = fetchTempMilestoneDetail();
-    setMilestone(data);
-    setIsMilestoneLocked(data.isLocked);
+    const fetchMilestoneDetail = async () => {
+      try {
+        setIsLoading(true);
+        const response = await milestoneService.getMilestoneById(mId);
+        
+        if (response.status === 200 && response.data) {
+          setMilestone(response.data);
+          setIsMilestoneLocked(response.data.isLocked);
 
-    // Reset form with fetched data
-    form.reset({
-      title: data.title,
-      description: data.description,
-      startDate: data.startDate.toISOString().split("T")[0],
-      endDate: data.endDate.toISOString().split("T")[0],
-    });
+          // Reset form with fetched data
+          form.reset({
+            title: response.data.title,
+            description: response.data.description,
+            startDate: new Date(response.data.startDate).toISOString().split("T")[0],
+            endDate: new Date(response.data.endDate).toISOString().split("T")[0],
+          });
+        } else {
+          toast.error(response.message || "Không thể tải thông tin cột mốc");
+        }
+      } catch (error) {
+        toast.error("Đã xảy ra lỗi khi tải thông tin cột mốc");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMilestoneDetail();
   }, [mId, form]);
 
-  // Handle case where milestone is not found
+  // Handle case where milestone is not found or loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-extrabold text-foreground mb-4">Đang tải...</h1>
+        </div>
+      </div>
+    );
+  }
+
   if (!milestone) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-extrabold text-foreground mb-4">Không tìm thấy cột mốc</h1>
-          <Button onClick={() => navigate("/student/dashboard")}>Quay lại Dashboard</Button>
+          <Button onClick={() => navigate(`/project/${projectId}`)}>Quay lại Dự án</Button>
         </div>
       </div>
     );
@@ -88,18 +118,32 @@ export const MilestoneDetailPage = () => {
   const inProgressTasks = milestone.tasks.filter(t => t.status === "IN_PROGRESS").length;
   const milestoneProgress = milestone.tasks.length > 0 ? Math.round((completedTasks / milestone.tasks.length) * 100) : 0;
 
-  // TODO: Replace with logic
   // Event handler for save milestone edits
-  const handleSaveEdits = (data: MilestoneFormValues) => {
-    setMilestone({
-      ...milestone,
-      title: data.title,
-      description: data.description,
-      startDate: new Date(data.startDate),
-      endDate: new Date(data.endDate),
-    });
-    // TODO: call backend API to save changes
-    setIsEditing(false);
+  const handleSaveEdits = async (data: MilestoneFormValues) => {
+    try {
+      const response = await milestoneService.updateMilestone(mId, {
+        title: data.title,
+        description: data.description,
+        startDate: data.startDate,
+        endDate: data.endDate,
+      });
+
+      if (response.status === 200 && response.data) {
+        setMilestone({
+          ...milestone,
+          title: response.data.title,
+          description: response.data.description,
+          startDate: new Date(response.data.startDate),
+          endDate: new Date(response.data.endDate),
+        });
+        setIsEditing(false);
+        toast.success("Cập nhật cột mốc thành công");
+      } else {
+        toast.error(response.message || "Không thể cập nhật cột mốc");
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi cập nhật cột mốc");
+    }
   };
 
   // Event handler for cancel editing
@@ -107,25 +151,41 @@ export const MilestoneDetailPage = () => {
     form.reset({
       title: milestone.title,
       description: milestone.description,
-      startDate: milestone.startDate.toISOString().split("T")[0],
-      endDate: milestone.endDate.toISOString().split("T")[0],
+      startDate: new Date(milestone.startDate).toISOString().split("T")[0],
+      endDate: new Date(milestone.endDate).toISOString().split("T")[0],
     });
     setIsEditing(false);
   };
 
-  // TODO: Replace with logic
   // Event handler for toggling task completion
-  const handleTaskToggle = (taskId: number) => {
+  const handleTaskToggle = async (taskId: number) => {
     if (!milestone) return;
-    const updatedTasks = milestone.tasks.map(task => {
-      if (task.id === taskId) {
-        const newStatus: "COMPLETED" | "IN_PROGRESS" = task.status === "COMPLETED" ? "IN_PROGRESS" : "COMPLETED";
-        return { ...task, status: newStatus };
+    
+    try {
+      const task = milestone.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      
+      const newStatus: "COMPLETED" | "IN_PROGRESS" = task.status === "COMPLETED" ? "IN_PROGRESS" : "COMPLETED";
+      const response = await taskService.toggleTaskStatus(taskId, {
+        status: newStatus,
+      });
+
+      if (response.status === 200 && response.data) {
+        const updatedTasks = milestone.tasks.map(t => 
+          t.id === taskId ? { ...t, status: response.data.status } : t
+        );
+        setMilestone({ ...milestone, tasks: updatedTasks });
+        toast.success(
+          newStatus === "COMPLETED"
+            ? "Đã đánh dấu hoàn thành"
+            : "Đã đánh dấu đang tiến hành"
+        );
+      } else {
+        toast.error(response.message || "Không thể thay đổi trạng thái");
       }
-      return task;
-    });
-    setMilestone({ ...milestone, tasks: updatedTasks });
-    // TODO: call backend API to toggle task status
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi thay đổi trạng thái");
+    }
   };
 
   // Event handler for creating new task
@@ -133,7 +193,6 @@ export const MilestoneDetailPage = () => {
     if (!milestone) return;
     setMilestone({ ...milestone, tasks: [...milestone.tasks, newTask] });
     setCreatingTask(false);
-    // TODO: call backend API to create task
   };
 
   // Event handler for updating task
@@ -143,7 +202,6 @@ export const MilestoneDetailPage = () => {
       task.id === updatedTask.id ? updatedTask : task
     );
     setMilestone({ ...milestone, tasks: updatedTasks });
-    // TODO: call backend API to update task
   };
 
   // Event handler for deleting task
@@ -151,14 +209,28 @@ export const MilestoneDetailPage = () => {
     if (!milestone) return;
     const updatedTasks = milestone.tasks.filter(task => task.id !== taskId);
     setMilestone({ ...milestone, tasks: updatedTasks });
-    // TODO: call backend API to delete task
   };
 
-  // TODO: Replace with logic
   // Event handler for locking/unlocking milestone (for instructors)
-  const handleToggleMilestoneLock = () => {
-    setIsMilestoneLocked(!isMilestoneLocked);
-    // In real app, update backend
+  const handleToggleMilestoneLock = async () => {
+    try {
+      const response = await milestoneService.toggleMilestoneLock(mId, {
+        isLocked: !isMilestoneLocked,
+      });
+
+      if (response.status === 200 && response.data) {
+        setIsMilestoneLocked(response.data.isLocked);
+        toast.success(
+          response.data.isLocked
+            ? "Đã khóa cột mốc thành công"
+            : "Đã mở khóa cột mốc thành công"
+        );
+      } else {
+        toast.error(response.message || "Không thể thay đổi trạng thái khóa");
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi thay đổi trạng thái khóa");
+    }
   };
 
   return (
@@ -385,6 +457,7 @@ export const MilestoneDetailPage = () => {
                 endDate={task.endDate}
                 completed={task.status === "COMPLETED"}
                 isLocked={task.isLocked}
+                userRole={userRole}
                 onToggle={() => handleTaskToggle(task.id)}
                 onUpdated={handleTaskUpdated}
                 onDeleted={handleTaskDeleted}
@@ -397,6 +470,7 @@ export const MilestoneDetailPage = () => {
               <TaskCard
                 projectId={pId}
                 milestoneId={mId}
+                userRole={userRole}
                 autoFocus={true}
                 onCancel={() => setCreatingTask(false)}
                 onCreated={handleTaskCreated}

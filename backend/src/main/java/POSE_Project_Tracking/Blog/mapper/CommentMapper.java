@@ -39,7 +39,6 @@ public interface CommentMapper {
 
     @Mapping(target = "authorId", source = "author.id")
     @Mapping(target = "authorName", source = "author.displayName")
-    @Mapping(target = "authorAvatar", source = "author.avatar")
     @Mapping(target = "parentCommentId", source = "parentComment.id")
     @Mapping(target = "projectId", source = "project.id")
     @Mapping(target = "milestoneId", source = "milestone.id")
