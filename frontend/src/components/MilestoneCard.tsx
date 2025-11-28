@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Milestone } from "@/types/milestone.type";
 import { milestoneSchema } from "@/zod_schema/milestone.schema";
+import { milestoneService } from "@/services/milestone.service";
+import { toast } from "sonner";
 
 interface MilestoneCardProps {
   id?: number;
@@ -34,8 +36,11 @@ interface MilestoneCardProps {
   tasksCompleted?: number;
   status?: "COMPLETED" | "IN_PROGRESS";
   isLocked?: boolean;
+  userRole?: "student" | "instructor";
   onCancel?: () => void;
-  onCreated?: (milestone: any) => void;
+  onCreated?: (milestone: Milestone) => void;
+  onUpdated?: (milestone: Milestone) => void;
+  onDeleted?: (milestoneId: number) => void;
   autoFocus?: boolean; // whether to auto-focus the first input when in edit/create mode
 }
 
@@ -51,13 +56,14 @@ export const MilestoneCard = ({
   tasksCompleted = 0,
   status,
   isLocked = false,
+  userRole = "student",
   onCancel,
   onCreated,
+  onUpdated,
+  onDeleted,
   autoFocus = false,
 }: MilestoneCardProps) => {
   const navigate = useNavigate();
-  // TODO: replace with actual auth
-  const [userRole] = useState<"student" | "instructor">("student");
 
   // Ref of title input to focus when entering edit/create mode
   const titleRef = useRef<HTMLInputElement>(null);
@@ -114,33 +120,61 @@ export const MilestoneCard = ({
     setIsEditing(false);
   };
 
-  // On form submit: either create new or update existing
-  const onSubmit = (data: z.infer<typeof milestoneSchema>) => {
-    if (isNew) {
-      // Create new milestone object to return via callback
-      const created: Milestone = {
-        id: Math.random(), // temporary until backend returns real id
-        title: data.title,
-        description: data.description ?? "",
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
-        completionPercentage: 0,
-        tasksTotal: 0,
-        tasksCompleted: 0,
-        status: "IN_PROGRESS",
-        isLocked: false,
-        orderNumber: 1000, // temporary high number to append to end
-      };
-      onCreated?.(created);
-      // TODO: add API call to create milestone
-    } else {
-      // TODO: replace with real update action / callback prop
-      console.log("Update milestone payload:", { id, ...data });
+  // Delete existing milestone
+  const handleDelete = async () => {
+    // If no id, cannot delete
+    if (!id) return;
+    try {
+      const response = await milestoneService.deleteMilestone(id);
+      if (response.status === 200) {
+        onDeleted?.(id);
+        toast.success("Xóa cột mốc thành công");
+      } else {
+        toast.error(response.message || "Không thể xóa cột mốc");
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi xóa cột mốc");
     }
+  }
 
-    // after submit, close editor for existing milestones; for new keep closed?
-    // We'll close editor for both — parent should re-render list to include new milestone.
-    setIsEditing(false);
+  // On form submit: either create new or update existing
+  const onSubmit = async (data: z.infer<typeof milestoneSchema>) => {
+    try {
+      if (isNew) {
+        // Create new milestone via API
+        const response = await milestoneService.createMilestone(projectId, {
+          title: data.title,
+          description: data.description ?? "",
+          startDate: data.startDate,
+          endDate: data.endDate,
+        });
+
+        if (response.status === 201 && response.data) {
+          onCreated?.(response.data);
+          toast.success("Tạo cột mốc thành công");
+        } else {
+          toast.error(response.message || "Không thể tạo cột mốc");
+        }
+      } else {
+        // Update existing milestone via API
+        const response = await milestoneService.updateMilestone(id!, {
+          title: data.title,
+          description: data.description ?? "",
+          startDate: data.startDate,
+          endDate: data.endDate,
+        });
+
+        if (response.status === 200 && response.data) {
+          onUpdated?.(response.data);
+          toast.success("Cập nhật cột mốc thành công");
+          setIsEditing(false);
+        } else {
+          toast.error(response.message || "Không thể cập nhật cột mốc");
+        }
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi lưu cột mốc");
+    }
   };
 
   return (
@@ -174,7 +208,7 @@ export const MilestoneCard = ({
                       size="icon"
                       variant="destructive"
                       className="rounded-full cursor-pointer"
-                      onClick={() => console.log("Delete milestone", id)}
+                      onClick={handleDelete}
                     >
                       <Trash />
                     </Button>
