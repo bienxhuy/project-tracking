@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom"
 import { projectService } from "@/services/project.service"
 import { fetchAllYears } from "@/services/semester.service"
 import { toast } from "sonner"
+import { useAuth } from "@/contexts/AuthContext"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { LayoutDashboard, FolderKanban, Filter, Plus } from "lucide-react"
+import { Filter, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -20,7 +20,7 @@ import {
 
 import { Project } from "@/types/project.type"
 import { ProjectCard } from "@/components/ProjectCard"
-import Developing from "@/assets/developing.jpg"
+import { FolderKanban } from "lucide-react"
 
 const alphabetSortOptions = {
   az: 'A-Z',
@@ -34,15 +34,24 @@ const dateSortOptions = {
 
 export const InstructorDashboard = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   
   // Current displayed projects
   const [projects, setProjects] = useState<Project[]>([])
   // Available years for filtering
   const [years, setYears] = useState<number[]>([])
+  // Filter states
+  const [selectedYear, setSelectedYear] = useState<string>("")
+  const [selectedSemester, setSelectedSemester] = useState<string>("")
+  const [selectedBatch, setSelectedBatch] = useState<string>("")
+  const [searchQuery, setSearchQuery] = useState<string>("")
   // Alphabetical sort state
   const [alphabetSort, setAlphabetSort] = useState<string>('az')
   // Date sort state
   const [dateSort, setDateSort] = useState<string>('newest')
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
   // Delete confirmation dialog
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; projectId: number | null }>({
     open: false,
@@ -57,9 +66,32 @@ export const InstructorDashboard = () => {
     setYears(availableYears)
   }, [])
 
-  const loadProjects = () => {
-    const currentBatchProject = projectService.fetchTempProjects()
-    setProjects(currentBatchProject)
+  const loadProjects = async (filters?: { year?: number; semester?: number; batch?: number }) => {
+    if (!user?.id) {
+      const errorMessage = "Không tìm thấy thông tin người dùng";
+      setError(errorMessage);
+      toast.error(errorMessage);
+      setIsLoading(false);
+      return
+    }
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await projectService.getInstructorProjects(user.id, filters);
+      
+      if (response.status !== 200) {
+        throw new Error('Không thể tải danh sách dự án');
+      }
+      
+      setProjects(response.data);
+    } catch (error) {
+      const errorMessage = "Không thể tải danh sách dự án";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   // Sort displaying projects whenever sort state changes
@@ -86,9 +118,14 @@ export const InstructorDashboard = () => {
   }
 
   // Fetch projects based on filters
-  const fetchProjectsBasedOnFilter = () => {
-    // TODO: Implement API call to fetch projects based on selected filters
-    toast.info("Chức năng lọc đang được phát triển")
+  const fetchProjectsBasedOnFilter = async () => {
+    const filters: { year?: number; semester?: number; batch?: number } = {}
+    
+    if (selectedYear) filters.year = parseInt(selectedYear)
+    if (selectedSemester) filters.semester = parseInt(selectedSemester)
+    if (selectedBatch) filters.batch = parseInt(selectedBatch)
+    
+    await loadProjects(filters)
   }
 
   // Handle project deletion
@@ -96,12 +133,17 @@ export const InstructorDashboard = () => {
     if (deleteDialog.projectId === null) return
 
     try {
-      await projectService.deleteProject(deleteDialog.projectId)
-      toast.success("Xóa dự án thành công")
-      loadProjects()
-      setDeleteDialog({ open: false, projectId: null })
+      const response = await projectService.deleteProject(deleteDialog.projectId);
+      
+      if (response.status !== 200) {
+        throw new Error('Xóa dự án thất bại');
+      }
+      
+      toast.success("Xóa dự án thành công");
+      setDeleteDialog({ open: false, projectId: null });
+      await loadProjects();
     } catch (error) {
-      toast.error("Xóa dự án thất bại")
+      toast.error("Xóa dự án thất bại");
     }
   }
 
@@ -123,21 +165,16 @@ export const InstructorDashboard = () => {
   return (
     <>
       <div className="pt-5 pb-10 px-5 md:px-15 lg:px-32 bg-amber">
-        {/* TABS FOR NAVIGATION */}
-        <Tabs defaultValue="dashboard" className="space-y-6 mb-10">
-          <TabsList className="bg-secondary">
-            <TabsTrigger value="dashboard" className="gap-2">
-              <LayoutDashboard className="w-4 h-4" />
-              Tổng quan
-            </TabsTrigger>
-            <TabsTrigger value="upcoming" className="gap-2">
-              <FolderKanban className="w-4 h-4" />
-              Gấp
-            </TabsTrigger>
-          </TabsList>
+        {/* DASHBOARD CONTENT */}
+        <div className="space-y-6 mb-10">
+            {/* HEADER WITH CREATE BUTTON */}
+            <div className="flex justify-end items-center">
+              <Button onClick={handleCreateProject} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Tạo dự án mới
+              </Button>
+            </div>
 
-          {/* DASHBOARD CONTENT */}
-          <TabsContent value="dashboard">
             {/* METRICS BLOCK */}
             <div className="flex flex-col gap-2 mb-10">
               <h3 className="text-xl font-bold text-foreground">Thống kê</h3>
@@ -172,13 +209,7 @@ export const InstructorDashboard = () => {
 
             {/* PROJECTS BLOCK */}
             <div className="flex flex-col rounded-lg gap-2">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold text-foreground">Dự án đã tạo</h3>
-                <Button onClick={handleCreateProject} className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Tạo dự án mới
-                </Button>
-              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">Dự án đã tạo</h3>
 
               {/**Displaying projects functional block*/}
               <div className="lg:flex lg:justify-between">
@@ -186,13 +217,18 @@ export const InstructorDashboard = () => {
                 <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-2">
                   {/* Search */}
                   <div className="w-40">
-                    <Input placeholder="Tìm kiếm" className="h-10" />
+                    <Input 
+                      placeholder="Tìm kiếm" 
+                      className="h-10" 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                   </div>
 
                   {/* Filter group */}
                   <div className="flex gap-2">
                     {/* Year Select */}
-                    <Select>
+                    <Select value={selectedYear} onValueChange={setSelectedYear}>
                       <SelectTrigger className="w-28 h-10">
                         <SelectValue placeholder="Năm học" />
                       </SelectTrigger>
@@ -206,7 +242,7 @@ export const InstructorDashboard = () => {
                     </Select>
 
                     {/* Semester Select */}
-                    <Select>
+                    <Select value={selectedSemester} onValueChange={setSelectedSemester}>
                       <SelectTrigger className="w-24 h-10">
                         <SelectValue placeholder="Học kỳ" />
                       </SelectTrigger>
@@ -218,7 +254,7 @@ export const InstructorDashboard = () => {
                     </Select>
 
                     {/* Batch Select */}
-                    <Select>
+                    <Select value={selectedBatch} onValueChange={setSelectedBatch}>
                       <SelectTrigger className="w-20 h-10">
                         <SelectValue placeholder="Đợt" />
                       </SelectTrigger>
@@ -269,37 +305,49 @@ export const InstructorDashboard = () => {
 
               {/* PROJECT GRID */}
               <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4 w-full mt-2">
-                {projects.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    id={project.id}
-                    title={project.title}
-                    semester={project.semester}
-                    year={project.year}
-                    batch={project.batch}
-                    progress={project.completionPercentage}
-                    members={project.memberCount}
-                    milestones={project.milestoneCount}
-                    completedMilestones={1}
-                    status={project.status}
-                    isLocked={project.isLocked}
-                    onUpdate={() => handleUpdateProject(project.id)}
-                    onDelete={() => openDeleteDialog(project.id)}
-                    showActions={true}
-                  />
-                ))}
+                {isLoading ? (
+                  <div className="col-span-full flex items-center justify-center py-16">
+                    <p className="text-muted-foreground">Đang tải...</p>
+                  </div>
+                ) : error ? (
+                  <div className="col-span-full flex flex-col items-center justify-center py-16 px-4">
+                    <p className="text-destructive text-center mb-2">{error}</p>
+                    <Button variant="outline" onClick={() => loadProjects()}>
+                      Thử lại
+                    </Button>
+                  </div>
+                ) : projects.length === 0 ? (
+                  <div className="col-span-full flex flex-col items-center justify-center py-16 px-4">
+                    <FolderKanban className="w-16 h-16 text-foreground/40 mb-4" />
+                    <h3 className="text-xl font-semibold text-muted-foreground mb-2">
+                      Không có dự án nào được tìm thấy
+                    </h3>
+                  </div>
+                ) : (
+                  projects.map((project) => (
+                    <ProjectCard
+                      key={project.id}
+                      id={project.id}
+                      title={project.title}
+                      semester={project.semester}
+                      year={project.year}
+                      batch={project.batch}
+                      progress={project.completionPercentage}
+                      members={project.memberCount}
+                      milestones={project.milestoneCount}
+                      completedMilestones={1}
+                      status={project.status}
+                      isLocked={project.isLocked}
+                      onUpdate={() => handleUpdateProject(project.id)}
+                      onDelete={() => openDeleteDialog(project.id)}
+                      showActions={true}
+                    />
+                  ))
+                )}
               </div>
             </div>
-          </TabsContent>
-
-          {/* UPCOMING TASKS */}
-          <TabsContent value="upcoming">
-            <div className="flex items-center justify-center">
-              <img src={Developing} alt="Developing" />
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
+        </div>
 
       {/* DELETE CONFIRMATION DIALOG */}
       <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, projectId: null })}>

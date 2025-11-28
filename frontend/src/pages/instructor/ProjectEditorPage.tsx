@@ -59,6 +59,8 @@ export const ProjectEditorPage = () => {
       semester: 0,
       batch: 0,
       falculty: "",
+      startDate: new Date(),
+      endDate: new Date(),
       studentIds: [],
     },
   })
@@ -69,7 +71,12 @@ export const ProjectEditorPage = () => {
       const years = fetchAllYears()
       setAvailableYears(years)
 
-      const faculties = projectService.fetchAllFaculties()
+      // TODO: Replace with API call when faculty endpoint is available
+      const faculties = [
+        "Công nghệ Thông tin",
+        "Đào tạo quốc tế",
+        "Cơ khí Chế tạo máy",
+      ]
       setAvailableFaculties(faculties)
 
       // Load project data if in edit mode
@@ -88,7 +95,8 @@ export const ProjectEditorPage = () => {
   // This function is used in editing mode only
   const loadProjectData = async () => {
     try {
-      const projectDetail = projectService.fetchDetailProject(parseInt(projectId!))
+      const response = await projectService.getProjectById(parseInt(projectId!))
+      const projectDetail = response.data
 
       if (projectDetail) {
 
@@ -100,6 +108,8 @@ export const ProjectEditorPage = () => {
         form.setValue('semester', projectDetail.semester)
         form.setValue('batch', projectDetail.batch)
         form.setValue('falculty', projectDetail.falculty)
+        form.setValue('startDate', new Date(projectDetail.startDate))
+        form.setValue('endDate', new Date(projectDetail.endDate))
         form.setValue('studentIds', projectDetail.students.map((s) => s.id))
 
         // Load selected students from project detail
@@ -109,7 +119,6 @@ export const ProjectEditorPage = () => {
         navigate("/instructor/dashboard")
       }
     } catch (error) {
-      console.error('Error loading project:', error)
       toast.error("Không thể tải thông tin dự án")
       navigate("/instructor/dashboard")
     }
@@ -128,7 +137,6 @@ export const ProjectEditorPage = () => {
     try {
       if (isEditMode) {
         const updateData: UpdateProjectRequest = {
-          id: parseInt(projectId!),
           title: data.title,
           objective: data.objective,
           content: data.content,
@@ -136,9 +144,11 @@ export const ProjectEditorPage = () => {
           semester: data.semester,
           batch: data.batch,
           falculty: data.falculty,
+          startDate: data.startDate,
+          endDate: data.endDate,
           studentIds: data.studentIds,
         }
-        await projectService.updateProject(updateData)
+        await projectService.updateProject(parseInt(projectId!), updateData)
         toast.success("Cập nhật dự án thành công")
       } else {
         const createData: CreateProjectRequest = {
@@ -149,6 +159,8 @@ export const ProjectEditorPage = () => {
           semester: data.semester,
           batch: data.batch,
           falculty: data.falculty,
+          startDate: data.startDate,
+          endDate: data.endDate,
           studentIds: data.studentIds,
         }
         await projectService.createProject(createData)
@@ -372,6 +384,51 @@ export const ProjectEditorPage = () => {
                             ))}
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Date Information Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Start Date */}
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Ngày bắt đầu <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            value={field.value ? field.value.toISOString().split('T')[0] : ''}
+                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* End Date */}
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Ngày kết thúc <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            value={field.value ? field.value.toISOString().split('T')[0] : ''}
+                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
