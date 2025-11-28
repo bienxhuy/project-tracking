@@ -50,7 +50,7 @@ export function useAdminDashboard(): AdminDashboardState {
         ]);
 
         const calculatedUserStats = userService.calculateStats(usersData);
-        const calculatedProjectStats = calculateProjectStats(projectsData);
+        const calculatedProjectStats = calculateProjectStats(projectsData.data);
         const activityCount = calculateRecentActivityCount(activityLog);
 
         setUserStats(calculatedUserStats);

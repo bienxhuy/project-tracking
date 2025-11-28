@@ -88,6 +88,16 @@ class ProjectService {
   }
 
   /**
+   * Get all projects (Admin only)
+   */
+  async getProjects(): Promise<ApiResponse<Project[]>> {
+    const response = await apiClient.get<ApiResponse<Project[]>>(
+      '/api/v1/projects'
+    );
+    return response.data;
+  }
+
+  /**
    * Get student's projects
    */
   async getStudentProjects(params?: {
