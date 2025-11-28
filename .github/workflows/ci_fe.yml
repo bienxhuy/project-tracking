@@ -39,12 +39,18 @@ jobs:
     
     - name: Clean install dependencies
       run: |
-        # Clean any existing node_modules
-        rm -rf node_modules
-        # Install with full optional dependencies support
-        npm install
-        # Verify installation
-        npm list --depth=0 || true
+        # Clean any existing files as recommended by npm bug workaround
+        rm -rf node_modules package-lock.json
+        # Set environment to force optional dependencies
+        export npm_config_platform=linux
+        export npm_config_arch=x64
+        # Fresh install (without package-lock.json to avoid npm bug)
+        npm install --legacy-peer-deps
+        # Verify vite can be loaded
+        npx vite --version || echo "Vite not found"
+      env:
+        # Force npm to install optional dependencies
+        npm_config_optional: true
     
     - name: Build application
       run: npm run build
