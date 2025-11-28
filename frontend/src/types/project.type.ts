@@ -40,11 +40,22 @@ export interface CreateProjectRequest {
   semester: number;
   batch: number;
   falculty: string;
+  startDate: Date;
+  endDate: Date;
   studentIds: number[];
 }
 
-export interface UpdateProjectRequest extends CreateProjectRequest {
-  id: number;
+export interface UpdateProjectRequest {
+  title: string;
+  objective: string;
+  content: string;
+  year: number;
+  semester: number;
+  batch: number;
+  falculty: string;
+  startDate: Date;
+  endDate: Date;
+  studentIds: number[];
 }
 
 export interface ProjectApiSummary {
@@ -56,4 +67,19 @@ export interface ProjectApiSummary {
   falculty?: string;
   year?: number;
   completionPercentage?: number;
+}
+
+export interface PagedProjects {
+  content: Project[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+export interface UpdateProjectContentRequest {
+  objective: string;
+  content: string;
 }
