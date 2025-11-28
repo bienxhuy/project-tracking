@@ -58,7 +58,6 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         // Đăng ký lần đầu
         if (user == null) {
             user = User.builder()
-                       .avatar(avatar)
                        .displayName(displayName)
                        .email(email)
                        .password("")

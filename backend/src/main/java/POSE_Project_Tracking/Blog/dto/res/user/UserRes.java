@@ -18,10 +18,6 @@ public class UserRes {
 
     private String displayName;
 
-    private String avatar;
-
-    private double level;
-
     EUserStatus accountStatus;
 
     private ELoginType loginType;

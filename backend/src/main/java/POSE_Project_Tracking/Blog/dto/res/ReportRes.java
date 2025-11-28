@@ -4,6 +4,7 @@ import POSE_Project_Tracking.Blog.enums.EReportStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -38,11 +39,14 @@ public class ReportRes {
     private Long taskId;
     private String taskTitle;
     
-    // Submitted by
+    // Submitted by (người tạo và nộp report)
     private Long submittedById;
     private String submittedByName;
     
     // Statistics
     private Integer totalComments;
     private Integer totalAttachments;
+    
+    // Comments (included when include=comments)
+    private List<CommentRes> comments;
 }

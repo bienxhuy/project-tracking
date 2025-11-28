@@ -66,7 +66,6 @@ public class UserServiceImpl implements IUserService {
         // Thiết lập giá trị mặc định
         user.setRole(EUserRole.STUDENT);
         user.setAccountStatus(EUserStatus.VERIFYING);
-        user.setLevel(0);
         user.setLoginType(ELoginType.LOCAL);
 
         user = userRepository.save(user);
@@ -183,17 +182,6 @@ public class UserServiceImpl implements IUserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
         user.setAccountStatus(status);
-        user = userRepository.save(user);
-        return changeToRes(user);
-    }
-
-    @Override
-    public UserRes updateUserAvatar(Long id, MultipartFile avatar) throws IOException {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
-        //        FileUtil.storeFile(avatar);
-        String avatarPath = imageUploadService.uploadImage(avatar);
-        user.setAvatar(avatarPath);
         user = userRepository.save(user);
         return changeToRes(user);
     }

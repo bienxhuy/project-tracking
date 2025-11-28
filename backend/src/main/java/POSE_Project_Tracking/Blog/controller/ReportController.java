@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,17 +20,21 @@ public class ReportController {
     @Autowired
     private IReportService reportService;
 
-    // Tạo report mới
+    // Tạo report mới (với optional attachments)
     @PostMapping
-    public ApiResponse<ReportRes> createReport(@Valid @RequestBody ReportReq reportReq) {
-        ReportRes report = reportService.createReport(reportReq);
+    public ApiResponse<ReportRes> createReport(
+            @Valid @ModelAttribute ReportReq reportReq,
+            @RequestParam(value = "attachments", required = false) MultipartFile[] attachments) {
+        ReportRes report = reportService.createReport(reportReq, attachments);
         return new ApiResponse<>(HttpStatus.CREATED, "Tạo báo cáo thành công", report, null);
     }
 
     // Lấy report theo ID
     @GetMapping("/{id}")
-    public ApiResponse<ReportRes> getReportById(@PathVariable Long id) {
-        ReportRes report = reportService.getReportById(id);
+    public ApiResponse<ReportRes> getReportById(
+            @PathVariable Long id,
+            @RequestParam(required = false) String include) {
+        ReportRes report = reportService.getReportById(id, include);
         return new ApiResponse<>(HttpStatus.OK, "Lấy thông tin báo cáo thành công", report, null);
     }
 
@@ -38,6 +43,15 @@ public class ReportController {
     public ApiResponse<List<ReportRes>> getReportsByProject(@PathVariable Long projectId) {
         List<ReportRes> reports = reportService.getReportsByProject(projectId);
         return new ApiResponse<>(HttpStatus.OK, "Lấy danh sách báo cáo của dự án thành công", reports, null);
+    }
+
+    // Lấy reports theo task
+    @GetMapping("/task/{taskId}")
+    public ApiResponse<List<ReportRes>> getReportsByTask(
+            @PathVariable Long taskId,
+            @RequestParam(required = false) String include) {
+        List<ReportRes> reports = reportService.getReportsByTask(taskId, include);
+        return new ApiResponse<>(HttpStatus.OK, "Lấy danh sách báo cáo của task thành công", reports, null);
     }
 
     // Lấy reports theo user

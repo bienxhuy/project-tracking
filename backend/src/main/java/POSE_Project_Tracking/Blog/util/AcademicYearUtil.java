@@ -26,9 +26,9 @@ public class AcademicYearUtil {
         int month = now.getMonthValue();
         
         if (month >= 1 && month <= 6) {
-            return 1; // Semester 1
+            return 2; // Semester 1
         } else {
-            return 2; // Semester 2
+            return 1; // Semester 2
         }
     }
 
