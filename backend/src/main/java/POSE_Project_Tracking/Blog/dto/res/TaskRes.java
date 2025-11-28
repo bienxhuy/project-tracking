@@ -1,10 +1,12 @@
 package POSE_Project_Tracking.Blog.dto.res;
 
 import POSE_Project_Tracking.Blog.enums.ETaskStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -36,10 +38,13 @@ public class TaskRes {
     private Long projectId;
     private String projectTitle;
     
-    // Assigned user info
-    private Long assignedToId;
-    private String assignedToName;
-    
+    // Assigned users info (multiple users can work on same task)
+    @JsonProperty("assignees")
+    private List<AssignedUserRes> assignedUsers;
+
+    // Reports (optional - only included when requested via query parameter)
+    private List<ReportRes> reports;
+
     // Statistics
     private Integer totalReports;
     private Integer totalComments;

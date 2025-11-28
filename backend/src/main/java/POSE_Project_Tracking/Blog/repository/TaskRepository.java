@@ -19,23 +19,27 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     List<Task> findByProjectId(Long projectId);
 
-    List<Task> findByAssignedTo(User user);
+    // Find tasks where user is in assignedUsers list
+    @Query("SELECT DISTINCT t FROM Task t JOIN t.assignedUsers u WHERE u = :user")
+    List<Task> findByAssignedUsersContaining(@Param("user") User user);
 
-    List<Task> findByAssignedToId(Long userId);
+    @Query("SELECT DISTINCT t FROM Task t JOIN t.assignedUsers u WHERE u.id = :userId")
+    List<Task> findByAssignedUsersId(@Param("userId") Long userId);
 
     List<Task> findByStatus(ETaskStatus status);
 
     List<Task> findByProjectIdAndStatus(Long projectId, ETaskStatus status);
 
-    List<Task> findByAssignedToIdAndStatus(Long userId, ETaskStatus status);
+    @Query("SELECT DISTINCT t FROM Task t JOIN t.assignedUsers u WHERE u.id = :userId AND t.status = :status")
+    List<Task> findByAssignedUsersIdAndStatus(@Param("userId") Long userId, @Param("status") ETaskStatus status);
 
-    @Query("SELECT t FROM Task t WHERE t.assignedTo.id = :userId AND t.status = :status")
+    @Query("SELECT DISTINCT t FROM Task t JOIN t.assignedUsers u WHERE u.id = :userId AND t.status = :status")
     List<Task> findUserTasksByStatus(@Param("userId") Long userId, @Param("status") ETaskStatus status);
 
     @Query("SELECT t FROM Task t WHERE t.endDate < :date AND t.status != 'COMPLETED'")
     List<Task> findOverdueTasks(@Param("date") LocalDate date);
 
-    @Query("SELECT t FROM Task t WHERE t.assignedTo.id = :userId AND t.endDate < :date AND t.status != 'COMPLETED'")
+    @Query("SELECT DISTINCT t FROM Task t JOIN t.assignedUsers u WHERE u.id = :userId AND t.endDate < :date AND t.status != 'COMPLETED'")
     List<Task> findOverdueTasksByUser(@Param("userId") Long userId, @Param("date") LocalDate date);
 
     @Query("SELECT t FROM Task t LEFT JOIN FETCH t.reports WHERE t.id = :id")

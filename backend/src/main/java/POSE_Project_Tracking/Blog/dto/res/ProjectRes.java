@@ -27,7 +27,7 @@ public class ProjectRes {
     private LocalDate startDate;
     private LocalDate endDate;
     private Boolean isLocked;
-    private Boolean isOnlyDesLocked;
+    private Boolean isObjDesLocked;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
@@ -51,5 +51,5 @@ public class ProjectRes {
     
     // Detailed data
     private List<MilestoneRes> milestones;
-    private List<ProjectMemberRes> students;
+    private List<AssignedUserRes> students;
 }

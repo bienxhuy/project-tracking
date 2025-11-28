@@ -50,8 +50,8 @@ public class Project extends ProgressEntity {
     @Column(name = "completion_percentage")
     private Float completionPercentage;
 
-    @Column(name = "is_only_des_locked")
-    private Boolean isOnlyDesLocked;
+    @Column(name = "is_obj_des_locked")
+    private Boolean isObjDesLocked;
 
     // Collections are not audited by default to avoid complexity
     // Use @Audited on specific collections if needed

@@ -20,8 +20,6 @@ public interface IReportService {
     List<ReportRes> getReportsByStatus(EReportStatus status);
     List<ReportRes> getReportsBetweenDates(LocalDateTime startDate, LocalDateTime endDate);
     void deleteReport(Long id);
-    void approveReport(Long id);
-    void rejectReport(Long id);
     void submitReport(Long id);
     void lockReport(Long id);
 }

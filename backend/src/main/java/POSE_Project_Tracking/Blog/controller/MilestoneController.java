@@ -3,8 +3,10 @@ package POSE_Project_Tracking.Blog.controller;
 import POSE_Project_Tracking.Blog.dto.req.MilestoneReq;
 import POSE_Project_Tracking.Blog.dto.res.ApiResponse;
 import POSE_Project_Tracking.Blog.dto.res.MilestoneRes;
+import POSE_Project_Tracking.Blog.dto.res.TaskRes;
 import POSE_Project_Tracking.Blog.enums.EMilestoneStatus;
 import POSE_Project_Tracking.Blog.service.IMilestoneService;
+import POSE_Project_Tracking.Blog.service.ITaskService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,9 @@ public class MilestoneController {
 
     @Autowired
     private IMilestoneService milestoneService;
+
+    @Autowired
+    private ITaskService taskService;
 
     // Tạo milestone mới
     @PostMapping
@@ -100,5 +105,14 @@ public class MilestoneController {
     public ApiResponse<Void> deleteMilestone(@PathVariable Long id) {
         milestoneService.deleteMilestone(id);
         return new ApiResponse<>(HttpStatus.OK, "Xóa milestone thành công", null, null);
+    }
+
+    // Lấy tasks theo milestone
+    @GetMapping("/{milestoneId}/tasks")
+    public ApiResponse<List<TaskRes>> getTasksByMilestone(
+            @PathVariable Long milestoneId,
+            @RequestParam(required = false) String include) {
+        List<TaskRes> tasks = taskService.getTasksByMilestone(milestoneId, include);
+        return new ApiResponse<>(HttpStatus.OK, "Lấy danh sách task của milestone thành công", tasks, null);
     }
 }

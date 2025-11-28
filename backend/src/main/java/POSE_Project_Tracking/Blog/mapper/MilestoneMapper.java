@@ -1,6 +1,7 @@
 package POSE_Project_Tracking.Blog.mapper;
 
 import POSE_Project_Tracking.Blog.dto.req.MilestoneReq;
+import POSE_Project_Tracking.Blog.dto.res.AssignedUserRes;
 import POSE_Project_Tracking.Blog.dto.res.MilestoneRes;
 import POSE_Project_Tracking.Blog.entity.Milestone;
 import POSE_Project_Tracking.Blog.entity.Project;
@@ -80,8 +81,7 @@ public interface MilestoneMapper {
     @Mapping(target = "isLocked", source = "locked")
     @Mapping(target = "projectId", source = "milestone.project.id")
     @Mapping(target = "projectTitle", source = "milestone.project.title")
-    @Mapping(target = "assignedToId", source = "assignedTo.id")
-    @Mapping(target = "assignedToName", source = "assignedTo.displayName")
+    @Mapping(target = "assignedUsers", source = "assignedUsers")
     @Mapping(target = "lockedById", source = "lockedBy.id")
     @Mapping(target = "lockedByName", source = "lockedBy.displayName")
     @Mapping(target = "createdById", source = "createdBy.id")
@@ -89,4 +89,10 @@ public interface MilestoneMapper {
     @Mapping(target = "totalReports", expression = "java(task.getReports() != null ? task.getReports().size() : 0)")
     @Mapping(target = "totalComments", expression = "java(task.getComments() != null ? task.getComments().size() : 0)")
     POSE_Project_Tracking.Blog.dto.res.TaskRes mapTask(POSE_Project_Tracking.Blog.entity.Task task);
+    
+    // Map User to AssignedUserRes
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "displayName", source = "displayName")
+    @Mapping(target = "email", source = "email")
+    AssignedUserRes mapUserToAssignedUserRes(POSE_Project_Tracking.Blog.entity.User user);
 }

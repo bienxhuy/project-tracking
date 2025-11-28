@@ -54,7 +54,7 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<ProjectMember> projectMemberships;
 
-    @OneToMany(mappedBy = "assignedTo", cascade = CascadeType.ALL)
+    @ManyToMany(mappedBy = "assignedUsers")
     private List<Task> assignedTasks;
 
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL)

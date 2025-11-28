@@ -25,6 +25,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -71,15 +72,20 @@ public class TaskServiceImpl implements ITaskService {
                     .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
         }
 
-        // Lấy assignee (nếu có)
-        User assignee = null;
-        if (taskReq.getAssigneeId() != null) {
-            assignee = userRepository.findById(taskReq.getAssigneeId())
-                    .orElseThrow(() -> new CustomException(USER_NON_EXISTENT));
+        // Lấy assignees (nếu có)
+        List<User> assignedUsers = new ArrayList<>();
+        if (taskReq.getAssigneeIds() != null && !taskReq.getAssigneeIds().isEmpty()) {
+            assignedUsers = userRepository.findAllById(taskReq.getAssigneeIds());
+            if (assignedUsers.size() != taskReq.getAssigneeIds().size()) {
+                throw new CustomException(USER_NON_EXISTENT);
+            }
         }
 
         // Map request to entity
-        Task task = taskMapper.toEntity(taskReq, project, assignee);
+        Task task = taskMapper.toEntity(taskReq, project, assignedUsers);
+        task.setMilestone(milestone);
+        task.setStartDate(taskReq.getStartDate());
+        task.setEndDate(taskReq.getEndDate());
 
         // Set createdBy từ current user
         User currentUser = securityUtil.getCurrentUser();
@@ -110,9 +116,18 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
-    public TaskRes getTaskById(Long id) {
+    public TaskRes getTaskById(Long id, String include) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
+
+        // Check if reports should be included
+        boolean includeReports = include != null && include.contains("reports");
+        
+        if (includeReports) {
+            // Force lazy loading of reports
+            task.getReports().size();
+            return taskMapper.toResponseWithReports(task);
+        }
 
         return taskMapper.toResponse(task);
     }
@@ -147,12 +162,22 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
-    public List<TaskRes> getTasksByMilestone(Long milestoneId) {
+    public List<TaskRes> getTasksByMilestone(Long milestoneId, String include) {
         Milestone milestone = milestoneRepository.findById(milestoneId)
                 .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
 
+        // Check if reports should be included
+        boolean includeReports = include != null && include.contains("reports");
+
         return taskRepository.findByMilestone(milestone).stream()
-                .map(taskMapper::toResponse)
+                .map(task -> {
+                    if (includeReports) {
+                        // Force lazy loading of reports
+                        task.getReports().size();
+                        return taskMapper.toResponseWithReports(task);
+                    }
+                    return taskMapper.toResponse(task);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -161,7 +186,7 @@ public class TaskServiceImpl implements ITaskService {
         User assignee = userRepository.findById(assigneeId)
                 .orElseThrow(() -> new CustomException(USER_NON_EXISTENT));
 
-        return taskRepository.findByAssignedTo(assignee).stream()
+        return taskRepository.findByAssignedUsersContaining(assignee).stream()
                 .map(taskMapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -237,6 +262,28 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
+    public TaskRes toggleTaskLock(Long id, Boolean isLocked) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(isLocked)) {
+            // Lock the task
+            User currentUser = securityUtil.getCurrentUser();
+            task.setLocked(true);
+            task.setLockedBy(currentUser);
+            task.setLockedAt(LocalDateTime.now());
+        } else {
+            // Unlock the task
+            task.setLocked(false);
+            task.setLockedBy(null);
+            task.setLockedAt(null);
+        }
+
+        task = taskRepository.save(task);
+        return taskMapper.toResponse(task);
+    }
+
+    @Override
     public List<TaskRes> getTasksByUser(Long userId) {
         // Alias for getTasksByAssignee
         return getTasksByAssignee(userId);
@@ -259,7 +306,7 @@ public class TaskServiceImpl implements ITaskService {
                 .orElseThrow(() -> new CustomException(USER_NON_EXISTENT));
         
         LocalDateTime now = LocalDateTime.now();
-        return taskRepository.findByAssignedTo(user).stream()
+        return taskRepository.findByAssignedUsersContaining(user).stream()
                 .filter(task -> task.getEndDate() != null && 
                        task.getEndDate().atStartOfDay().isBefore(now) &&
                        task.getStatus() != ETaskStatus.COMPLETED)
@@ -279,7 +326,13 @@ public class TaskServiceImpl implements ITaskService {
             throw new CustomException(TASK_LOCKED);
         }
 
-        task.setAssignedTo(user);
+        // Add user to assigned users if not already present
+        if (task.getAssignedUsers() == null) {
+            task.setAssignedUsers(new ArrayList<>());
+        }
+        if (!task.getAssignedUsers().contains(user)) {
+            task.getAssignedUsers().add(user);
+        }
         taskRepository.save(task);
     }
 
