@@ -177,7 +177,7 @@ export const MilestoneCard = ({
       toast.error("Đã xảy ra lỗi khi lưu cột mốc");
     }
   };
-  
+
   return (
     <Card className="border-border bg-card hover:bg-gray-50 transition-colors h-fit">
       {/* Normal (display) mode: only show when not editing and not creating new */}
@@ -186,13 +186,13 @@ export const MilestoneCard = ({
           <CardHeader>
             <CardTitle className="flex flex-col items-start text-lg font-semibold text-foreground">
               <div className="flex items-center justify-between w-full">
-                {status === "COMPLETED" ? (
+                {isLocked ? (
+                  <Lock className="w-5 h-5 text-red-400" />
+                ) : status === "COMPLETED" ? (
                   <CheckCircle2 className="w-5 h-5 text-success" />
                 ) : status === "IN_PROGRESS" ? (
                   <Clock className="w-5 h-5 text-primary" />
-                ) : (
-                  <Lock className="w-5 h-5 text-red-400" />
-                )}
+                ) : null}
 
                 {userRole == "student" && (
                   <div className="flex items-center gap-2">
@@ -201,6 +201,7 @@ export const MilestoneCard = ({
                       variant="ghost"
                       className="rounded-full cursor-pointer"
                       onClick={handleEnterEdit}
+                      disabled={isLocked}
                     >
                       <SquarePen />
                     </Button>
@@ -210,6 +211,7 @@ export const MilestoneCard = ({
                       variant="destructive"
                       className="rounded-full cursor-pointer"
                       onClick={handleDelete}
+                      disabled={isLocked}
                     >
                       <Trash />
                     </Button>

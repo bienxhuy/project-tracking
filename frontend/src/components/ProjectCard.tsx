@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { statusConfig } from "@/types/project.type";
 
-import { Calendar, Users, Target, Edit, Trash2, MoreVertical } from "lucide-react";
+import { Calendar, Users, Target, Edit, Trash2, MoreVertical, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -43,6 +43,7 @@ export const ProjectCard = ({
   milestones,
   completedMilestones,
   status,
+  isLocked,
   showActions = false,
   onUpdate,
   onDelete,
@@ -69,6 +70,12 @@ export const ProjectCard = ({
           <CardTitle className="text-xl font-semibold text-foreground">{title}</CardTitle>
           <div className="flex items-center gap-2">
             <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
+            {isLocked && (
+              <Badge variant="outline" className="flex items-center gap-1 border-yellow-500 text-yellow-600">
+                <Lock className="h-3 w-3" />
+                Locked
+              </Badge>
+            )}
             {showActions && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -77,13 +84,17 @@ export const ProjectCard = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={(e) => handleActionClick(e, onUpdate!)}>
+                  <DropdownMenuItem 
+                    onClick={(e) => handleActionClick(e, onUpdate!)}
+                    disabled={isLocked}
+                  >
                     <Edit className="mr-2 h-4 w-4" />
                     Cập nhật
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={(e) => handleActionClick(e, onDelete!)}
                     className="text-destructive"
+                    disabled={isLocked}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Xóa

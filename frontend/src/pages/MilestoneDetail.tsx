@@ -172,9 +172,21 @@ export const MilestoneDetailPage = () => {
   const handleTaskToggle = async (taskId: number) => {
     if (!milestone) return;
     
+    // Prevent toggling if milestone is locked
+    if (isMilestoneLocked) {
+      toast.error("Không thể thay đổi trạng thái khi cột mốc đã bị khóa");
+      return;
+    }
+    
     try {
       const task = milestone.tasks.find(t => t.id === taskId);
       if (!task) return;
+      
+      // Also check if task itself is locked
+      if (task.isLocked) {
+        toast.error("Không thể thay đổi trạng thái nhiệm vụ đã khóa");
+        return;
+      }
       
       const newStatus: "COMPLETED" | "IN_PROGRESS" = task.status === "COMPLETED" ? "IN_PROGRESS" : "COMPLETED";
       const response = await taskService.toggleTaskStatus(taskId, newStatus);
@@ -466,6 +478,7 @@ export const MilestoneDetailPage = () => {
                 endDate={task.endDate}
                 completed={task.status === "COMPLETED"}
                 isLocked={task.isLocked}
+                isMilestoneLocked={isMilestoneLocked}
                 userRole={userRole}
                 onToggle={() => handleTaskToggle(task.id)}
                 onUpdated={handleTaskUpdated}

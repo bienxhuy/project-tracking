@@ -32,6 +32,7 @@ interface TaskCardProps {
   endDate?: Date;
   completed?: boolean;
   isLocked?: boolean;
+  isMilestoneLocked?: boolean;
   userRole?: "student" | "instructor";
   onToggle?: () => void;
   onCancel?: () => void;
@@ -53,6 +54,7 @@ export const TaskCard = ({
   endDate,
   completed = false,
   isLocked = false,
+  isMilestoneLocked = false,
   userRole = "student",
   onToggle,
   onCancel,
@@ -63,6 +65,9 @@ export const TaskCard = ({
   availableMembers = [],
 }: TaskCardProps) => {
   const navigate = useNavigate();
+  
+  // Effective lock status: task is locked if either the task itself or its parent milestone is locked
+  const isEffectiveLocked = isLocked || isMilestoneLocked;
   
   // Ref for title input to focus when entering edit/create mode
   const titleRef = useRef<HTMLInputElement>(null);
@@ -209,7 +214,7 @@ export const TaskCard = ({
             checked={completed} 
             onCheckedChange={onToggle}
             className="mt-1"
-            disabled={isLocked}
+            disabled={isEffectiveLocked}
           />
           <div className="flex-1 space-y-2 cursor-pointer" onClick={handleClick}>
             <div className="flex items-start justify-between gap-2">
@@ -217,7 +222,7 @@ export const TaskCard = ({
                 <h4 className={`font-medium text-foreground ${completed ? "line-through text-muted-foreground" : ""}`}>
                   {title}
                 </h4>
-                {isLocked && (
+                {isEffectiveLocked && (
                   <Lock className="w-3 h-3 text-destructive" />
                 )}
               </div>
@@ -248,7 +253,7 @@ export const TaskCard = ({
           </div>
           
           {/* Edit/Delete buttons for students when not locked */}
-          {userRole === "student" && !isLocked && (
+          {userRole === "student" && !isEffectiveLocked && (
             <div className="flex items-center gap-1">
               <Button
                 size="icon"

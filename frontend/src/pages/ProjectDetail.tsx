@@ -342,6 +342,7 @@ export const ProjectDetailPage = () => {
                   tasksTotal={milestone.tasksTotal}
                   tasksCompleted={milestone.tasksCompleted}
                   status={milestone.status}
+                  isLocked={milestone.isLocked}
                   userRole={userRole}
                   onUpdated={(updatedMilestone) => {
                     setProject({
