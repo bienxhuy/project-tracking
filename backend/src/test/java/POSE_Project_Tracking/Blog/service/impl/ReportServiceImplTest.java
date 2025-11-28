@@ -199,7 +199,7 @@ class ReportServiceImplTest {
         when(reportRepository.findById(1L)).thenReturn(Optional.of(report));
         when(reportMapper.toResponse(report)).thenReturn(new ReportRes());
 
-        ReportRes result = service.getReportById(1L);
+        ReportRes result = service.getReportById(1L, null);
 
         assertNotNull(result);
     }
@@ -208,7 +208,7 @@ class ReportServiceImplTest {
     void getReportById_nonExistingReport_throwsException() {
         when(reportRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(CustomException.class, () -> service.getReportById(999L));
+        assertThrows(CustomException.class, () -> service.getReportById(999L, null));
     }
 }
 
