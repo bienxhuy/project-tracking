@@ -136,10 +136,10 @@ class ProjectServiceImplTest {
     @Test
     void lockProject_validRequest_locksProject() {
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(currentUser));
+        when(securityUtil.getCurrentUser()).thenReturn(currentUser);
         when(projectRepository.save(any(Project.class))).thenReturn(project);
 
-        service.lockProject(1L, 2L);
+        service.lockProject(1L);
 
         assertTrue(project.getLocked());
         assertEquals(currentUser, project.getLockedBy());
