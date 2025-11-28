@@ -2,11 +2,13 @@
 
 import { Attachment } from "./attachment.type";
 import { Comment } from "./comment.type";
+import { BaseUser } from "./user.type";
 
 export interface Report {
   id: number;
   title: string;
   content: string;
+  reporter: BaseUser;
   attachments: Attachment[];
   status: "SUBMITTED" | "LOCKED";
 }

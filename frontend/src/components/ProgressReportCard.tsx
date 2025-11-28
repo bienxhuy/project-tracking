@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -41,6 +42,8 @@ export const ProgressReportCard = ({
   isTaskLocked,
   onReportUpdated,
 }: ProgressReportCardProps) => {
+  const { user } = useAuth();
+  
   // General state of the card
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -63,7 +66,8 @@ export const ProgressReportCard = ({
 
   // State to determine permissions
   const [isLocked, setIsLocked] = useState<boolean>(report.status === "LOCKED" || isTaskLocked);
-  const canEdit = userRole === "student" && !isLocked;
+  const isReporter = user?.id === report.reporter.id;
+  const canEdit = isReporter && !isLocked;
   const canLock = userRole === "instructor";
 
   // Fetch report details (comments) when expanding for the first time
@@ -246,6 +250,15 @@ export const ProgressReportCard = ({
                     </Badge>
                   )}
                 </div>
+                {/* Reporter Information */}
+                <div className="flex items-center gap-2 mb-2">
+                  <Avatar className="w-6 h-6">
+                    <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                      {getInitials(report.reporter.displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-muted-foreground">{report.reporter.displayName}</span>
+                </div>
                 {/* Show content preview */}
                 {!isExpanded && (
                   <>
@@ -361,7 +374,7 @@ export const ProgressReportCard = ({
                         <p className="text-sm text-foreground whitespace-pre-wrap">
                           {comment.content}
                         </p>
-                        {!isLocked && (
+                        {!isLocked && user?.id === comment.commenter.id && (
                           <Button
                             size="icon"
                             variant="ghost"
