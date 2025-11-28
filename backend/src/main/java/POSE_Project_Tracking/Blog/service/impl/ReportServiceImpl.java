@@ -98,11 +98,6 @@ public class ReportServiceImpl implements IReportService {
             throw new CustomException(UNAUTHORIZED);
         }
 
-        // Cannot update if already approved
-        if (report.getStatus() == EReportStatus.APPROVED) {
-            throw new CustomException(REPORT_ALREADY_APPROVED);
-        }
-
         // Update only allowed fields
         reportMapper.updateEntityFromRequest(reportReq, report);
 
@@ -191,30 +186,12 @@ public class ReportServiceImpl implements IReportService {
             throw new CustomException(UNAUTHORIZED);
         }
 
-        // Cannot delete if already approved
-        if (report.getStatus() == EReportStatus.APPROVED) {
-            throw new CustomException(REPORT_ALREADY_APPROVED);
+        // Cannot delete if already locked
+        if (Boolean.TRUE.equals(report.getLocked())) {
+            throw new CustomException(REPORT_LOCKED);
         }
 
         reportRepository.delete(report);
-    }
-
-    @Override
-    public void approveReport(Long id) {
-        Report report = reportRepository.findById(id)
-                .orElseThrow(() -> new CustomException(REPORT_NOT_FOUND));
-
-        report.setStatus(EReportStatus.APPROVED);
-        reportRepository.save(report);
-    }
-
-    @Override
-    public void rejectReport(Long id) {
-        Report report = reportRepository.findById(id)
-                .orElseThrow(() -> new CustomException(REPORT_NOT_FOUND));
-
-        report.setStatus(EReportStatus.REJECTED);
-        reportRepository.save(report);
     }
 
     @Override
@@ -222,7 +199,6 @@ public class ReportServiceImpl implements IReportService {
         // Alias for getReportsByAuthor
         return getReportsByAuthor(userId);
     }
-
     @Override
     public void submitReport(Long id) {
         Report report = reportRepository.findById(id)
@@ -238,7 +214,14 @@ public class ReportServiceImpl implements IReportService {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new CustomException(REPORT_NOT_FOUND));
 
-        report.setStatus(EReportStatus.APPROVED);
+        report.setStatus(EReportStatus.LOCKED);
+        report.setLocked(true);
+        report.setLockedAt(LocalDateTime.now());
+        
+        // Get current user as the one who locked
+        User currentUser = securityUtil.getCurrentUser();
+        report.setLockedBy(currentUser);
+        
         reportRepository.save(report);
     }
 }

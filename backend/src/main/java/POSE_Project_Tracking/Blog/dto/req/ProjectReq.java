@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -33,4 +34,7 @@ public class ProjectReq {
     private LocalDate startDate;
 
     private LocalDate endDate;
+
+    // List of student IDs to be added as project members
+    private List<Long> studentIds;
 }

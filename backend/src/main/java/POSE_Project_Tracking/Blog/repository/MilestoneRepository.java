@@ -34,4 +34,10 @@ public interface MilestoneRepository extends JpaRepository<Milestone, Long> {
 
     @Query("SELECT m FROM Milestone m JOIN FETCH m.project WHERE m.id = :id")
     Optional<Milestone> findByIdWithProject(@Param("id") Long id);
+
+    @Query("SELECT m FROM Milestone m LEFT JOIN FETCH m.tasks WHERE m.id = :id")
+    Optional<Milestone> findByIdWithTasks(@Param("id") Long id);
+
+    @Query("SELECT DISTINCT m FROM Milestone m LEFT JOIN FETCH m.tasks WHERE m.project.id = :projectId ORDER BY m.orderNumber ASC")
+    List<Milestone> findByProjectIdWithTasks(@Param("projectId") Long projectId);
 }

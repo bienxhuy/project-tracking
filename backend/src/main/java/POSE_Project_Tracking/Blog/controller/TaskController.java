@@ -28,8 +28,10 @@ public class TaskController {
 
     // Lấy task theo ID
     @GetMapping("/{id}")
-    public ApiResponse<TaskRes> getTaskById(@PathVariable Long id) {
-        TaskRes task = taskService.getTaskById(id);
+    public ApiResponse<TaskRes> getTaskById(
+            @PathVariable Long id,
+            @RequestParam(required = false) String include) {
+        TaskRes task = taskService.getTaskById(id, include);
         return new ApiResponse<>(HttpStatus.OK, "Lấy thông tin task thành công", task, null);
     }
 
@@ -100,6 +102,18 @@ public class TaskController {
     public ApiResponse<Void> markTaskAsCompleted(@PathVariable Long id) {
         taskService.markTaskAsCompleted(id);
         return new ApiResponse<>(HttpStatus.OK, "Đánh dấu task hoàn thành thành công", null, null);
+    }
+
+    // Lock/Unlock task
+    @PatchMapping("/{id}/lock")
+    public ApiResponse<TaskRes> toggleTaskLock(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Boolean> request) {
+        Boolean isLocked = request.get("isLocked");
+        TaskRes task = taskService.toggleTaskLock(id, isLocked);
+        return new ApiResponse<>(HttpStatus.OK, 
+                isLocked ? "Khóa task thành công" : "Mở khóa task thành công", 
+                task, null);
     }
 
     // Xóa task

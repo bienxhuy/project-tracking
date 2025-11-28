@@ -1,6 +1,7 @@
 package POSE_Project_Tracking.Blog.mapper;
 
 import POSE_Project_Tracking.Blog.dto.req.MilestoneReq;
+import POSE_Project_Tracking.Blog.dto.res.AssignedUserRes;
 import POSE_Project_Tracking.Blog.dto.res.MilestoneRes;
 import POSE_Project_Tracking.Blog.entity.Milestone;
 import POSE_Project_Tracking.Blog.entity.Project;
@@ -45,8 +46,53 @@ public interface MilestoneMapper {
     @Mapping(target = "attachments", ignore = true)
     void updateEntityFromRequest(MilestoneReq milestoneReq, @MappingTarget Milestone milestone);
 
+    @Named("toResponse")
+    @Mapping(target = "isLocked", source = "locked")
     @Mapping(target = "projectId", source = "project.id")
     @Mapping(target = "projectTitle", source = "project.title")
-    @Mapping(target = "totalReports", expression = "java(milestone.getReports() != null ? milestone.getReports().size() : 0)")
+    @Mapping(target = "lockedById", source = "lockedBy.id")
+    @Mapping(target = "lockedByName", source = "lockedBy.displayName")
+    @Mapping(target = "createdById", source = "createdBy.id")
+    @Mapping(target = "createdByName", source = "createdBy.displayName")
+    @Mapping(target = "tasksTotal", expression = "java(milestone.getTasks() != null ? milestone.getTasks().size() : 0)")
+    @Mapping(target = "tasksCompleted", expression = "java(milestone.getTasks() != null ? (int) milestone.getTasks().stream().filter(t -> t.getStatus() == POSE_Project_Tracking.Blog.enums.ETaskStatus.COMPLETED).count() : 0)")
+    @Mapping(target = "tasks", ignore = true)
     MilestoneRes toResponse(Milestone milestone);
+    
+    // Helper method for mapping list of milestones with tasks
+    default MilestoneRes toResponseWithTasks(Milestone milestone) {
+        if (milestone == null) {
+            return null;
+        }
+        
+        MilestoneRes response = toResponse(milestone);
+        
+        // Manually set tasks if they are loaded
+        if (milestone.getTasks() != null) {
+            response.setTasks(milestone.getTasks().stream()
+                .map(this::mapTask)
+                .collect(java.util.stream.Collectors.toList()));
+        }
+        
+        return response;
+    }
+    
+    // Helper method to map Task to TaskRes
+    @Mapping(target = "isLocked", source = "locked")
+    @Mapping(target = "projectId", source = "milestone.project.id")
+    @Mapping(target = "projectTitle", source = "milestone.project.title")
+    @Mapping(target = "assignedUsers", source = "assignedUsers")
+    @Mapping(target = "lockedById", source = "lockedBy.id")
+    @Mapping(target = "lockedByName", source = "lockedBy.displayName")
+    @Mapping(target = "createdById", source = "createdBy.id")
+    @Mapping(target = "createdByName", source = "createdBy.displayName")
+    @Mapping(target = "totalReports", expression = "java(task.getReports() != null ? task.getReports().size() : 0)")
+    @Mapping(target = "totalComments", expression = "java(task.getComments() != null ? task.getComments().size() : 0)")
+    POSE_Project_Tracking.Blog.dto.res.TaskRes mapTask(POSE_Project_Tracking.Blog.entity.Task task);
+    
+    // Map User to AssignedUserRes
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "displayName", source = "displayName")
+    @Mapping(target = "email", source = "email")
+    AssignedUserRes mapUserToAssignedUserRes(POSE_Project_Tracking.Blog.entity.User user);
 }

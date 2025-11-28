@@ -3,8 +3,10 @@ package POSE_Project_Tracking.Blog.controller;
 import POSE_Project_Tracking.Blog.dto.req.MilestoneReq;
 import POSE_Project_Tracking.Blog.dto.res.ApiResponse;
 import POSE_Project_Tracking.Blog.dto.res.MilestoneRes;
+import POSE_Project_Tracking.Blog.dto.res.TaskRes;
 import POSE_Project_Tracking.Blog.enums.EMilestoneStatus;
 import POSE_Project_Tracking.Blog.service.IMilestoneService;
+import POSE_Project_Tracking.Blog.service.ITaskService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,9 @@ public class MilestoneController {
     @Autowired
     private IMilestoneService milestoneService;
 
+    @Autowired
+    private ITaskService taskService;
+
     // Tạo milestone mới
     @PostMapping
     public ApiResponse<MilestoneRes> createMilestone(@Valid @RequestBody MilestoneReq milestoneReq) {
@@ -28,15 +33,19 @@ public class MilestoneController {
 
     // Lấy milestone theo ID
     @GetMapping("/{id}")
-    public ApiResponse<MilestoneRes> getMilestoneById(@PathVariable Long id) {
-        MilestoneRes milestone = milestoneService.getMilestoneById(id);
+    public ApiResponse<MilestoneRes> getMilestoneById(
+            @PathVariable Long id,
+            @RequestParam(required = false) String include) {
+        MilestoneRes milestone = milestoneService.getMilestoneById(id, include);
         return new ApiResponse<>(HttpStatus.OK, "Lấy thông tin milestone thành công", milestone, null);
     }
 
     // Lấy milestones theo project
     @GetMapping("/project/{projectId}")
-    public ApiResponse<List<MilestoneRes>> getMilestonesByProject(@PathVariable Long projectId) {
-        List<MilestoneRes> milestones = milestoneService.getMilestonesByProject(projectId);
+    public ApiResponse<List<MilestoneRes>> getMilestonesByProject(
+            @PathVariable Long projectId,
+            @RequestParam(required = false) String include) {
+        List<MilestoneRes> milestones = milestoneService.getMilestonesByProject(projectId, include);
         return new ApiResponse<>(HttpStatus.OK, "Lấy danh sách milestone của dự án thành công", milestones, null);
     }
 
@@ -79,10 +88,31 @@ public class MilestoneController {
         return new ApiResponse<>(HttpStatus.OK, "Cập nhật tiến độ milestone thành công", null, null);
     }
 
+    // Lock/Unlock milestone
+    @PatchMapping("/{id}/lock")
+    public ApiResponse<MilestoneRes> toggleMilestoneLock(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Boolean> request) {
+        Boolean isLocked = request.get("isLocked");
+        MilestoneRes milestone = milestoneService.toggleMilestoneLock(id, isLocked);
+        return new ApiResponse<>(HttpStatus.OK, 
+                isLocked ? "Khóa milestone thành công" : "Mở khóa milestone thành công", 
+                milestone, null);
+    }
+
     // Xóa milestone
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteMilestone(@PathVariable Long id) {
         milestoneService.deleteMilestone(id);
         return new ApiResponse<>(HttpStatus.OK, "Xóa milestone thành công", null, null);
+    }
+
+    // Lấy tasks theo milestone
+    @GetMapping("/{milestoneId}/tasks")
+    public ApiResponse<List<TaskRes>> getTasksByMilestone(
+            @PathVariable Long milestoneId,
+            @RequestParam(required = false) String include) {
+        List<TaskRes> tasks = taskService.getTasksByMilestone(milestoneId, include);
+        return new ApiResponse<>(HttpStatus.OK, "Lấy danh sách task của milestone thành công", tasks, null);
     }
 }

@@ -79,7 +79,6 @@ public enum ErrorCode {
     INVALID_REPORT_STATUS(8004, "Invalid report status", HttpStatus.BAD_REQUEST),
     REPORT_CONTENT_INVALID(8005, "Report content is invalid", HttpStatus.BAD_REQUEST),
     REPORT_SUBMISSION_FAILED(8006, "Failed to submit report", HttpStatus.BAD_REQUEST),
-    REPORT_ALREADY_APPROVED(8007, "Report is already approved and cannot be modified", HttpStatus.FORBIDDEN),
 
     // ==========================
     // 9xxx - Notification-related
