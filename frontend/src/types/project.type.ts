@@ -14,8 +14,8 @@ export interface Project {
   falculty: string;
   startDate: Date;
   endDate: Date;
-  milestoneCount: number;
-  memberCount: number;
+  totalMilestones: number;
+  totalMembers: number;
   completionPercentage: number;
   status: "ACTIVE" | "COMPLETED";
   isLocked: boolean;

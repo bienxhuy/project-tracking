@@ -269,8 +269,8 @@ export const StudentDashboard = () => {
                       year={project.year}
                       batch={project.batch}
                       progress={project.completionPercentage}
-                      members={project.memberCount}
-                      milestones={project.milestoneCount}
+                      members={project.totalMembers}
+                      milestones={project.totalMilestones}
                       completedMilestones={1}
                       status={project.status}
                       isLocked={project.isLocked}

@@ -302,7 +302,7 @@ export const ProjectDetailPage = () => {
               </div>
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-1">Quy mô nhóm</h3>
-                <p className="text-foreground">{project.memberCount} thành viên</p>
+                <p className="text-foreground">{project.totalMembers} thành viên</p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-1">Trạng thái</h3>
