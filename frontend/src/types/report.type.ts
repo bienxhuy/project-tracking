@@ -14,3 +14,21 @@ export interface Report {
 export interface ReportDetail extends Report {
   comments: Comment[];
 }
+
+export interface CreateReportRequest {
+  title: string;
+  content: string;
+  files: File[];
+}
+
+export interface UpdateReportRequest {
+  title: string;
+  content: string;
+  files: File[];
+  existingAttachmentIds: number[];
+  removedAttachmentIds: number[];
+}
+
+export interface ToggleReportLockRequest {
+  isLocked: boolean;
+}

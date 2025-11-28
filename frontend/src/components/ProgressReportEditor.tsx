@@ -11,7 +11,8 @@ import { Upload } from "lucide-react";
 
 import { Attachment } from "@/types/attachment.type";
 import { FileCard } from "@/components/FileCard";
-import { createReport, updateReport as updateReportService } from "@/services/report.service";
+import { reportService } from "@/services/report.service";
+import { toast } from "sonner";
 
 interface ProgressReportEditorProps {
   mode: "create" | "edit";
@@ -110,33 +111,40 @@ export const ProgressReportEditor = ({
   const handleSubmit = async (data: z.infer<typeof reportSchema>) => {
     setIsSubmitting(true);
     try {
-      let reportData;
-      
       if (mode === "edit" && reportId) {
-        // Edit mode: 
-        // 1. Upload new files to backend first
-        // 2. Send update with new title, new content, new files, removed files
+        // Edit mode: update existing report
         const existingAttachmentIds = attachments.map(att => att.id);
-        reportData = await updateReportService(reportId, { 
+        const response = await reportService.updateReport(reportId, { 
           title: data.title, 
           content: data.content,
           files: newFiles,
           existingAttachmentIds,
           removedAttachmentIds,
         });
+        
+        if (response.status === 200 && response.data) {
+          onSuccess?.(response.data);
+          toast.success("Cập nhật báo cáo thành công");
+        } else {
+          toast.error(response.message || "Không thể cập nhật báo cáo");
+        }
       } else if (mode === "create" && taskId) {
-        // Create mode: upload files and create report
-        reportData = await createReport(taskId, {
+        // Create mode: create new report
+        const response = await reportService.createReport(taskId, {
           title: data.title,
           content: data.content,
           files: newFiles,
         });
+        
+        if (response.status === 201 && response.data) {
+          onSuccess?.(response.data);
+          toast.success("Tạo báo cáo thành công");
+        } else {
+          toast.error(response.message || "Không thể tạo báo cáo");
+        }
       } else {
         throw new Error("Invalid mode or missing required IDs");
       }
-      
-      // Return report data with ID from backend to parent
-      onSuccess?.(reportData);
       
       // Reset form
       form.reset();
@@ -145,8 +153,7 @@ export const ProgressReportEditor = ({
       setRemovedAttachmentIds([]);
       setFileError(null);
     } catch (error) {
-      console.error("Failed to submit report:", error);
-      setFileError("Không thể lưu báo cáo. Vui lòng thử lại.");
+      toast.error("Đã xảy ra lỗi khi lưu báo cáo");
     } finally {
       setIsSubmitting(false);
     }

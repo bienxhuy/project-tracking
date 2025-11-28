@@ -20,7 +20,9 @@ import { Report } from "@/types/report.type";
 import { Comment as CommentType } from "@/types/comment.type";
 import { ProgressReportEditor } from "@/components/ProgressReportEditor";
 import { FileCard } from "@/components/FileCard";
-import { fetchReportDetail, addCommentToReport, deleteCommentFromReport, toggleReportLock as toggleReportLockService } from "@/services/report.service";
+import { reportService } from "@/services/report.service";
+import { commentService } from "@/services/comment.service";
+import { toast } from "sonner";
 
 interface ProgressReportCardProps {
   report: Report;
@@ -69,11 +71,15 @@ export const ProgressReportCard = ({
     if (!isExpanded && !commentsLoaded) {
       setIsLoadingComments(true);
       try {
-        const reportDetail = await fetchReportDetail(report.id);
-        setComments(reportDetail.comments);
-        setCommentsLoaded(true);
+        const response = await reportService.getReportById(report.id);
+        if (response.status === 200 && response.data) {
+          setComments(response.data.comments);
+          setCommentsLoaded(true);
+        } else {
+          toast.error(response.message || "Không thể tải bình luận");
+        }
       } catch (error) {
-        console.error("Failed to fetch report details:", error);
+        toast.error("Đã xảy ra lỗi khi tải bình luận");
       } finally {
         setIsLoadingComments(false);
       }
@@ -142,22 +148,37 @@ export const ProgressReportCard = ({
   const handleSubmitComment = async () => {
     if (!commentText.trim()) return;
     try {
-      const newComment = await addCommentToReport(report.id, commentText, mentionedUsers);
-      setComments([...comments, newComment]);
-      setCommentText("");
-      setMentionedUsers([]);
+      const response = await commentService.addComment(report.id, {
+        content: commentText,
+        mentions: mentionedUsers,
+      });
+      
+      if (response.status === 201 && response.data) {
+        setComments([...comments, response.data]);
+        setCommentText("");
+        setMentionedUsers([]);
+        toast.success("Thêm bình luận thành công");
+      } else {
+        toast.error(response.message || "Không thể thêm bình luận");
+      }
     } catch (error) {
-      console.error("Failed to add comment:", error);
+      toast.error("Đã xảy ra lỗi khi thêm bình luận");
     }
   };
 
   // Handle comment delete
   const handleDeleteCommentLocal = async (commentId: number) => {
     try {
-      await deleteCommentFromReport(report.id, commentId);
-      setComments(comments.filter(c => c.id !== commentId));
+      const response = await commentService.deleteComment(commentId);
+      
+      if (response.status === 200) {
+        setComments(comments.filter(c => c.id !== commentId));
+        toast.success("Xóa bình luận thành công");
+      } else {
+        toast.error(response.message || "Không thể xóa bình luận");
+      }
     } catch (error) {
-      console.error("Failed to delete comment:", error);
+      toast.error("Đã xảy ra lỗi khi xóa bình luận");
     }
   };
 
@@ -174,12 +195,25 @@ export const ProgressReportCard = ({
   // Handle report lock toggle
   const handleToggleLock = async () => {
     try {
-      await toggleReportLockService(report.id);
-      report.status = report.status === "LOCKED" ? "SUBMITTED" : "LOCKED";
-      setIsLocked(report.status === "LOCKED" || isTaskLocked);
-      onReportUpdated?.(report);
+      const newLockStatus = report.status === "LOCKED" ? false : true;
+      const response = await reportService.toggleReportLock(report.id, {
+        isLocked: newLockStatus,
+      });
+      
+      if (response.status === 200 && response.data) {
+        report.status = response.data.status;
+        setIsLocked(report.status === "LOCKED" || isTaskLocked);
+        onReportUpdated?.(report);
+        toast.success(
+          newLockStatus
+            ? "Đã khóa báo cáo thành công"
+            : "Đã mở khóa báo cáo thành công"
+        );
+      } else {
+        toast.error(response.message || "Không thể thay đổi trạng thái khóa");
+      }
     } catch (error) {
-      console.error("Failed to toggle report lock:", error);
+      toast.error("Đã xảy ra lỗi khi thay đổi trạng thái khóa");
     }
   };
 
