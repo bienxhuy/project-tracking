@@ -3,7 +3,6 @@ package POSE_Project_Tracking.Blog.controller;
 import java.io.IOException;
 import java.util.List;
 
-import POSE_Project_Tracking.Blog.enums.EUserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,10 +31,15 @@ public class UserController {
     IUserService userService;
 
 
-    // Lấy tất cả user
+    // Lấy tất cả user với filters
     @GetMapping
-    public ApiResponse<List<UserRes>> getAllUsers() {
-        List<UserRes> users = userService.getAllUsers();
+    public ApiResponse<List<UserRes>> getAllUsers(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String accountStatus,
+            @RequestParam(required = false) String loginType
+    ) {
+        List<UserRes> users = userService.getAllUsers(search, role, accountStatus, loginType);
         return new ApiResponse<>(HttpStatus.OK, "Fetched all users", users, null);
     }
 

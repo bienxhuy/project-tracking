@@ -1,0 +1,109 @@
+import apiClient from '../api/axios.customize.ts';
+import { 
+  User, 
+  CreateUserDto, 
+  UpdateUserDto, 
+  BulkCreateUserDto, 
+  BulkImportResult,
+  UserFilters,
+  UserStats
+} from "@/types/user.type";
+import { UserRole, UserStatus } from "@/types/util.type";
+import { ApiResponse } from "@/types/auth.type";
+
+class UserService {
+  async getUsers(filters?: UserFilters): Promise<User[]> {
+    const params = new URLSearchParams();
+    
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.role && filters.role !== 'ALL') params.append('role', filters.role);
+    if (filters?.accountStatus && filters.accountStatus !== 'ALL') {
+      params.append('accountStatus', filters.accountStatus);
+    }
+    if (filters?.loginType && filters.loginType !== 'ALL') {
+      params.append('loginType', filters.loginType);
+    }
+
+    const response = await apiClient.get<ApiResponse<User[]>>(
+      `/api/v1/users?${params.toString()}`
+    );
+    return response.data.data;
+  }
+
+  async getUserById(id: number): Promise<User> {
+    const response = await apiClient.get<ApiResponse<User>>(`/api/v1/users/${id}`);
+    return response.data.data;
+  }
+
+  async createUser(data: CreateUserDto): Promise<User> {
+    const response = await apiClient.post<ApiResponse<User>>('/api/v1/auth/register', data);
+    return response.data.data;
+  }
+
+  async updateUser(id: number, data: UpdateUserDto): Promise<User> {
+    const response = await apiClient.put<ApiResponse<User>>(`/api/v1/users/${id}`, data);
+    return response.data.data;
+  }
+
+  async activateUser(id: number): Promise<User> {
+    const response = await apiClient.put<ApiResponse<User>>(
+      `/api/v1/users/${id}/status?status=ACTIVE`
+    );
+    return response.data.data;
+  }
+  
+  async deactivateUser(id: number): Promise<User> {
+    const response = await apiClient.put<ApiResponse<User>>(
+      `/api/v1/users/${id}/status?status=INACTIVE`
+    );
+    return response.data.data;
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    await apiClient.delete(`/api/v1/users/${id}`);
+  }
+
+  async bulkCreateUsers(data: BulkCreateUserDto): Promise<BulkImportResult> {
+    const response = await apiClient.post<ApiResponse<BulkImportResult>>(
+      '/api/v1/users/bulk',
+      data
+    );
+    return response.data.data;
+  }
+
+  // Calculate stats locally from users array
+  calculateStats(users: User[]): UserStats {
+    return {
+      totalUsers: users.length,
+      totalAdmins: users.filter(u => u.role === UserRole.ADMIN).length,
+      totalInstructors: users.filter(u => u.role === UserRole.INSTRUCTOR).length,
+      totalStudents: users.filter(u => u.role === UserRole.STUDENT).length,
+      totalInactive: users.filter(u => u.accountStatus === UserStatus.INACTIVE).length,
+    };
+  }
+}
+
+export const userService = new UserService();
+
+
+// API Service to fetch user data
+
+import { BaseUser } from "@/types/user.type";
+import { dummyStudents } from "@/data/dummy/users.dummy";
+
+export function fetchAllStudents(): BaseUser[] {
+  // TODO: Replace with real API call
+  return dummyStudents;
+}
+
+export function searchStudents(query: string): BaseUser[] {
+  // TODO: Replace with real API call
+  if (!query) return dummyStudents;
+  
+  const lowerQuery = query.toLowerCase();
+  return dummyStudents.filter(
+    student => 
+      student.full_name.toLowerCase().includes(lowerQuery) ||
+      student.email.toLowerCase().includes(lowerQuery)
+  );
+}

@@ -63,22 +63,21 @@ public class AuthController {
                              .setAuthentication(authentication);
 
         var currentUser = userService.findByUsernameOrEmail(loginReq.getIdentifier());
-        if (currentUser.getAccountStatus()
-                       .equals(EUserStatus.VERIFYING)) {
-            return ResponseEntity.status(HttpStatus.OK)
-                                 .body(new ApiResponse<>(
-                                         ErrorCode.VERIFYING_EMAIL.getHttpStatus(),
-                                         ErrorCode.VERIFYING_EMAIL.getMessage(),
-                                         new LoginRes(null, currentUser.getId()),
-                                         ErrorCode.VERIFYING_EMAIL.name()));
-        } else if (currentUser.getAccountStatus()
-                              .equals(EUserStatus.BANNED)) {
+        
+        // Auto-activate on first login
+        if (currentUser.getAccountStatus().equals(EUserStatus.VERIFYING)) {
+            userService.updateUserStatus(currentUser.getId(), EUserStatus.ACTIVE);
+            currentUser = userService.findByUsernameOrEmail(loginReq.getIdentifier());
+        }
+        
+        // Block inactive users
+        if (currentUser.getAccountStatus().equals(EUserStatus.INACTIVE)) {
             return ResponseEntity.status(HttpStatus.OK)
                                  .body(new ApiResponse<>(
                                          ErrorCode.UNAUTHORIZED.getHttpStatus(),
-                                         ErrorCode.UNAUTHORIZED.getMessage(),
+                                         "Tài khoản đã bị vô hiệu hóa",
                                          new LoginRes(null, currentUser.getId()),
-                                         ErrorCode.UNAUTHORIZED.name()));
+                                         "ACCOUNT_INACTIVE"));
         }
 
         String accessToken = securityUtil.createAccessToken(currentUser);

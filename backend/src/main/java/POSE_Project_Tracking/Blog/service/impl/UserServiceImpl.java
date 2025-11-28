@@ -85,6 +85,44 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    public List<UserRes> getAllUsers(String search, String role, String accountStatus, String loginType) {
+        var users = userRepository.findAll();
+        
+        // Apply filters
+        return users.stream()
+                .filter(user -> {
+                    // Search filter (username, email, displayName, id)
+                    if (search != null && !search.isEmpty()) {
+                        String searchLower = search.toLowerCase();
+                        boolean matchesSearch = user.getUsername().toLowerCase().contains(searchLower) ||
+                                user.getEmail().toLowerCase().contains(searchLower) ||
+                                user.getDisplayName().toLowerCase().contains(searchLower) ||
+                                user.getId().toString().contains(searchLower);
+                        if (!matchesSearch) return false;
+                    }
+                    
+                    // Role filter
+                    if (role != null && !role.isEmpty() && !role.equals("ALL")) {
+                        if (!user.getRole().name().equals(role)) return false;
+                    }
+                    
+                    // Account status filter
+                    if (accountStatus != null && !accountStatus.isEmpty() && !accountStatus.equals("ALL")) {
+                        if (!user.getAccountStatus().name().equals(accountStatus)) return false;
+                    }
+                    
+                    // Login type filter
+                    if (loginType != null && !loginType.isEmpty() && !loginType.equals("ALL")) {
+                        if (!user.getLoginType().name().equals(loginType)) return false;
+                    }
+                    
+                    return true;
+                })
+                .map(this::changeToRes)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Cacheable(value = CacheConfig.USER_PROFILE_CACHE, key = "#id")
     public UserRes getUserById(Long id) {
         var user = userRepository.findById(id)
@@ -140,6 +178,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    @CacheEvict(value = CacheConfig.USER_PROFILE_CACHE, allEntries = true)
     public UserRes updateUserStatus(Long id, EUserStatus status) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));

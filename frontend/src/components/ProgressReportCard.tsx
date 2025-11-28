@@ -1,0 +1,394 @@
+import { useState, useRef } from "react";
+
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  ChevronDown,
+  ChevronUp,
+  Edit,
+  FileText,
+  Send,
+  Lock,
+  Unlock,
+  Trash
+} from "lucide-react";
+
+import { Report } from "@/types/report.type";
+import { Comment as CommentType } from "@/types/comment.type";
+import { ProgressReportEditor } from "@/components/ProgressReportEditor";
+import { FileCard } from "@/components/FileCard";
+import { fetchReportDetail, addCommentToReport, deleteCommentFromReport, toggleReportLock as toggleReportLockService } from "@/services/report.service";
+
+interface ProgressReportCardProps {
+  report: Report;
+  projectMembers: Array<{ id: number; name: string; initials: string }>;
+  userRole: "student" | "instructor";
+  isTaskLocked: boolean;
+  onReportUpdated?: (updatedReport: Report) => void; // Pass updated report to parent
+}
+
+export const ProgressReportCard = ({
+  report,
+  projectMembers,
+  userRole,
+  isTaskLocked,
+  onReportUpdated,
+}: ProgressReportCardProps) => {
+  // General state of the card
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Comments state and related
+  // Lazy load comments when expanding
+  const [comments, setComments] = useState<CommentType[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [commentText, setCommentText] = useState("");
+
+  // Mention dropdown state and related
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState("");
+  const [cursorPosition, setCursorPosition] = useState(0);
+  const [mentionedUsers, setMentionedUsers] = useState<number[]>([]);
+
+  // Ref for comment textarea 
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
+
+  // State to determine permissions
+  const [isLocked, setIsLocked] = useState<boolean>(report.status === "LOCKED" || isTaskLocked);
+  const canEdit = userRole === "student" && !isLocked;
+  const canLock = userRole === "instructor";
+
+  // Fetch report details (comments) when expanding for the first time
+  const handleToggleExpand = async () => {
+    // If current state is not expanded and comments not loaded, fetch comments
+    // This is the 1st time expanding
+    if (!isExpanded && !commentsLoaded) {
+      setIsLoadingComments(true);
+      try {
+        const reportDetail = await fetchReportDetail(report.id);
+        setComments(reportDetail.comments);
+        setCommentsLoaded(true);
+      } catch (error) {
+        console.error("Failed to fetch report details:", error);
+      } finally {
+        setIsLoadingComments(false);
+      }
+    }
+
+    // Toggle expanded state
+    setIsExpanded(!isExpanded);
+  };
+
+  // Handle @ mention on every change in comment textarea
+  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+
+    setCommentText(value);
+    setCursorPosition(cursorPos);
+
+    // Check for last @ character before cursor
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    // If found, extract the search term
+    if (lastAtIndex !== -1) {
+      // Extract search term after '@' 
+      const searchTerm = textBeforeCursor.substring(lastAtIndex + 1);
+
+      // If search term does not contain space, show mention dropdown
+      if (!searchTerm.includes(" ")) {
+        // Update search term and show dropdown
+        setMentionSearch(searchTerm.toLowerCase());
+        setShowMentionDropdown(true);
+        return;
+      }
+    }
+
+    setShowMentionDropdown(false);
+  };
+
+  // Insert mention
+  const insertMention = (member: { id: number; name: string }) => {
+    const textBeforeCursor = commentText.substring(0, cursorPosition);
+    const textAfterCursor = commentText.substring(cursorPosition);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    const newText =
+      textBeforeCursor.substring(0, lastAtIndex) +
+      `@${member.name} ` +
+      textAfterCursor;
+
+    setCommentText(newText);
+    setMentionedUsers([...mentionedUsers, member.id]);
+    setShowMentionDropdown(false);
+
+    // Focus back to textarea
+    setTimeout(() => {
+      commentInputRef.current?.focus();
+    }, 0);
+  };
+
+  // Filter members for mention dropdown
+  const filteredMembers = projectMembers.filter(member =>
+    member.name.toLowerCase().includes(mentionSearch)
+  );
+
+  // Handle comment submit
+  const handleSubmitComment = async () => {
+    if (!commentText.trim()) return;
+    try {
+      const newComment = await addCommentToReport(report.id, commentText, mentionedUsers);
+      setComments([...comments, newComment]);
+      setCommentText("");
+      setMentionedUsers([]);
+    } catch (error) {
+      console.error("Failed to add comment:", error);
+    }
+  };
+
+  // Handle comment delete
+  const handleDeleteCommentLocal = async (commentId: number) => {
+    try {
+      await deleteCommentFromReport(report.id, commentId);
+      setComments(comments.filter(c => c.id !== commentId));
+    } catch (error) {
+      console.error("Failed to delete comment:", error);
+    }
+  };
+
+  // Handle successful update from Editor
+  const handleUpdateSuccess = (updatedReport: import("@/types/report.type").Report) => {
+    setIsEditing(false);
+    onReportUpdated?.(updatedReport);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  // Handle report lock toggle
+  const handleToggleLock = async () => {
+    try {
+      await toggleReportLockService(report.id);
+      report.status = report.status === "LOCKED" ? "SUBMITTED" : "LOCKED";
+      setIsLocked(report.status === "LOCKED" || isTaskLocked);
+      onReportUpdated?.(report);
+    } catch (error) {
+      console.error("Failed to toggle report lock:", error);
+    }
+  };
+
+  return (
+    <Card className="border-border">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            {isEditing ? (
+              <ProgressReportEditor
+                mode="edit"
+                reportId={report.id}
+                initialData={{
+                  title: report.title,
+                  content: report.content,
+                  attachments: report.attachments,
+                }}
+                onSuccess={handleUpdateSuccess}
+                onCancel={handleCancelEdit}
+              />
+            ) : (
+              <>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold text-lg text-foreground">{report.title}</h3>
+                  {isLocked && (
+                    <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+                      <Lock className="w-3 h-3" />
+                    </Badge>
+                  )}
+                </div>
+                {/* Show content preview */}
+                {!isExpanded && (
+                  <>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {report.content}
+                    </p>
+                    {/* Show attachments preview */}
+                    {report.attachments.length > 0 && (
+                      <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                        <FileText className="w-3 h-3" />
+                        <span>{report.attachments.length} tệp đính kèm</span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+
+          {!isEditing && (
+            <div className="flex items-center gap-1">
+              {canEdit && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit className="w-3 h-3" />
+                </Button>
+              )}
+              {canLock && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={handleToggleLock}
+                >
+                  {isLocked ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                </Button>
+              )}
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={handleToggleExpand}
+              >
+                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </Button>
+            </div>
+          )}
+        </div>
+      </CardHeader>
+
+      {isExpanded && !isEditing && (
+        <CardContent className="space-y-4">
+          {/* Report Content */}
+          <div>
+            <p className="text-sm text-foreground whitespace-pre-wrap">{report.content}</p>
+          </div>
+
+          {/* Attachments */}
+          {report.attachments.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Tệp đính kèm ({report.attachments.length})
+              </h4>
+              <div className="space-y-2">
+                {report.attachments.map((attachment) => (
+                  <FileCard
+                    key={attachment.id}
+                    fileName={attachment.originalFilename}
+                    fileSize={attachment.fileSize}
+                    downloadUrl={attachment.storageUrl}
+                    variant="existing"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Comments Section */}
+          <div className="space-y-3 border-t border-border pt-4">
+            <h4 className="text-sm font-medium text-foreground">
+              Bình luận ({comments.length})
+            </h4>
+
+            {isLoadingComments ? (
+              <div className="text-center py-4 text-muted-foreground text-sm">
+                Đang tải bình luận...
+              </div>
+            ) : (
+              /* Existing Comments */
+              <div className="space-y-3">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="flex gap-2">
+                    <Avatar className="w-7 h-7">
+                      <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                        {comment.commenter.initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground">
+                          {comment.commenter.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {comment.createdDate.toLocaleString("vi-VN")}
+                        </span>
+                      </div>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm text-foreground whitespace-pre-wrap">
+                          {comment.content}
+                        </p>
+                        {!isLocked && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteCommentLocal(comment.id)}
+                          >
+                            <Trash className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Comment */}
+            {!isLocked && (
+              <div className="space-y-2 relative">
+                <Textarea
+                  ref={commentInputRef}
+                  placeholder="Thêm bình luận... (Gõ @ để tag thành viên)"
+                  value={commentText}
+                  onChange={handleCommentChange}
+                  rows={2}
+                  className="bg-white"
+                />
+
+                {/* Mention Dropdown */}
+                {showMentionDropdown && filteredMembers.length > 0 && (
+                  <div className="absolute z-10 w-full max-h-48 overflow-y-auto bg-white border border-border rounded-md shadow-lg">
+                    {filteredMembers.map((member) => (
+                      <button
+                        key={member.id}
+                        type="button"
+                        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary text-left"
+                        onClick={() => insertMention(member)}
+                      >
+                        <Avatar className="w-6 h-6">
+                          <AvatarFallback className="text-xs">
+                            {member.initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm text-foreground">{member.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <Button
+                  size="sm"
+                  onClick={handleSubmitComment}
+                  disabled={!commentText.trim()}
+                  className="cursor-pointer"
+                >
+                  <Send className="w-3 h-3 mr-2" />
+                  Gửi
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+};

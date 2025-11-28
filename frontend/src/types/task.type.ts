@@ -1,12 +1,18 @@
 // Minimal representation of a task data for API calls
 
+import { Report } from "./report.type";
+
 export interface Task {
-  id: string;
+  id: number;
   title: string;
   description: string;
-  assignees: Array<{ id: string; name: string; initials: string }>;
-  startDate: string;
-  endDate: string;
-  completed: boolean;
+  startDate: Date;
+  endDate: Date;
+  status: "IN_PROGRESS" | "COMPLETED";
   isLocked: boolean;
+  assignees: Array<{ id: number; name: string; initials: string }>;
+}
+
+export interface TaskDetail extends Task {
+  reports: Array<Report>;
 }

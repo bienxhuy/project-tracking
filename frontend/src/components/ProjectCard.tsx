@@ -1,32 +1,39 @@
-// TODO: Uncomment the navigation code when routing is set up
+import { useNavigate } from "react-router-dom";
+import { statusConfig } from "@/types/project.type";
 
-// import { useNavigate } from "react-router-dom";
+import { Calendar, Users, Target, Edit, Trash2, MoreVertical } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, Users, Target } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
 
 export interface ProjectCardProps {
-  id: string;
+  id: number;
   title: string;
-  semester: string;
-  year: string;
-  batch: string;
+  semester: number;
+  year: number;
+  batch: number;
   progress: number;
   members: number;
   milestones: number;
   completedMilestones: number;
-  status: "active" | "completed" | "locked";
+  status: "ACTIVE" | "COMPLETED";
+  isLocked: boolean;
+  showActions?: boolean;
+  onUpdate?: () => void;
+  onDelete?: () => void;
 }
 
-const statusConfig = {
-  active: { label: "Active", className: "bg-primary text-primary-foreground" },
-  completed: { label: "Completed", className: "bg-success text-success-foreground" },
-  locked: { label: "Locked", className: "bg-warning text-warning-foreground" },
-};
 
 export const ProjectCard = ({
-  // id,
+  id,
   title,
   semester,
   year,
@@ -36,24 +43,60 @@ export const ProjectCard = ({
   milestones,
   completedMilestones,
   status,
+  showActions = false,
+  onUpdate,
+  onDelete,
 }: ProjectCardProps) => {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const statusInfo = statusConfig[status];
+
+  const handleCardClick = () => {
+    navigate(`/project/${id}`);
+  };
+
+  const handleActionClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    action();
+  };
 
   return (
     <Card 
       className="hover:shadow-lg transition-all duration-300 border-border bg-gradient-card cursor-pointer bg-dark"
-      // onClick={() => navigate(`/project/${id}`)}
+      onClick={handleCardClick}
     >
       <CardHeader>
         <div className="flex items-start justify-between">
           <CardTitle className="text-xl font-semibold text-foreground">{title}</CardTitle>
-          <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
+            {showActions && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={(e) => handleActionClick(e, onUpdate!)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Cập nhật
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={(e) => handleActionClick(e, onDelete!)}
+                    className="text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Xóa
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
           <div className="flex items-center gap-1">
             <Calendar className="w-4 h-4" />
-            <span>{semester} {year} - Batch {batch}</span>
+            <span>Học kỳ {semester} {year} - Đợt {batch}</span>
           </div>
         </div>
       </CardHeader>

@@ -24,10 +24,32 @@ public class UserOTPFacade {
     IEmailService emailService;
 
     public UserRes createUser(UserReq req) {
+        // Save the original password before it gets hashed
+        String originalPassword = req.getPassword();
+        
         UserRes res = userService.createUser(req);
-        OTP otp = otpService.generateOTP(res.getId());
-        sendOTPToEmail(res, otp);
+        
+        // Send account info email with temporary password
+        sendAccountInfoToEmail(res, originalPassword);
+        
         return res;
+    }
+    
+    void sendAccountInfoToEmail(UserRes user, String temporaryPassword) {
+        try {
+            MessageDTO messageDTO = MessageDTO.builder()
+                                              .from("Nguyentruongpro19@gmail.com")
+                                              .to(user.getEmail())
+                                              .subject("Tài khoản UTEPs của bạn đã được tạo")
+                                              .toName(user.getDisplayName())
+                                              .password(temporaryPassword)
+                                              .build();
+
+            emailService.sendEmail(messageDTO);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Không thể gửi email thông tin tài khoản, vui lòng thử lại");
+        }
     }
 
     public void generateOTP(Long userId) {

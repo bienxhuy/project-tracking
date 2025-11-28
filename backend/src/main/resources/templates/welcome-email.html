@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>OTP Verification</title>
+    <title>Thông tin tài khoản UTEPs</title>
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
@@ -27,16 +27,37 @@
             margin-bottom: 20px;
         }
 
-        .otp-code {
-            font-size: 32px;
-            font-weight: bold;
-            color: #e74c3c;
-            background-color: #fceae9;
-            padding: 15px;
-            text-align: center;
+        .info-box {
+            background-color: #f8f9fa;
+            padding: 20px;
             border-radius: 6px;
             margin: 20px 0;
-            letter-spacing: 4px;
+            border-left: 4px solid #2d89ef;
+        }
+
+        .info-row {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #555;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .info-value {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .warning-box {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
         }
 
         .footer {
@@ -53,19 +74,30 @@
 </head>
 <body>
 <div class="email-container">
-    <div class="header">🔐 Xác nhận OTP</div>
+    <div class="header">🎉 Tài khoản UTEPs của bạn đã được tạo</div>
     <p>Xin chào <strong th:text="${name}">User</strong>,</p>
-    <p th:text="${content}">Dưới đây là mã OTP của bạn để xác thực hành động.</p>
+    <p>Tài khoản của bạn đã được tạo trên hệ thống <strong>UTEPs</strong>:</p>
 
-    <div class="otp-code" th:text="${otp}">123456</div>
+    <div class="info-box">
+        <div class="info-row">
+            <span class="info-label">Tài khoản:</span>
+            <span class="info-value" th:text="${email}">user@example.com</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Mật khẩu:</span>
+            <span class="info-value" th:text="${password}">********</span>
+        </div>
+    </div>
 
-    <p>Vui lòng không chia sẻ mã này với bất kỳ ai. Mã có hiệu lực trong vòng <strong>100 năm (Chưa giới hạn
-        time)</strong>.</p>
+    <p>Vui lòng đăng nhập vào hệ thống với thông tin trên.</p>
+
+    <div class="warning-box">
+        ⚠️ <strong>Xin lưu ý:</strong> Đổi mật khẩu ngay khi đăng nhập thành công để đảm bảo tính bảo mật.
+    </div>
 
     <div class="footer">
         Trân trọng,<br>
-        <div class="signature">OOSE Team</div>
-        <div>Nhất Kỳ Viên Phương Là Số 1!</div>
+        <div class="signature">UTEPs Team</div>
     </div>
 </div>
 </body>

@@ -1,24 +1,59 @@
 // Minimal representation of a Project entity for API Calls
 
 import { Milestone } from "./milestone.type";
+import { BaseUser } from "./user.type";
 
 export interface Project {
-  id: string;
+  id: number;
   title: string;
+  objective: string;
   content: string;
-  year: string;
-  semester: string;
-  batch: string;
+  year: number;
+  semester: number;
+  batch: number;
   falculty: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   milestoneCount: number;
   memberCount: number;
   completionPercentage: number;
-  status: "active" | "completed" | "locked";
+  status: "ACTIVE" | "COMPLETED";
+  isLocked: boolean;
 }
 
 export interface ProjectDetail extends Project {
-  objective: string;
+  isObjDesLocked: boolean;
   milestones: Milestone[];
+  students: BaseUser[];
+}
+
+export const statusConfig = {
+  ACTIVE: { label: "Đang hoạt động", className: "bg-warning text-warning-foreground" },
+  COMPLETED: { label: "Hoàn thành", className: "bg-success text-success-foreground" },
+};
+
+export interface CreateProjectRequest {
+  title: string;
+  objective: string;
+  content: string;
+  year: number;
+  semester: number;
+  batch: number;
+  falculty: string;
+  studentIds: number[];
+}
+
+export interface UpdateProjectRequest extends CreateProjectRequest {
+  id: number;
+}
+
+export interface ProjectApiSummary {
+  id: number;
+  name?: string;
+  title?: string;
+  status?: string;
+  faculty?: string;
+  falculty?: string;
+  year?: number;
+  completionPercentage?: number;
 }

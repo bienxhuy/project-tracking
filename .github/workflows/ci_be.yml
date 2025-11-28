@@ -39,10 +39,19 @@ jobs:
         - name: Grant execute permission for mvnw
           run: chmod +x mvnw    
 
-        - name: Build 
-          run: ./mvnw clean package -DskipTests
+        - name: Build and Test
+          run: ./mvnw clean verify
           env:
             MAVEN_OPTS: "-Xmx512m"
+
+        - name: Publish Test Results
+          uses: dorny/test-reporter@v1
+          if: always()
+          with:
+            name: Maven Tests
+            path: backend/target/surefire-reports/*.xml
+            reporter: java-junit
+            fail-on-error: true
 
         - name: Display build info
           run: |
