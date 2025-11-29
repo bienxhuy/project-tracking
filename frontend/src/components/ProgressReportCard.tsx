@@ -435,6 +435,11 @@ export const ProgressReportCard = ({
                         </AvatarFallback>
                       </Avatar>
                         <span className="text-sm text-foreground">{member.displayName}</span>
+                        {member.role === "INSTRUCTOR" && (
+                          <Badge variant="outline" className="text-xs ml-auto">
+                            Giảng viên
+                          </Badge>
+                        )}
                       </button>
                     ))}
                   </div>
