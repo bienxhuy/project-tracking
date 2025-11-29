@@ -423,6 +423,11 @@ public class ProjectServiceImpl implements IProjectService {
             Long completedTasks = taskRepository.countCompletedTasksByProject(id);
             float percentage = (float) completedTasks / totalTasks * 100;
             project.setCompletionPercentage(percentage);
+            
+            // Automatically update status to COMPLETED when completion reaches 100%
+            if (percentage >= 100.0f) {
+                project.setStatus(EProjectStatus.COMPLETED);
+            }
         }
 
         projectRepository.save(project);

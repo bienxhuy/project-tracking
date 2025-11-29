@@ -196,6 +196,11 @@ public class MilestoneServiceImpl implements IMilestoneService {
             Long completedTasks = taskRepository.countCompletedTasksByMilestone(id);
             float percentage = (float) completedTasks / totalTasks * 100;
             milestone.setCompletionPercentage(percentage);
+            
+            // Automatically update status to COMPLETED when completion reaches 100%
+            if (percentage >= 100.0f) {
+                milestone.setStatus(EMilestoneStatus.COMPLETED);
+            }
         }
 
         milestoneRepository.save(milestone);
