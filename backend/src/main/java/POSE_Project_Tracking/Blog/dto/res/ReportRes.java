@@ -49,4 +49,7 @@ public class ReportRes {
     
     // Comments (included when include=comments)
     private List<CommentRes> comments;
+    
+    // Attachments
+    private List<AttachmentRes> attachments;
 }

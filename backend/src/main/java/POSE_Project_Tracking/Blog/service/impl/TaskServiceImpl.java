@@ -16,11 +16,13 @@ import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.IMilestoneService;
 import POSE_Project_Tracking.Blog.service.IProjectService;
+import POSE_Project_Tracking.Blog.service.IReportService;
 import POSE_Project_Tracking.Blog.service.ITaskService;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
@@ -57,7 +59,12 @@ public class TaskServiceImpl implements ITaskService {
     private IProjectService projectService;
 
     @Autowired
+    @Lazy
     private IMilestoneService milestoneService;
+
+    @Autowired
+    @Lazy
+    private IReportService reportService;
 
     @Override
     public TaskRes createTask(TaskReq taskReq) {
@@ -107,8 +114,18 @@ public class TaskServiceImpl implements ITaskService {
             throw new CustomException(TASK_LOCKED);
         }
 
-        // Update only allowed fields
-        taskMapper.updateEntityFromRequest(taskReq, task);
+        // Update with assignees if provided
+        if (taskReq.getAssigneeIds() != null) {
+            List<User> assignedUsers = userRepository.findAllById(taskReq.getAssigneeIds());
+            if (assignedUsers.size() != taskReq.getAssigneeIds().size()) {
+                throw new CustomException(USER_NON_EXISTENT);
+            }
+            // Update all fields including assignees using mapper
+            taskMapper.updateEntityFromRequestWithAssignees(taskReq, task, assignedUsers);
+        } else {
+            // Update only title, description, startDate, endDate using mapper
+            taskMapper.updateEntityFromRequest(taskReq, task);
+        }
 
         task = taskRepository.save(task);
 
@@ -225,7 +242,29 @@ public class TaskServiceImpl implements ITaskService {
         Long projectId = task.getProject().getId();
         Long milestoneId = task.getMilestone() != null ? task.getMilestone().getId() : null;
 
+        // Force lazy loading and clear all relationships to avoid FK constraint issues
+        if (task.getAssignedUsers() != null) {
+            task.getAssignedUsers().clear();
+            taskRepository.saveAndFlush(task);
+        }
+
+        // Clear OneToMany relationships (though they have orphanRemoval, explicit clear helps)
+        if (task.getReports() != null) {
+            task.getReports().clear();
+        }
+        if (task.getComments() != null) {
+            task.getComments().clear();
+        }
+        if (task.getAttachments() != null) {
+            task.getAttachments().clear();
+        }
+
+        // Flush to ensure all changes are persisted before deletion
+        taskRepository.saveAndFlush(task);
+
+        // Now delete the task
         taskRepository.delete(task);
+        taskRepository.flush();
 
         // Update completion percentages after deletion
         projectService.updateProjectCompletion(projectId);
@@ -236,17 +275,8 @@ public class TaskServiceImpl implements ITaskService {
 
     @Override
     public void lockTask(Long id, Long userId) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(USER_NON_EXISTENT));
-
-        task.setLocked(true);
-        task.setLockedBy(user);
-        task.setLockedAt(LocalDateTime.now());
-
-        taskRepository.save(task);
+        // Lock task and all children (reports and their comments)
+        lockTaskWithChildren(id);
     }
 
     @Override
@@ -263,23 +293,22 @@ public class TaskServiceImpl implements ITaskService {
 
     @Override
     public TaskRes toggleTaskLock(Long id, Boolean isLocked) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
-
         if (Boolean.TRUE.equals(isLocked)) {
-            // Lock the task
-            User currentUser = securityUtil.getCurrentUser();
-            task.setLocked(true);
-            task.setLockedBy(currentUser);
-            task.setLockedAt(LocalDateTime.now());
+            // Lock task and all children
+            lockTaskWithChildren(id);
         } else {
-            // Unlock the task
+            // Unlock task only (not children)
+            Task task = taskRepository.findById(id)
+                    .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
+            
             task.setLocked(false);
             task.setLockedBy(null);
             task.setLockedAt(null);
+            taskRepository.save(task);
         }
 
-        task = taskRepository.save(task);
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
         return taskMapper.toResponse(task);
     }
 
@@ -375,6 +404,28 @@ public class TaskServiceImpl implements ITaskService {
         projectService.updateProjectCompletion(projectId);
         if (milestoneId != null) {
             milestoneService.updateMilestoneCompletion(milestoneId);
+        }
+    }
+
+    @Override
+    public void lockTaskWithChildren(Long id) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
+
+        User currentUser = securityUtil.getCurrentUser();
+        LocalDateTime now = LocalDateTime.now();
+
+        // Lock task only
+        task.setLocked(true);
+        task.setLockedBy(currentUser);
+        task.setLockedAt(now);
+        taskRepository.save(task);
+
+        // Delegate to ReportService to lock all reports (and their children - comments)
+        if (task.getReports() != null) {
+            task.getReports().forEach(report -> {
+                reportService.lockReportWithChildren(report.getId());
+            });
         }
     }
 }

@@ -13,9 +13,11 @@ import POSE_Project_Tracking.Blog.repository.ProjectRepository;
 import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.IMilestoneService;
+import POSE_Project_Tracking.Blog.service.ITaskService;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -45,6 +47,10 @@ public class MilestoneServiceImpl implements IMilestoneService {
 
     @Autowired
     private SecurityUtil securityUtil;
+
+    @Autowired
+    @Lazy
+    private ITaskService taskService;
 
     @Override
     public MilestoneRes createMilestone(MilestoneReq milestoneReq) {
@@ -159,22 +165,22 @@ public class MilestoneServiceImpl implements IMilestoneService {
 
     @Override
     public MilestoneRes toggleMilestoneLock(Long id, Boolean isLocked) {
-        Milestone milestone = milestoneRepository.findById(id)
-                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
-
-        User currentUser = securityUtil.getCurrentUser();
-        
-        milestone.setLocked(isLocked);
-        
         if (Boolean.TRUE.equals(isLocked)) {
-            milestone.setLockedBy(currentUser);
-            milestone.setLockedAt(LocalDateTime.now());
+            // Lock milestone and all children
+            lockMilestoneWithChildren(id);
         } else {
+            // Unlock milestone only (not children)
+            Milestone milestone = milestoneRepository.findById(id)
+                    .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
+            
+            milestone.setLocked(false);
             milestone.setLockedBy(null);
             milestone.setLockedAt(null);
+            milestoneRepository.save(milestone);
         }
-
-        milestone = milestoneRepository.save(milestone);
+        
+        Milestone milestone = milestoneRepository.findById(id)
+                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
         return milestoneMapper.toResponse(milestone);
     }
 
@@ -217,5 +223,27 @@ public class MilestoneServiceImpl implements IMilestoneService {
 
         milestone.setStatus(status);
         milestoneRepository.save(milestone);
+    }
+
+    @Override
+    public void lockMilestoneWithChildren(Long id) {
+        Milestone milestone = milestoneRepository.findById(id)
+                .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
+
+        User currentUser = securityUtil.getCurrentUser();
+        LocalDateTime now = LocalDateTime.now();
+
+        // Lock milestone only
+        milestone.setLocked(true);
+        milestone.setLockedBy(currentUser);
+        milestone.setLockedAt(now);
+        milestoneRepository.save(milestone);
+
+        // Delegate to TaskService to lock all tasks (and their children)
+        if (milestone.getTasks() != null) {
+            milestone.getTasks().forEach(task -> {
+                taskService.lockTaskWithChildren(task.getId());
+            });
+        }
     }
 }

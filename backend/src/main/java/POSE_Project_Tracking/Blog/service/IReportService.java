@@ -24,4 +24,5 @@ public interface IReportService {
     void deleteReport(Long id);
     void submitReport(Long id);
     void lockReport(Long id);
+    void lockReportWithChildren(Long id);
 }

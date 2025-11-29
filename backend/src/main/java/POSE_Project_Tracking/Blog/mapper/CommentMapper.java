@@ -9,6 +9,12 @@ import org.mapstruct.*;
 public interface CommentMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "startDate", ignore = true)
+    @Mapping(target = "endDate", ignore = true)
+    @Mapping(target = "locked", constant = "false")
+    @Mapping(target = "lockedBy", ignore = true)
+    @Mapping(target = "lockedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "content", source = "commentReq.content")
@@ -25,6 +31,12 @@ public interface CommentMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "startDate", ignore = true)
+    @Mapping(target = "endDate", ignore = true)
+    @Mapping(target = "locked", ignore = true)
+    @Mapping(target = "lockedBy", ignore = true)
+    @Mapping(target = "lockedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "project", ignore = true)
     @Mapping(target = "milestone", ignore = true)
     @Mapping(target = "task", ignore = true)
@@ -37,6 +49,11 @@ public interface CommentMapper {
     @Mapping(target = "attachments", ignore = true)
     void updateEntityFromRequest(CommentReq commentReq, @MappingTarget Comment comment);
 
+    @Mapping(target = "isLocked", source = "locked")
+    @Mapping(target = "lockedById", source = "lockedBy.id")
+    @Mapping(target = "lockedByName", source = "lockedBy.displayName")
+    @Mapping(target = "createdById", source = "createdBy.id")
+    @Mapping(target = "createdByName", source = "createdBy.displayName")
     @Mapping(target = "authorId", source = "author.id")
     @Mapping(target = "authorName", source = "author.displayName")
     @Mapping(target = "parentCommentId", source = "parentComment.id")

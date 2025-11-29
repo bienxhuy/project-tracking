@@ -19,4 +19,5 @@ public interface IMilestoneService {
     MilestoneRes toggleMilestoneLock(Long id, Boolean isLocked);
     void updateMilestoneCompletion(Long id);
     void updateMilestoneStatus(Long id, EMilestoneStatus status);
+    void lockMilestoneWithChildren(Long id);
 }
