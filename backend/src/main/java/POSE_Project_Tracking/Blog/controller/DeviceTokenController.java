@@ -95,21 +95,45 @@ public class DeviceTokenController {
     }
 
     /**
+     * Debug endpoint - xem chi tiết các tokens
+     */
+    @GetMapping("/debug")
+    @Operation(summary = "Debug: View detailed information about stored tokens")
+    public ResponseEntity<Map<String, Object>> debugTokens() {
+        User currentUser = securityUtil.getCurrentUser();
+        List<UserDeviceToken> tokens = deviceTokenService.getActiveDeviceTokens(currentUser);
+        
+        return ResponseEntity.ok(Map.of(
+            "userId", currentUser.getId(),
+            "username", currentUser.getUsername(),
+            "totalTokens", tokens.size(),
+            "tokens", tokens.stream().map(token -> Map.of(
+                "id", token.getId(),
+                "fcmToken", token.getFcmToken(),
+                "deviceType", token.getDeviceType(),
+                "deviceInfo", token.getDeviceInfo() != null ? token.getDeviceInfo() : "N/A",
+                "isActive", token.getIsActive(),
+                "createdAt", token.getCreatedAt(),
+                "lastUsedAt", token.getLastUsedAt()
+            )).toList()
+        ));
+    }
+
+    /**
      * Gửi test notification đến user hiện tại
      */
     @PostMapping("/test-notification")
     @Operation(summary = "Send a test notification to all devices of the current user")
-    public ResponseEntity<List<PushNotificationResponse>> sendTestNotification() {
+    public ResponseEntity<Map<String, Object>> sendTestNotification() {
         
         User currentUser = securityUtil.getCurrentUser();
         List<String> tokens = deviceTokenService.getActiveFcmTokens(currentUser);
         
         if (tokens.isEmpty()) {
-            return ResponseEntity.badRequest().body(List.of(
-                PushNotificationResponse.builder()
-                    .success(false)
-                    .error("No active device tokens found")
-                    .build()
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "No active device tokens found",
+                "results", List.of()
             ));
         }
         
@@ -125,10 +149,30 @@ public class DeviceTokenController {
         List<PushNotificationResponse> responses = tokens.stream()
                 .map(token -> {
                     notification.setToken(token);
-                    return messagingService.sendNotificationToToken(notification);
+                    PushNotificationResponse response = messagingService.sendNotificationToToken(notification);
+                    
+                    // Tự động xóa token không valid khỏi database
+                    if (response.isTokenInvalid()) {
+                        log.warn("Removing invalid token from database: {}", token);
+                        deviceTokenService.deleteDeviceToken(token);
+                    }
+                    
+                    return response;
                 })
                 .toList();
         
-        return ResponseEntity.ok(responses);
+        long successCount = responses.stream().filter(PushNotificationResponse::isSuccess).count();
+        long failureCount = responses.size() - successCount;
+        long invalidTokenCount = responses.stream().filter(PushNotificationResponse::isTokenInvalid).count();
+        
+        return ResponseEntity.ok(Map.of(
+            "success", successCount > 0,
+            "message", String.format("Sent to %d/%d devices. %d invalid tokens removed.", 
+                    successCount, responses.size(), invalidTokenCount),
+            "successCount", successCount,
+            "failureCount", failureCount,
+            "invalidTokensRemoved", invalidTokenCount,
+            "results", responses
+        ));
     }
 }

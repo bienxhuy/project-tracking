@@ -66,6 +66,19 @@ export const getMyDeviceTokens = async () => {
 };
 
 /**
+ * Debug: Get detailed token information
+ */
+export const debugDeviceTokens = async () => {
+  try {
+    const response = await apiClient.get('/api/v1/device-tokens/debug');
+    return response.data;
+  } catch (error) {
+    console.error('Error debugging device tokens:', error);
+    throw error;
+  }
+};
+
+/**
  * Send test notification
  */
 export const sendTestNotification = async () => {
