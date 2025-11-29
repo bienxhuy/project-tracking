@@ -12,6 +12,8 @@ import POSE_Project_Tracking.Blog.service.ICommentService;
 import POSE_Project_Tracking.Blog.service.IReportService;
 import POSE_Project_Tracking.Blog.util.FileUtil;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -77,6 +79,9 @@ public class ReportServiceImpl implements IReportService {
     @Autowired
     @Lazy
     private ICommentService commentService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Value("${upload.base-url:http://localhost:8080/api/v1/uploads}")
     private String baseUrl;
@@ -192,6 +197,14 @@ public class ReportServiceImpl implements IReportService {
 
         // Upload attachments if provided
         uploadAttachments(report, attachments);
+
+        // Flush changes to database and clear persistence context
+        entityManager.flush();
+        entityManager.clear();
+
+        // Reload report to get attachments with eager fetch
+        report = reportRepository.findByIdWithAttachments(report.getId())
+                .orElseThrow(() -> new CustomException(REPORT_NOT_FOUND));
 
         return reportMapper.toResponse(report);
     }
