@@ -9,7 +9,7 @@ import POSE_Project_Tracking.Blog.entity.Task;
 import POSE_Project_Tracking.Blog.entity.User;
 import org.mapstruct.*;
 
-@Mapper(componentModel = "spring", uses = {CommentMapper.class})
+@Mapper(componentModel = "spring", uses = {CommentMapper.class, AttachmentMapper.class})
 public interface ReportMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -69,6 +69,7 @@ public interface ReportMapper {
     @Mapping(target = "totalComments", expression = "java(report.getComments() != null ? report.getComments().size() : 0)")
     @Mapping(target = "totalAttachments", expression = "java(report.getAttachments() != null ? report.getAttachments().size() : 0)")
     @Mapping(target = "comments", ignore = true)
+    @Mapping(target = "attachments", source = "attachments")
     @Named("toResponse")
     ReportRes toResponse(Report report);
     
@@ -86,6 +87,7 @@ public interface ReportMapper {
     @Mapping(target = "totalComments", expression = "java(report.getComments() != null ? report.getComments().size() : 0)")
     @Mapping(target = "totalAttachments", expression = "java(report.getAttachments() != null ? report.getAttachments().size() : 0)")
     @Mapping(target = "comments", source = "comments")
+    @Mapping(target = "attachments", source = "attachments")
     @Named("toResponseWithComments")
     ReportRes toResponseWithComments(Report report);
 }

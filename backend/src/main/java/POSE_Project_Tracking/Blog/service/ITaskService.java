@@ -27,4 +27,5 @@ public interface ITaskService {
     void assignTask(Long taskId, Long userId);
     void updateTaskStatus(Long id, ETaskStatus status);
     void markTaskAsCompleted(Long id);
+    void lockTaskWithChildren(Long id);
 }

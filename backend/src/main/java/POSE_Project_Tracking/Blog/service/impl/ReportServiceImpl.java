@@ -8,12 +8,14 @@ import POSE_Project_Tracking.Blog.exceptionHandler.CustomException;
 import POSE_Project_Tracking.Blog.mapper.AttachmentMapper;
 import POSE_Project_Tracking.Blog.mapper.ReportMapper;
 import POSE_Project_Tracking.Blog.repository.*;
+import POSE_Project_Tracking.Blog.service.ICommentService;
 import POSE_Project_Tracking.Blog.service.IReportService;
 import POSE_Project_Tracking.Blog.util.FileUtil;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -71,6 +73,10 @@ public class ReportServiceImpl implements IReportService {
 
     @Autowired
     private AttachmentUploadService attachmentUploadService;
+
+    @Autowired
+    @Lazy
+    private ICommentService commentService;
 
     @Value("${upload.base-url:http://localhost:8080/api/v1/uploads}")
     private String baseUrl;
@@ -322,17 +328,30 @@ public class ReportServiceImpl implements IReportService {
 
     @Override
     public void lockReport(Long id) {
+        // Lock report and all children (comments)
+        lockReportWithChildren(id);
+    }
+
+    @Override
+    public void lockReportWithChildren(Long id) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new CustomException(REPORT_NOT_FOUND));
 
-        report.setStatus(EReportStatus.LOCKED);
-        report.setLocked(true);
-        report.setLockedAt(LocalDateTime.now());
-        
-        // Get current user as the one who locked
         User currentUser = securityUtil.getCurrentUser();
+        LocalDateTime now = LocalDateTime.now();
+
+        // Lock report only
+        report.setLocked(true);
         report.setLockedBy(currentUser);
-        
+        report.setLockedAt(now);
+        report.setStatus(EReportStatus.LOCKED);
         reportRepository.save(report);
+
+        // Delegate to CommentService to lock all comments in report
+        if (report.getComments() != null) {
+            report.getComments().forEach(comment -> {
+                commentService.lockComment(comment.getId());
+            });
+        }
     }
 }
