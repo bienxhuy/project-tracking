@@ -242,17 +242,15 @@ export default function NotificationTestPage() {
         </div>
 
         {/* Debug Info */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-6 bg-gray-800 text-white rounded-lg shadow-lg p-6">
-            <h2 className="text-lg font-semibold mb-3">🔧 Debug Info</h2>
-            <div className="space-y-2 text-xs font-mono">
-              <p>Browser Supported: {isSupported ? '✅' : '❌'}</p>
-              <p>Permission: {permission}</p>
-              <p>Has Token: {fcmToken ? '✅' : '❌'}</p>
-              <p>API URL: {import.meta.env.API_BASE_URL || 'Not configured'}</p>
-            </div>
+        <div className="mt-6 bg-gray-800 text-white rounded-lg shadow-lg p-6">
+          <h2 className="text-lg font-semibold mb-3">🔧 Debug Info</h2>
+          <div className="space-y-2 text-xs font-mono">
+            <p>Browser Supported: {isSupported ? '✅' : '❌'}</p>
+            <p>Permission: {permission}</p>
+            <p>Has Token: {fcmToken ? '✅' : '❌'}</p>
+            <p>API URL: http://localhost:9090</p>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -2,13 +2,13 @@
 // Replace with your Firebase project config from Firebase Console
 
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, // Optional
+  apiKey: "c-8sSvbCBQU",
+  authDomain: "pose-project-tracking.firebaseapp.com",
+  projectId: "pose-project-tracking",
+  storageBucket: "pose-project-tracking.firebasestorage.app",
+  messagingSenderId: "408081046822",
+  appId: "1:408081046822:web:3421bb3ed06ddac481b5e7",
+  measurementId: "G-XXXXXXXXXX", // Optional
 };
 
-export const vapidKey = import.meta.env.FIREBASE_VAPID_KEY;
+export const vapidKey = "BMygLl041Dh_hLUX-Q6stRx0V0vz_RfZjxqzkxhCsoWQxONWAn8MwSy4OLvjBR-RQiOy2j1FuCIinT6gZMIt-k0";

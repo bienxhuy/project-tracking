@@ -87,8 +87,8 @@ export const NotificationManager = () => {
         </div>
       )}
 
-      {/* Debug Info (Remove in production) */}
-      {fcmToken && process.env.NODE_ENV === 'development' && (
+      {/* Debug Info */}
+      {fcmToken && (
         <div className="fixed bottom-4 left-4 bg-gray-100 text-gray-700 px-3 py-2 rounded text-xs max-w-sm break-all">
           <strong>FCM Token:</strong>
           <div className="mt-1 font-mono text-xs">{fcmToken.substring(0, 50)}...</div>

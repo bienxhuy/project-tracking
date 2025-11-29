@@ -41,21 +41,17 @@ class WebSocketService {
       return;
     }
 
-    const wsUrl = import.meta.env.WS_URL;
-
-    console.log('Connecting to WebSocket:', wsUrl);
+    console.log('Connecting to WebSocket: http://localhost:9090/ws');
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS(wsUrl),
+      webSocketFactory: () => new SockJS("http://localhost:9090/ws"),
       
       connectHeaders: token ? {
         Authorization: `Bearer ${token}`,
       } : {},
 
       debug: (str) => {
-        if (import.meta.env.DEV) {
-          console.log('[WebSocket Debug]', str);
-        }
+        console.log('[WebSocket Debug]', str);
       },
 
       reconnectDelay: this.reconnectDelay,

@@ -1,11 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = import.meta.env.API_BASE_URL;
-console.log('API_BASE_URL:', API_BASE_URL);
-
 // Create axios instance
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: "http://localhost:9090",
   headers: {
     'Content-Type': 'application/json',
   },
@@ -15,7 +12,7 @@ const apiClient = axios.create({
 
 // Create separate instance for long-running operations
 export const apiClientLongRunning = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: "http://localhost:9090",
   headers: {
     'Content-Type': 'application/json',
   },
@@ -103,7 +100,7 @@ apiClient.interceptors.response.use(
 
       try {
         // Try to refresh token
-        const response = await axios.get(`${API_BASE_URL}/api/v1/auth/refresh`, {
+        const response = await axios.get(`http://localhost:9090/api/v1/auth/refresh`, {
           withCredentials: true,
         });
 
@@ -163,7 +160,7 @@ apiClientLongRunning.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/v1/auth/refresh`, {
+        const response = await axios.get(`http://localhost:9090/api/v1/auth/refresh`, {
           withCredentials: true,
         });
 
