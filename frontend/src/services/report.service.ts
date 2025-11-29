@@ -39,7 +39,7 @@ class ReportService {
    */
   async getReportsByTask(taskId: number): Promise<ApiResponse<Report[]>> {
     const response = await apiClient.get<ApiResponse<Report[]>>(
-      `/api/v1/tasks/${taskId}/reports`
+      `/api/v1/reports/task/${taskId}`
     );
     if (response.data.status === "success" && response.data.data) {
       response.data.data = response.data.data.map(report => parseReportDates<Report>(report));
