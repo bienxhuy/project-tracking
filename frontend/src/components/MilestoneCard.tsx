@@ -234,7 +234,7 @@ export const MilestoneCard = ({
               </div>
 
               <div
-                className="cursor-pointer hover:underline"
+                className="cursor-pointer hover:underline line-clamp-1 break-words"
                 onClick={() =>
                   navigate(`/project/${projectId}/milestone/${id}`)
                 }
@@ -242,7 +242,7 @@ export const MilestoneCard = ({
                 {title}
               </div>
             </CardTitle>
-            <p className="text-sm text-muted-foreground mt-2">{description}</p>
+            <p className="text-sm text-muted-foreground mt-2 line-clamp-1 break-words">{description}</p>
           </CardHeader>
 
           <CardContent className="space-y-3">
