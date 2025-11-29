@@ -14,7 +14,7 @@ export interface User {
   avatar?: string;
   role: UserRole;
   accountStatus: UserStatus;
-  level: number;  // double in backend
+  level?: number;  // Optional - removed from backend entity
   loginType: LoginType;
   createdAt: string;  // LocalDateTime from BaseEntity
   updatedAt: string;  // LocalDateTime from BaseEntity
