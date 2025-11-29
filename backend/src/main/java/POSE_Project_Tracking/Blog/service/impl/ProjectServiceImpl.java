@@ -297,11 +297,15 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    public List<ProjectRes> getProjectsByInstructor(Long instructorId) {
-        User instructor = userRepository.findById(instructorId)
-                .orElseThrow(() -> new CustomException(USER_NON_EXISTENT));
+    public List<ProjectRes> getProjectsByInstructor(Long instructorId, Integer year, Integer semester, String batch) {
+        // Use current academic year/semester/batch as defaults if not provided
+        Integer effectiveYear = year != null ? year : AcademicYearUtil.getCurrentYear();
+        Integer effectiveSemester = semester != null ? semester : AcademicYearUtil.getCurrentSemester();
+        String effectiveBatch = batch != null ? batch : AcademicYearUtil.getCurrentBatch();
 
-        return projectRepository.findByInstructor(instructor).stream()
+        return projectRepository.findByInstructorIdWithFilters(
+                instructorId, effectiveYear, effectiveSemester, effectiveBatch
+        ).stream()
                 .map(projectMapper::toResponse)
                 .collect(Collectors.toList());
     }
