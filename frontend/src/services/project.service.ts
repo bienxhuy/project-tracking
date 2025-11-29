@@ -19,6 +19,7 @@ function parseProjectDates<T extends Project | ProjectDetail>(project: any): T {
     ...project,
     startDate: new Date(project.startDate),
     endDate: new Date(project.endDate),
+    students: project.students.filter((mem: any) => mem.role === "STUDENT"),
     milestones: project.milestones?.map((milestone: any) => ({
       ...milestone,
       startDate: new Date(milestone.startDate),
@@ -174,10 +175,16 @@ class ProjectService {
    * Get instructor's projects
    */
   async getInstructorProjects(
-    instructorId: number
+    instructorId: number,
+    params?: {
+      year?: number;
+      semester?: number;
+      batch?: string;
+    }
   ): Promise<ApiResponse<Project[]>> {
     const response = await apiClient.get<ApiResponse<Project[]>>(
-      `/api/v1/projects/instructor/${instructorId}`
+      `/api/v1/projects/instructor/${instructorId}`,
+      { params }
     );
     if (response.data.status === "success" && response.data.data) {
       response.data.data = response.data.data.map(project => parseProjectDates<Project>(project));

@@ -12,6 +12,9 @@ import POSE_Project_Tracking.Blog.repository.ProjectMemberRepository;
 import POSE_Project_Tracking.Blog.repository.ProjectRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.IProjectMemberService;
+import POSE_Project_Tracking.Blog.service.NotificationHelperService;
+import POSE_Project_Tracking.Blog.enums.ENotificationType;
+import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,6 +40,12 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
     @Autowired
     private ProjectMemberMapper projectMemberMapper;
 
+    @Autowired
+    private NotificationHelperService notificationHelperService;
+
+    @Autowired
+    private SecurityUtil securityUtil;
+
     @Override
     public ProjectMemberRes addMember(ProjectMemberReq projectMemberReq) {
         // Lấy project
@@ -57,6 +66,26 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
 
         // Save
         member = projectMemberRepository.save(member);
+
+        // ✅ NOTIFICATION: Sinh viên được thêm vào project
+        try {
+            User triggeredBy = securityUtil.getCurrentUser();
+            String title = "Bạn được thêm vào dự án";
+            String message = String.format("Bạn đã được thêm vào dự án \"%s\"", project.getTitle());
+            
+            notificationHelperService.createNotification(
+                user, 
+                title,
+                message, 
+                ENotificationType.PROJECT_ASSIGNED,
+                project.getId(),
+                "PROJECT",
+                triggeredBy
+            );
+        } catch (Exception e) {
+            // Log but don't fail the operation
+            e.printStackTrace();
+        }
 
         return projectMemberMapper.toResponse(member);
     }

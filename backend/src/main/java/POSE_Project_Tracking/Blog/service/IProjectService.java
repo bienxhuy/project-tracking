@@ -18,7 +18,7 @@ public interface IProjectService {
     
     List<ProjectRes> getAllProjects();
     
-    List<ProjectRes> getProjectsByInstructor(Long instructorId);
+    List<ProjectRes> getProjectsByInstructor(Long instructorId, Integer year, Integer semester, String batch);
     
     List<ProjectRes> getProjectsByStatus(EProjectStatus status);
     

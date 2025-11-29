@@ -26,6 +26,8 @@ public interface MilestoneRepository extends JpaRepository<Milestone, Long> {
     @Query("SELECT m FROM Milestone m WHERE m.project.id = :projectId ORDER BY m.orderNumber ASC")
     List<Milestone> findByProjectIdOrderByOrderNumber(@Param("projectId") Long projectId);
 
+    List<Milestone> findByEndDate(LocalDate endDate);
+
     @Query("SELECT m FROM Milestone m WHERE m.endDate < :date AND m.status != 'COMPLETED'")
     List<Milestone> findOverdueMilestones(@Param("date") LocalDate date);
 

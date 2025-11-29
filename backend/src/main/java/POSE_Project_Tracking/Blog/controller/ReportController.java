@@ -1,6 +1,7 @@
 package POSE_Project_Tracking.Blog.controller;
 
 import POSE_Project_Tracking.Blog.dto.req.ReportReq;
+import POSE_Project_Tracking.Blog.dto.req.UpdateReportReq;
 import POSE_Project_Tracking.Blog.dto.res.ApiResponse;
 import POSE_Project_Tracking.Blog.dto.res.ReportRes;
 import POSE_Project_Tracking.Blog.enums.EReportStatus;
@@ -72,8 +73,9 @@ public class ReportController {
     @PutMapping("/{id}")
     public ApiResponse<ReportRes> updateReport(
             @PathVariable Long id,
-            @Valid @RequestBody ReportReq reportReq) {
-        ReportRes report = reportService.updateReport(id, reportReq);
+            @Valid @ModelAttribute UpdateReportReq updateReportReq,
+            @RequestParam(value = "files", required = false) MultipartFile[] files) {
+        ReportRes report = reportService.updateReport(id, updateReportReq, files);
         return new ApiResponse<>(HttpStatus.OK, "Cập nhật báo cáo thành công", report, null);
     }
 

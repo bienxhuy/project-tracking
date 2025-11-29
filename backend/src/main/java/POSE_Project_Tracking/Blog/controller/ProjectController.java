@@ -81,9 +81,15 @@ public class ProjectController {
     }
 
     // Lấy projects theo instructor
+    @Operation(summary = "Get projects by instructor with filters", 
+               description = "Get all projects by a specific instructor, with optional year/semester/batch filters")
     @GetMapping("/instructor/{instructorId}")
-    public ApiResponse<List<ProjectRes>> getProjectsByInstructor(@PathVariable Long instructorId) {
-        List<ProjectRes> projects = projectService.getProjectsByInstructor(instructorId);
+    public ApiResponse<List<ProjectRes>> getProjectsByInstructor(
+            @PathVariable Long instructorId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer semester,
+            @RequestParam(required = false) String batch) {
+        List<ProjectRes> projects = projectService.getProjectsByInstructor(instructorId, year, semester, batch);
         return new ApiResponse<>(HttpStatus.OK, "Lấy danh sách dự án của giảng viên thành công", projects, null);
     }
 

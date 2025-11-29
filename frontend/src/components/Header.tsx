@@ -8,16 +8,19 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
-import { Bell, Menu } from "lucide-react"
+import { Bell, Menu, Wifi, WifiOff } from "lucide-react"
 import logo from "@/assets/logo.png"
 import developing from "@/assets/developing.jpg"
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWebSocketNotifications } from "@/hooks/useWebSocketNotifications";
+import { NotificationPermissionDialog } from "@/components/NotificationPermissionDialog";
+import { requestNotificationPermission } from "@/services/firebase.service";
+import { registerDeviceToken } from "@/services/notification.api";
 
-import { fetchNotifications } from "@/services/notification.service";
-import { Notification } from "@/types/notification.type";
 import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
 import { useNavigate } from "react-router-dom";
 
@@ -29,23 +32,109 @@ const notificationTypes = [
 ]
 
 export const Header = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [showNotificationDialog, setShowNotificationDialog] = useState(false);
+  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const { logout, user } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
+  
+  // WebSocket notifications
+  const {
+    notifications,
+    unreadCount,
+    isConnected,
+    isLoading,
+    markAsRead,
+  } = useWebSocketNotifications();
 
+  // Check notification permission on mount
   useEffect(() => {
-    // Fetch notifications when the component mounts
-    const data = fetchNotifications();
-    setNotifications(data);
+    if ('Notification' in window) {
+      const currentPermission = Notification.permission;
+      console.log('Current notification permission:', currentPermission);
+      
+      // If permission granted, try to get token and register if not already done
+      if (currentPermission === 'granted') {
+        const existingToken = localStorage.getItem('fcmToken');
+        if (!existingToken) {
+          console.log('Permission granted but no token found, requesting token...');
+          handleRequestPermission().catch(err => {
+            console.error('Failed to auto-register token:', err);
+          });
+        }
+      }
+    }
   }, []);
 
+  // Handle notification permission request
+  const handleRequestPermission = async () => {
+    try {
+      const token = await requestNotificationPermission();
+      
+      if (token) {
+        // Register token with backend
+        await registerDeviceToken(token, 'WEB');
+        console.log('Device token registered successfully');
+        
+        // Store token in localStorage
+        localStorage.setItem('fcmToken', token);
+        
+        addToast({
+          title: "Đã bật thông báo",
+          description: "Bạn sẽ nhận được thông báo từ hệ thống",
+          variant: "success",
+        });
+      }
+    } catch (error) {
+      console.error('Failed to request notification permission:', error);
+      addToast({
+        title: "Không thể bật thông báo",
+        description: "Vui lòng kiểm tra cài đặt trình duyệt",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle bell icon click - check permission before opening dropdown
+  const handleBellClick = () => {
+    console.log('🔔 Bell icon clicked');
+    
+    if (!('Notification' in window)) {
+      console.warn('Browser does not support notifications');
+      addToast({
+        title: "Trình duyệt không hỗ trợ",
+        description: "Trình duyệt của bạn không hỗ trợ thông báo",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const currentPermission = Notification.permission;
+    console.log('Current notification permission:', currentPermission);
+    
+    // If permission not granted and not skipped, show dialog
+    if (currentPermission === 'default') {
+      console.log('Showing permission dialog...');
+      setShowNotificationDialog(true);
+    } else if (currentPermission === 'denied') {
+      console.log('Permission denied, showing error toast');
+      addToast({
+        title: "Thông báo đã bị chặn",
+        description: "Vui lòng bật thông báo trong cài đặt trình duyệt",
+        variant: "destructive",
+      });
+    } else {
+      // Permission granted, open dropdown normally
+      console.log('Permission already granted, opening dropdown');
+      setNotificationDropdownOpen(true);
+    }
+  };
+
   // Mark notification as read
-  const handleNotificationClick = (notification: Notification) => {
-    notification.isRead = true;
-    setNotifications([...notifications]);
-    // TODO: Call API to update notification status in the backend
+  const handleNotificationClick = (notificationId: number) => {
+    // Call API to mark as read (handled in useWebSocketNotifications hook)
+    markAsRead(notificationId);
   };
 
   const handleLogout = async () => {
@@ -68,27 +157,65 @@ export const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="flex h-15 items-center justify-between px-5 md:px-15 lg:px-32">
+    <>
+      {/* Notification Permission Dialog */}
+      <NotificationPermissionDialog
+        open={showNotificationDialog}
+        onOpenChange={setShowNotificationDialog}
+        onRequestPermission={async () => {
+          await handleRequestPermission();
+          setShowNotificationDialog(false);
+          // After granting permission, open the dropdown
+          setNotificationDropdownOpen(true);
+        }}
+      />
 
-        {/*Logo*/}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center cursor-pointer" onClick={() => navigate("/")}>
-              <img src={logo} alt="Logo" />
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+        <div className="flex h-15 items-center justify-between px-5 md:px-15 lg:px-32">
+
+          {/*Logo*/}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center cursor-pointer" onClick={() => navigate("/")}>
+                <img src={logo} alt="Logo" />
+              </div>
+              <h1 className="text-xl font-extrabold text-balance tracking-tight cursor-pointer" onClick={() => navigate("/")}>UTEPs</h1>
             </div>
-            <h1 className="text-xl font-extrabold text-balance tracking-tight cursor-pointer" onClick={() => navigate("/")}>UTEPs</h1>
           </div>
-        </div>
 
-        <div className="flex items-center gap-4">
-          {/*Notification dropdown*/}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="cursor-pointer" variant="ghost" size="icon">
-                <Bell className="w-5 h-5" />
-              </Button>
-            </DropdownMenuTrigger>
+          <div className="flex items-center gap-4">
+            {/*Notification dropdown*/}
+            <DropdownMenu 
+              open={notificationDropdownOpen} 
+              onOpenChange={(open) => {
+                // Only allow closing, not opening via the trigger
+                // Opening is controlled by handleBellClick
+                if (!open) {
+                  setNotificationDropdownOpen(false);
+                }
+              }}
+            >
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  className="cursor-pointer relative" 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleBellClick();
+                  }}
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <Badge 
+                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                      variant="destructive"
+                    >
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
 
             <DropdownMenuContent className="w-[300px] sm:w-[400px] md:w-[500px] px-3" align="end" alignOffset={-40}>
               <DropdownMenuLabel className="px-0 py-2">
@@ -111,20 +238,27 @@ export const Header = () => {
 
                 {/*All notifications*/}
                 <TabsContent value={notificationTypes[0].id}>
-                  {notifications.length === 0 ? (
-                    <div></div>
+                  {isLoading ? (
+                    <div className="flex items-center justify-center text-gray-500 py-5">
+                      <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-2">Đang tải...</span>
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div className="flex items-center justify-center text-gray-500 py-5">
+                      Bạn chưa có thông báo nào.
+                    </div>
                   ) : (
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
                         className={`flex flex-col px-3 py-2 mb-1 ${notification.isRead ? "bg-transparent" : "bg-blue-50 rounded border-yellow-300 cursor-pointer"
                           }`}
-                        onClick={() => {handleNotificationClick(notification)}}
+                        onClick={() => {handleNotificationClick(notification.id)}}
                       >
                         <div className="flex justify-between items-center">
                           <h3 className="text-sm font-semibold text-gray-800">{notification.title}</h3>
                           <span className="text-xs text-gray-500">
-                            {notification.createdDate.toLocaleDateString()} {notification.createdDate.toLocaleTimeString()}
+                            {new Date(notification.timestamp).toLocaleDateString()} {new Date(notification.timestamp).toLocaleTimeString()}
                           </span>
                         </div>
                         <p className="text-sm text-gray-700 mt-1">{notification.message}</p>
@@ -141,7 +275,12 @@ export const Header = () => {
 
                 {/*Notifications are unread */}
                 <TabsContent value={notificationTypes[1].id}>
-                  {notifications.filter(notification => !notification.isRead).length === 0 ? (
+                  {isLoading ? (
+                    <div className="flex items-center justify-center text-gray-500 py-5">
+                      <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-2">Đang tải...</span>
+                    </div>
+                  ) : notifications.filter(notification => !notification.isRead).length === 0 ? (
                     <div className="flex items-center justify-center text-gray-500 py-5">
                       Bạn chưa có thông báo mới nào.
                     </div>
@@ -151,12 +290,12 @@ export const Header = () => {
                         key={notification.id}
                         className={`flex flex-col px-3 py-2 mb-1 ${notification.isRead ? "bg-transparent" : "bg-blue-50 rounded border-yellow-300 cursor-pointer click:bg-transparent"
                           }`}
-                        onClick={() => {handleNotificationClick(notification)}}
+                        onClick={() => {handleNotificationClick(notification.id)}}
                       >
                         <div className="flex justify-between items-center">
                           <h3 className="text-sm font-semibold text-gray-800">{notification.title}</h3>
                           <span className="text-xs text-gray-500">
-                            {notification.createdDate.toLocaleDateString()} {notification.createdDate.toLocaleTimeString()}
+                            {new Date(notification.timestamp).toLocaleDateString()} {new Date(notification.timestamp).toLocaleTimeString()}
                           </span>
                         </div>
                         <p className="text-sm text-gray-700 mt-1">{notification.message}</p>
@@ -216,5 +355,6 @@ export const Header = () => {
         onOpenChange={setPasswordDialogOpen}
       />
     </header>
+    </>
   )
 }
