@@ -60,32 +60,20 @@ public interface MilestoneMapper {
     @Mapping(target = "tasks", ignore = true)
     MilestoneRes toResponse(Milestone milestone);
     
-    @AfterMapping
-    default void mapTasksAfterMapping(Milestone source, @MappingTarget MilestoneRes target) {
-        if (source.getTasks() != null && !source.getTasks().isEmpty()) {
-            target.setTasks(source.getTasks().stream()
-                .map(this::mapTask)
-                .collect(java.util.stream.Collectors.toList()));
-        }
-    }
-    
-    // Helper method for mapping list of milestones with tasks
-    default MilestoneRes toResponseWithTasks(Milestone milestone) {
-        if (milestone == null) {
-            return null;
-        }
-        
-        MilestoneRes response = toResponse(milestone);
-        
-        // Manually set tasks if they are loaded
-        if (milestone.getTasks() != null) {
-            response.setTasks(milestone.getTasks().stream()
-                .map(this::mapTask)
-                .collect(java.util.stream.Collectors.toList()));
-        }
-        
-        return response;
-    }
+    // Named method for mapping milestones WITH tasks - used specifically for detailed views
+    @Named("toResponseWithTasks")
+    @Mapping(target = "isLocked", source = "locked")
+    @Mapping(target = "status", source = "status")
+    @Mapping(target = "projectId", source = "project.id")
+    @Mapping(target = "projectTitle", source = "project.title")
+    @Mapping(target = "lockedById", source = "lockedBy.id")
+    @Mapping(target = "lockedByName", source = "lockedBy.displayName")
+    @Mapping(target = "createdById", source = "createdBy.id")
+    @Mapping(target = "createdByName", source = "createdBy.displayName")
+    @Mapping(target = "tasksTotal", expression = "java(milestone.getTasks() != null ? milestone.getTasks().size() : 0)")
+    @Mapping(target = "tasksCompleted", expression = "java(milestone.getTasks() != null ? (int) milestone.getTasks().stream().filter(t -> t.getStatus() == POSE_Project_Tracking.Blog.enums.ETaskStatus.COMPLETED).count() : 0)")
+    @Mapping(target = "tasks", source = "tasks")
+    MilestoneRes toResponseWithTasks(Milestone milestone);
     
     // Helper method to map Task to TaskRes
     @Mapping(target = "isLocked", source = "locked")

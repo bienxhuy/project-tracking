@@ -266,7 +266,7 @@ public class ProjectServiceImpl implements IProjectService {
             project.getMembers().size();
         }
         
-        return projectMapper.toResponse(project);
+        return projectMapper.toResponseWithDetails(project);
     }
 
     @Override
