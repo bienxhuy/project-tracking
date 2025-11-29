@@ -36,6 +36,7 @@ interface MilestoneCardProps {
   tasksCompleted?: number;
   status?: "COMPLETED" | "IN_PROGRESS";
   isLocked?: boolean;
+  isProjectLocked?: boolean;
   userRole?: "student" | "instructor";
   onCancel?: () => void;
   onCreated?: (milestone: Milestone) => void;
@@ -56,6 +57,7 @@ export const MilestoneCard = ({
   tasksCompleted = 0,
   status,
   isLocked = false,
+  isProjectLocked = false,
   userRole = "student",
   onCancel,
   onCreated,
@@ -64,6 +66,9 @@ export const MilestoneCard = ({
   autoFocus = false,
 }: MilestoneCardProps) => {
   const navigate = useNavigate();
+
+  // Effective lock status: milestone is locked if either the milestone itself or its parent project is locked
+  const isEffectiveLocked = isLocked || isProjectLocked;
 
   // Ref of title input to focus when entering edit/create mode
   const titleRef = useRef<HTMLInputElement>(null);
@@ -101,6 +106,10 @@ export const MilestoneCard = ({
 
   // When user clicks the edit icon: reset form to current prop values then open editor
   const handleEnterEdit = () => {
+    if (isEffectiveLocked) {
+      toast.error("Không thể chỉnh sửa cột mốc đã khóa");
+      return;
+    }
     form.reset(initialValues);
     setIsEditing(true);
   };
@@ -124,6 +133,10 @@ export const MilestoneCard = ({
   const handleDelete = async () => {
     // If no id, cannot delete
     if (!id) return;
+    if (isEffectiveLocked) {
+      toast.error("Không thể xóa cột mốc đã khóa");
+      return;
+    }
     try {
       const response = await milestoneService.deleteMilestone(id);
       if (response.status === "success") {
@@ -177,7 +190,7 @@ export const MilestoneCard = ({
       toast.error("Đã xảy ra lỗi khi lưu cột mốc");
     }
   };
-  
+
   return (
     <Card className="border-border bg-card hover:bg-gray-50 transition-colors h-fit">
       {/* Normal (display) mode: only show when not editing and not creating new */}
@@ -185,14 +198,14 @@ export const MilestoneCard = ({
         <>
           <CardHeader>
             <CardTitle className="flex flex-col items-start text-lg font-semibold text-foreground">
-              <div className="flex items-center justify-between w-full">
-                {status === "COMPLETED" ? (
+              <div className="flex items-center justify-between w-full mb-2">
+                {isEffectiveLocked ? (
+                  <Lock className="w-5 h-5 text-red-400" />
+                ) : status === "COMPLETED" ? (
                   <CheckCircle2 className="w-5 h-5 text-success" />
                 ) : status === "IN_PROGRESS" ? (
                   <Clock className="w-5 h-5 text-primary" />
-                ) : (
-                  <Lock className="w-5 h-5 text-red-400" />
-                )}
+                ) : null}
 
                 {userRole == "student" && (
                   <div className="flex items-center gap-2">
@@ -201,6 +214,7 @@ export const MilestoneCard = ({
                       variant="ghost"
                       className="rounded-full cursor-pointer"
                       onClick={handleEnterEdit}
+                      disabled={isEffectiveLocked}
                     >
                       <SquarePen />
                     </Button>
@@ -210,6 +224,7 @@ export const MilestoneCard = ({
                       variant="destructive"
                       className="rounded-full cursor-pointer"
                       onClick={handleDelete}
+                      disabled={isEffectiveLocked}
                     >
                       <Trash />
                     </Button>
@@ -219,7 +234,7 @@ export const MilestoneCard = ({
               </div>
 
               <div
-                className="cursor-pointer hover:underline"
+                className="cursor-pointer hover:underline line-clamp-1 break-words"
                 onClick={() =>
                   navigate(`/project/${projectId}/milestone/${id}`)
                 }
@@ -227,7 +242,7 @@ export const MilestoneCard = ({
                 {title}
               </div>
             </CardTitle>
-            <p className="text-sm text-muted-foreground mt-2">{description}</p>
+            <p className="text-sm text-muted-foreground mt-2 line-clamp-1 break-words">{description}</p>
           </CardHeader>
 
           <CardContent className="space-y-3">
@@ -250,7 +265,7 @@ export const MilestoneCard = ({
 
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {isLocked
+                {isEffectiveLocked
                   ? "Đã khóa"
                   : status === "IN_PROGRESS"
                     ? "Đang tiến hành"

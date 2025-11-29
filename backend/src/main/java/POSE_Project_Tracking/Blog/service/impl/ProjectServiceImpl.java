@@ -34,10 +34,30 @@ import POSE_Project_Tracking.Blog.repository.ProjectMemberRepository;
 import POSE_Project_Tracking.Blog.repository.ProjectRepository;
 import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
+import POSE_Project_Tracking.Blog.service.IMilestoneService;
 import POSE_Project_Tracking.Blog.service.IProjectService;
+import POSE_Project_Tracking.Blog.service.ITaskService;
 import POSE_Project_Tracking.Blog.util.AcademicYearUtil;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
+import org.springframework.aop.framework.AopProxyUtils;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
+
+import java.lang.reflect.Method;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static POSE_Project_Tracking.Blog.enums.ErrorCode.*;
 
 @Service
 @Transactional(rollbackOn = Exception.class)
@@ -60,6 +80,14 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Autowired
     private SecurityUtil securityUtil;
+
+    @Autowired
+    @Lazy
+    private IMilestoneService milestoneService;
+
+    @Autowired
+    @Lazy
+    private ITaskService taskService;
 
     private static boolean inspected = false;  // Chỉ inspect 1 lần
 
@@ -150,6 +178,16 @@ public class ProjectServiceImpl implements IProjectService {
 
         // Save project first to get ID
         project = projectRepository.save(project);
+
+        // Add instructor as project member
+        ProjectMember instructorMember = ProjectMember.builder()
+                .project(project)
+                .user(currentUser)
+                .role(currentUser.getRole())
+                .joinedAt(LocalDateTime.now())
+                .isActive(true)
+                .build();
+        projectMemberRepository.save(instructorMember);
 
         // Add student members if studentIds provided
         if (projectReq.getStudentIds() != null && !projectReq.getStudentIds().isEmpty()) {
@@ -298,12 +336,29 @@ public class ProjectServiceImpl implements IProjectService {
 
         // Get current authenticated user
         User currentUser = securityUtil.getCurrentUser();
+        LocalDateTime now = LocalDateTime.now();
 
+        // Lock project only
         project.setLocked(true);
         project.setLockedBy(currentUser);
-        project.setLockedAt(LocalDateTime.now());
-
+        project.setLockedAt(now);
         projectRepository.save(project);
+
+        // Delegate to MilestoneService to lock all milestones (and their children)
+        if (project.getMilestones() != null) {
+            project.getMilestones().forEach(milestone -> {
+                milestoneService.lockMilestoneWithChildren(milestone.getId());
+            });
+        }
+
+        // Delegate to TaskService to lock all tasks not in milestone (and their children)
+        if (project.getTasks() != null) {
+            project.getTasks().stream()
+                .filter(task -> task.getMilestone() == null)
+                .forEach(task -> {
+                    taskService.lockTaskWithChildren(task.getId());
+                });
+        }
     }
 
     @Override
@@ -394,6 +449,11 @@ public class ProjectServiceImpl implements IProjectService {
             Long completedTasks = taskRepository.countCompletedTasksByProject(id);
             float percentage = (float) completedTasks / totalTasks * 100;
             project.setCompletionPercentage(percentage);
+            
+            // Automatically update status to COMPLETED when completion reaches 100%
+            if (percentage >= 100.0f) {
+                project.setStatus(EProjectStatus.COMPLETED);
+            }
         }
 
         projectRepository.save(project);

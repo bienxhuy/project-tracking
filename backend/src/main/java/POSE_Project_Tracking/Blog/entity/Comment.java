@@ -17,7 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 @SuperBuilder
 @Audited // Track feedback/comment changes (who gave feedback, what was old feedback)
-public class Comment extends BaseEntity {
+public class Comment extends ProgressEntity {
 
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;

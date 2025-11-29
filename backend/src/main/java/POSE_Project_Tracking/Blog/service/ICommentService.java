@@ -18,4 +18,5 @@ public interface ICommentService {
     List<CommentRes> getCommentsByParent(Long parentId);
     List<CommentRes> getRepliesByComment(Long commentId);  // Alias for getCommentsByParent
     void deleteComment(Long id);
+    void lockComment(Long id);
 }

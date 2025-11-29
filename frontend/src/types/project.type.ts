@@ -14,7 +14,10 @@ export interface Project {
   falculty: string;
   startDate: Date;
   endDate: Date;
+  totalCompletedMilestones: number;
   totalMilestones: number;
+  totalCompletedTasks: number;
+  totalTasks: number;
   totalMembers: number;
   completionPercentage: number;
   status: "ACTIVE" | "COMPLETED";

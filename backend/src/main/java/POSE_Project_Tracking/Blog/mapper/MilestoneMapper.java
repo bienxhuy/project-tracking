@@ -48,6 +48,7 @@ public interface MilestoneMapper {
 
     @Named("toResponse")
     @Mapping(target = "isLocked", source = "locked")
+    @Mapping(target = "status", source = "status")
     @Mapping(target = "projectId", source = "project.id")
     @Mapping(target = "projectTitle", source = "project.title")
     @Mapping(target = "lockedById", source = "lockedBy.id")

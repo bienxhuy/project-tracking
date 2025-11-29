@@ -46,7 +46,9 @@ public class ProjectRes {
     
     // Statistics
     private Integer totalMilestones;
+    private Integer totalCompletedMilestones;
     private Integer totalTasks;
+    private Integer totalCompletedTasks;
     private Integer totalMembers;
     
     // Detailed data

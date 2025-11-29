@@ -90,9 +90,9 @@ export const ProjectDetailPage = () => {
   const statusInfo = statusConfig[project.status];
   const completedMilestones = project.milestones.filter(m => m.status === "COMPLETED").length;
 
-  // Calculate overall progress based on all tasks across milestones
-  const totalTasks = project.milestones.reduce((sum, milestone) => sum + milestone.tasksTotal, 0);
-  const totalCompletedTasks = project.milestones.reduce((sum, milestone) => sum + milestone.tasksCompleted, 0);
+  // Use API-provided task totals for overall progress
+  const totalTasks = project.totalTasks;
+  const totalCompletedTasks = project.totalCompletedTasks;
   const overallProgress = totalTasks > 0 ? Math.round((totalCompletedTasks / totalTasks) * 100) : 0;
 
   // Event handlers for content editing
@@ -155,6 +155,31 @@ export const ProjectDetailPage = () => {
     }
   };
 
+  // Event handler for locking/unlocking entire project (Instructor only)
+  const handleToggleProjectLock = async () => {
+    try {
+      if (project.isLocked) {
+        const response = await projectService.unlockEntireProject(Number(id));
+        if (response.status === "success") {
+          setProject({ ...project, isLocked: false });
+          toast.success("Đã mở khóa toàn bộ dự án");
+        } else {
+          toast.error(response.message || "Không thể mở khóa dự án");
+        }
+      } else {
+        const response = await projectService.lockEntireProject(Number(id));
+        if (response.status === "success") {
+          setProject({ ...project, isLocked: true });
+          toast.success("Đã khóa toàn bộ dự án");
+        } else {
+          toast.error(response.message || "Không thể khóa dự án");
+        }
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi thay đổi trạng thái khóa dự án");
+    }
+  };
+
   const handleSubmitComment = () => {
     if (!comment.trim()) return;
     // In real app, save comment to backend
@@ -166,9 +191,31 @@ export const ProjectDetailPage = () => {
     <div className="min-h-screen bg-background">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="scroll-m-20 text-left text-4xl font-extrabold tracking-tight text-balance mb-7">
-          {project.title}
-        </h1>
+        {/* Project Title with Lock Badge */}
+        <div className="flex items-center gap-3 mb-4">
+          <h1 className="scroll-m-20 text-left text-4xl font-extrabold tracking-tight text-balance">
+            {project.title}
+          </h1>
+          {project.isLocked && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-destructive/10 text-destructive border border-destructive/20 text-sm font-medium">
+              <Lock className="w-4 h-4" />
+              Đã khóa
+            </span>
+          )}
+        </div>
+
+        {/* Instructor Lock Project Button */}
+        {userRole === "instructor" && (
+          <div className="mb-6">
+            <Button
+              variant="outline"
+              onClick={handleToggleProjectLock}
+            >
+              {project.isLocked ? <Unlock className="w-4 h-4 mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+              {project.isLocked ? "Mở khóa toàn bộ dự án" : "Khóa toàn bộ dự án"}
+            </Button>
+          </div>
+        )}
 
         {/* Objectives and Description Card */}
         <Card className="mb-8">
@@ -189,7 +236,7 @@ export const ProjectDetailPage = () => {
                     </Button>
                   </>
                 )}
-                {userRole === "student" && !project.isObjDesLocked && (
+                {userRole === "student" && !project.isObjDesLocked && !project.isLocked && (
                   <Button
                     size="sm"
                     variant="outline"
@@ -240,8 +287,12 @@ export const ProjectDetailPage = () => {
               </Button>
             )}
             {/* Indicate the content lock status */}
-            {project.isObjDesLocked && (
-              <p className="text-sm text-destructive">Nội dung đã bị khóa bởi giảng viên</p>
+            {(project.isObjDesLocked || project.isLocked) && (
+              <p className="text-sm text-destructive">
+                {project.isLocked 
+                  ? "Toàn bộ dự án đã bị khóa bởi giảng viên" 
+                  : "Nội dung đã bị khóa bởi giảng viên"}
+              </p>
             )}
             {showCommentSection && userRole === "instructor" && (
               <>
@@ -316,7 +367,7 @@ export const ProjectDetailPage = () => {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-foreground">Cột mốc</h2>
-            {userRole === "student" && (
+            {userRole === "student" && !project.isLocked && (
               <Button onClick={() => setCreatingMilestone(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Tạo cột mốc
@@ -324,6 +375,13 @@ export const ProjectDetailPage = () => {
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Empty state */}
+            {project.milestones.length === 0 && !creatingMilestone && (
+              <div className="col-span-full text-center py-8 text-muted-foreground">
+                <p>Chưa có cột mốc nào.</p>
+              </div>
+            )}
+            
             {/* Existing Milestone Cards */}
             {project.milestones.map((milestone) => {
               return (
@@ -342,6 +400,8 @@ export const ProjectDetailPage = () => {
                   tasksTotal={milestone.tasksTotal}
                   tasksCompleted={milestone.tasksCompleted}
                   status={milestone.status}
+                  isLocked={milestone.isLocked}
+                  isProjectLocked={project.isLocked}
                   userRole={userRole}
                   onUpdated={(updatedMilestone) => {
                     setProject({

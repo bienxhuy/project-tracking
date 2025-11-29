@@ -22,6 +22,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -216,5 +217,20 @@ public class CommentServiceImpl implements ICommentService {
     public List<CommentRes> getRepliesByComment(Long commentId) {
         // Alias for getCommentsByParent
         return getCommentsByParent(commentId);
+    }
+
+    @Override
+    public void lockComment(Long id) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new CustomException(COMMENT_NOT_FOUND));
+
+        User currentUser = securityUtil.getCurrentUser();
+        LocalDateTime now = LocalDateTime.now();
+
+        // Lock comment only
+        comment.setLocked(true);
+        comment.setLockedBy(currentUser);
+        comment.setLockedAt(now);
+        commentRepository.save(comment);
     }
 }

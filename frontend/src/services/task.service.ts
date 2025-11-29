@@ -9,6 +9,27 @@ import {
   UpdateTaskRequest,
   ToggleTaskLockRequest,
 } from "@/types/task.type";
+import { Report } from "@/types/report.type";
+
+/**
+ * Helper function to parse report data from BE response
+ */
+function parseReportData(report: any): Report {
+  return {
+    id: report.id,
+    title: report.title,
+    content: report.content,
+    status: report.status,
+    attachments: report.attachments || [],
+    createdAt: new Date(report.createdAt),
+    reporter: {
+      id: report.submittedById,
+      displayName: report.submittedByName,
+      email: '',
+      role: 'STUDENT' as const,
+    },
+  };
+}
 
 /**
  * Helper function to parse date strings to Date objects in Task
@@ -18,10 +39,7 @@ function parseTaskDates<T extends Task | TaskDetail>(task: any): T {
     ...task,
     startDate: task.startDate ? new Date(task.startDate) : undefined,
     endDate: task.endDate ? new Date(task.endDate) : undefined,
-    reports: task.reports?.map((report: any) => ({
-      ...report,
-      submittedAt: new Date(report.submittedAt),
-    })),
+    reports: task.reports?.map((report: any) => parseReportData(report)),
   };
 }
 

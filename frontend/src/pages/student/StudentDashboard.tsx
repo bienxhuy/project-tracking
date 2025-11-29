@@ -260,18 +260,26 @@ export const StudentDashboard = () => {
                       Thử lại
                     </Button>
                   </div>
-                ) : projects.length === 0 ? (
+                ) : projects.filter(project => 
+                    project.title.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).length === 0 ? (
                   <div className="col-span-full flex flex-col items-center justify-center py-16 px-4">
                     <FolderKanban className="w-16 h-16 text-muted-foreground/40 mb-4" />
                     <h3 className="text-xl font-semibold text-foreground mb-2">
-                      Chưa có dự án nào
+                      {searchQuery ? "Không tìm thấy dự án" : "Chưa có dự án nào"}
                     </h3>
                     <p className="text-muted-foreground text-center max-w-md">
-                      Bạn chưa tham gia dự án nào. Vui lòng liên hệ giảng viên để được thêm vào dự án.
+                      {searchQuery 
+                        ? `Không tìm thấy dự án nào phù hợp với "${searchQuery}"`
+                        : "Bạn chưa tham gia dự án nào. Vui lòng liên hệ giảng viên để được thêm vào dự án."}
                     </p>
                   </div>
                 ) : (
-                  projects.map((project) => (
+                  projects
+                    .filter(project => 
+                      project.title.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                    .map((project) => (
                     <ProjectCard
                       key={project.id}
                       id={project.id}
@@ -279,10 +287,12 @@ export const StudentDashboard = () => {
                       semester={project.semester}
                       year={project.year}
                       batch={project.batch}
-                      progress={project.completionPercentage}
+                      progress={
+                        project.totalTasks === 0 ? 
+                        0 : Math.round((project.totalCompletedTasks / project.totalTasks) * 100)}
                       members={project.totalMembers}
                       milestones={project.totalMilestones}
-                      completedMilestones={1}
+                      completedMilestones={project.totalCompletedMilestones}
                       status={project.status}
                       isLocked={project.isLocked}
                     />
