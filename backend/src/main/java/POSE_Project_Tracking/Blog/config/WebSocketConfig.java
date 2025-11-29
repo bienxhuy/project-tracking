@@ -2,6 +2,7 @@ package POSE_Project_Tracking.Blog.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -14,11 +15,14 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * - Client connects via SockJS/STOMP protocol
  * - Message broker routes messages to subscribed clients
  * - Support both user-specific and broadcast messages
+ * - JWT authentication for secure user identification
  */
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final WebSocketAuthInterceptor webSocketAuthInterceptor;
 
     /**
      * Configure message broker
@@ -49,5 +53,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*") // Allow all origins (configure for production)
                 .withSockJS(); // Enable SockJS fallback options
+    }
+
+    /**
+     * Configure client inbound channel to add JWT authentication interceptor
+     * This extracts userId from JWT token and maps it to WebSocket session
+     */
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(webSocketAuthInterceptor);
     }
 }

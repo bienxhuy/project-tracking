@@ -1,6 +1,7 @@
 package POSE_Project_Tracking.Blog.service;
 
 import POSE_Project_Tracking.Blog.dto.PushNotificationRequest;
+import POSE_Project_Tracking.Blog.dto.PushNotificationResponse;
 import POSE_Project_Tracking.Blog.dto.WebSocketNotificationMessage;
 import POSE_Project_Tracking.Blog.entity.Notification;
 import POSE_Project_Tracking.Blog.entity.Project;
@@ -77,7 +78,6 @@ public class NotificationHelperService {
             // Update unread count
             Long unreadCount = notificationRepository.countByUserAndIsRead(user, false);
             webSocketNotificationService.sendNotificationCount(user.getId(), unreadCount);
-            
             log.info("✅ Sent WebSocket notification to user {}: {}", user.getId(), title);
         } catch (Exception e) {
             log.error("❌ Failed to send WebSocket notification: {}", e.getMessage());
@@ -253,18 +253,38 @@ public class NotificationHelperService {
                 .data(data)
                 .build();
 
-        try {
-            // Send to multiple devices using multicast
-            firebaseMessagingService.sendMulticastNotification(pushRequest, fcmTokens);
-            log.info("✅ Sent Firebase push notification to {} device(s) for user {}", 
-                    fcmTokens.size(), user.getId());
-        } catch (Exception e) {
-            log.error("❌ Failed to send Firebase push notification to user {}: {}", 
-                    user.getId(), e.getMessage());
-            
-            // Xử lý invalid tokens (optional - có thể xóa token không còn valid)
-            handleInvalidTokens(e, fcmTokens);
+        // Gửi từng token một thay vì multicast (workaround cho lỗi batch)
+        int successCount = 0;
+        int failureCount = 0;
+        
+        for (String fcmToken : fcmTokens) {
+            try {
+                pushRequest.setToken(fcmToken);
+                PushNotificationResponse response = firebaseMessagingService.sendNotificationToToken(pushRequest);
+                
+                if (response.isSuccess()) {
+                    successCount++;
+                    log.debug("✅ Sent to token: {}...", fcmToken.substring(0, Math.min(20, fcmToken.length())));
+                } else {
+                    failureCount++;
+                    log.warn("❌ Failed to send to token: {}..., error: {}", 
+                            fcmToken.substring(0, Math.min(20, fcmToken.length())), 
+                            response.getError());
+                    
+                    // Tự động xóa token không valid
+                    if (response.isTokenInvalid()) {
+                        log.warn("⚠️ Removing invalid FCM token from database");
+                        userDeviceTokenRepository.deleteByFcmToken(fcmToken);
+                    }
+                }
+            } catch (Exception e) {
+                failureCount++;
+                log.error("❌ Exception sending to token: {}", e.getMessage());
+            }
         }
+        
+        log.info("✅ Firebase push notification summary for user {}: {} success, {} failed", 
+                user.getId(), successCount, failureCount);
     }
 
     /**

@@ -32,13 +32,47 @@ public class FirebaseMessagingService {
                     .messageId(response)
                     .build();
                     
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (ExecutionException e) {
+            // Kiểm tra nếu là lỗi UNREGISTERED (token không còn valid)
+            if (e.getCause() instanceof FirebaseMessagingException) {
+                FirebaseMessagingException fme = (FirebaseMessagingException) e.getCause();
+                String errorCode = fme.getMessagingErrorCode() != null ? 
+                        fme.getMessagingErrorCode().name() : "UNKNOWN";
+                
+                log.error("FCM Error [{}] for token: {} - {}", 
+                        errorCode, request.getToken(), fme.getMessage());
+                
+                return PushNotificationResponse.builder()
+                        .success(false)
+                        .error("FCM Error: " + errorCode)
+                        .fcmErrorCode(errorCode)
+                        .tokenInvalid(isTokenInvalidError(errorCode))
+                        .build();
+            }
+            
             log.error("Error sending notification to token: {}", request.getToken(), e);
             return PushNotificationResponse.builder()
                     .success(false)
                     .error(e.getMessage())
                     .build();
+                    
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Interrupted while sending notification to token: {}", request.getToken(), e);
+            return PushNotificationResponse.builder()
+                    .success(false)
+                    .error("Request interrupted: " + e.getMessage())
+                    .build();
         }
+    }
+    
+    /**
+     * Kiểm tra xem error code có phải là token không valid không
+     */
+    private boolean isTokenInvalidError(String errorCode) {
+        return "UNREGISTERED".equals(errorCode) || 
+               "INVALID_ARGUMENT".equals(errorCode) ||
+               "NOT_FOUND".equals(errorCode);
     }
 
     /**
@@ -137,22 +171,6 @@ public class FirebaseMessagingService {
             messageBuilder.putAllData(request.getData());
         }
 
-        // Cấu hình cho Android
-        messageBuilder.setAndroidConfig(AndroidConfig.builder()
-                .setPriority(AndroidConfig.Priority.HIGH)
-                .setNotification(AndroidNotification.builder()
-                        .setSound("default")
-                        .setColor("#FF0000")
-                        .build())
-                .build());
-
-        // Cấu hình cho iOS
-        messageBuilder.setApnsConfig(ApnsConfig.builder()
-                .setAps(Aps.builder()
-                        .setSound("default")
-                        .setBadge(1)
-                        .build())
-                .build());
 
         return messageBuilder.build();
     }

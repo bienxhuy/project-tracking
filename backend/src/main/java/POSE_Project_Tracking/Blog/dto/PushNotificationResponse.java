@@ -28,4 +28,14 @@ public class PushNotificationResponse {
      * Thông báo lỗi (nếu có)
      */
     private String error;
+    
+    /**
+     * FCM Error Code (UNREGISTERED, INVALID_ARGUMENT, etc.)
+     */
+    private String fcmErrorCode;
+    
+    /**
+     * Token có bị invalid không (cần xóa khỏi DB)
+     */
+    private boolean tokenInvalid;
 }

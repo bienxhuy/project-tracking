@@ -66,12 +66,17 @@ export const useNotification = () => {
           console.log('Notification received:', payload);
           setNotification(payload);
           
-          // Show browser notification
+          // Show browser notification với âm thanh
           if (payload.notification) {
             new Notification(payload.notification.title || 'New Notification', {
               body: payload.notification.body,
               icon: payload.notification.image || '/vite.svg',
-            });
+              badge: '/vite.svg',
+              tag: payload.data?.type || 'default',
+              requireInteraction: false,
+              silent: false, // KEY: Đảm bảo có âm thanh!
+              data: payload.data,
+            } as NotificationOptions);
           }
         })
         .catch((err) => console.error('Error listening for messages:', err));

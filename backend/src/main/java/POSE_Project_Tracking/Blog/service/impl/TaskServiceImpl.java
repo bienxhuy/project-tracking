@@ -106,6 +106,28 @@ public class TaskServiceImpl implements ITaskService {
         // Save
         task = taskRepository.save(task);
 
+        // ✅ NOTIFICATION: Gửi thông báo cho các students được assign vào task
+        if (!assignedUsers.isEmpty()) {
+            try {
+                String title = "Bạn được giao task mới";
+                String message = String.format("Bạn được giao task \"%s\" trong dự án \"%s\"", 
+                    task.getTitle(), project.getTitle());
+                
+                notificationHelperService.createNotificationsForUsers(
+                    assignedUsers,
+                    title,
+                    message,
+                    ENotificationType.TASK_ASSIGNED,
+                    task.getId(),
+                    "TASK",
+                    currentUser
+                );
+            } catch (Exception e) {
+                // Log but don't fail the operation
+                e.printStackTrace();
+            }
+        }
+
         return taskMapper.toResponse(task);
     }
 
@@ -119,12 +141,24 @@ public class TaskServiceImpl implements ITaskService {
             throw new CustomException(TASK_LOCKED);
         }
 
+        // Get current assignees before update
+        List<Long> oldAssigneeIds = task.getAssignedUsers().stream()
+                .map(User::getId)
+                .collect(Collectors.toList());
+
         // Update with assignees if provided
+        List<User> newlyAssignedUsers = new ArrayList<>();
         if (taskReq.getAssigneeIds() != null) {
             List<User> assignedUsers = userRepository.findAllById(taskReq.getAssigneeIds());
             if (assignedUsers.size() != taskReq.getAssigneeIds().size()) {
                 throw new CustomException(USER_NON_EXISTENT);
             }
+            
+            // Tìm những user MỚI được assign (không có trong list cũ)
+            newlyAssignedUsers = assignedUsers.stream()
+                    .filter(user -> !oldAssigneeIds.contains(user.getId()))
+                    .collect(Collectors.toList());
+            
             // Update all fields including assignees using mapper
             taskMapper.updateEntityFromRequestWithAssignees(taskReq, task, assignedUsers);
         } else {
@@ -133,6 +167,29 @@ public class TaskServiceImpl implements ITaskService {
         }
 
         task = taskRepository.save(task);
+
+        // ✅ NOTIFICATION: Gửi thông báo cho các students MỚI được assign vào task
+        if (!newlyAssignedUsers.isEmpty()) {
+            try {
+                User currentUser = securityUtil.getCurrentUser();
+                String title = "Bạn được giao task mới";
+                String message = String.format("Bạn được giao task \"%s\" trong dự án \"%s\"", 
+                    task.getTitle(), task.getProject().getTitle());
+                
+                notificationHelperService.createNotificationsForUsers(
+                    newlyAssignedUsers,
+                    title,
+                    message,
+                    ENotificationType.TASK_ASSIGNED,
+                    task.getId(),
+                    "TASK",
+                    currentUser
+                );
+            } catch (Exception e) {
+                // Log but don't fail the operation
+                e.printStackTrace();
+            }
+        }
 
         return taskMapper.toResponse(task);
     }
