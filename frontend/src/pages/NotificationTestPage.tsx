@@ -249,7 +249,7 @@ export default function NotificationTestPage() {
               <p>Browser Supported: {isSupported ? '✅' : '❌'}</p>
               <p>Permission: {permission}</p>
               <p>Has Token: {fcmToken ? '✅' : '❌'}</p>
-              <p>API URL: {import.meta.env.VITE_API_BASE_URL || 'Not configured'}</p>
+              <p>API URL: {import.meta.env.API_BASE_URL || 'Not configured'}</p>
             </div>
           </div>
         )}

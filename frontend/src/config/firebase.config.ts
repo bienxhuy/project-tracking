@@ -11,4 +11,4 @@ export const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, // Optional
 };
 
-export const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+export const vapidKey = import.meta.env.FIREBASE_VAPID_KEY;
