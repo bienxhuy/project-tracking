@@ -46,6 +46,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT DISTINCT p FROM Project p JOIN p.members pm WHERE pm.user.id = :userId AND p.status = :status")
     List<Project> findProjectsByMemberUserIdAndStatus(@Param("userId") Long userId, @Param("status") EProjectStatus status);
 
+    List<Project> findByEndDate(java.time.LocalDate endDate);
+
     @Query("SELECT DISTINCT p FROM Project p JOIN p.members pm WHERE pm.user.id = :userId " +
            "AND (:year IS NULL OR p.year = :year) " +
            "AND (:semester IS NULL OR p.semester = :semester) " +

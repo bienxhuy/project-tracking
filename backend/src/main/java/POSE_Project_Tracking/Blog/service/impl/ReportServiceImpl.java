@@ -10,6 +10,8 @@ import POSE_Project_Tracking.Blog.mapper.ReportMapper;
 import POSE_Project_Tracking.Blog.repository.*;
 import POSE_Project_Tracking.Blog.service.ICommentService;
 import POSE_Project_Tracking.Blog.service.IReportService;
+import POSE_Project_Tracking.Blog.service.NotificationHelperService;
+import POSE_Project_Tracking.Blog.enums.ENotificationType;
 import POSE_Project_Tracking.Blog.util.FileUtil;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
@@ -77,6 +79,9 @@ public class ReportServiceImpl implements IReportService {
     @Autowired
     @Lazy
     private ICommentService commentService;
+
+    @Autowired
+    private NotificationHelperService notificationHelperService;
 
     @Value("${upload.base-url:http://localhost:8080/api/v1/uploads}")
     private String baseUrl;
@@ -192,6 +197,27 @@ public class ReportServiceImpl implements IReportService {
 
         // Upload attachments if provided
         uploadAttachments(report, attachments);
+
+        // ✅ NOTIFICATION: Report được submit
+        if (project != null) {
+            try {
+                String title = "Báo cáo mới được submit";
+                String message = String.format("%s đã submit báo cáo \"%s\"", 
+                    author.getDisplayName(), report.getTitle());
+                
+                notificationHelperService.createNotificationsForAllProjectMembers(
+                    project,
+                    title,
+                    message,
+                    ENotificationType.REPORT_SUBMITTED,
+                    report.getId(),
+                    "REPORT",
+                    author
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         return reportMapper.toResponse(report);
     }
@@ -346,6 +372,26 @@ public class ReportServiceImpl implements IReportService {
         report.setLockedAt(now);
         report.setStatus(EReportStatus.LOCKED);
         reportRepository.save(report);
+
+        // ✅ NOTIFICATION: Report bị khóa
+        if (report.getProject() != null) {
+            try {
+                String title = "Báo cáo bị khóa";
+                String message = String.format("Báo cáo \"%s\" đã bị khóa bởi giảng viên", report.getTitle());
+                
+                notificationHelperService.createNotificationsForStudentsOnly(
+                    report.getProject(),
+                    title,
+                    message,
+                    ENotificationType.REPORT_LOCKED,
+                    report.getId(),
+                    "REPORT",
+                    currentUser
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         // Delegate to CommentService to lock all comments in report
         if (report.getComments() != null) {

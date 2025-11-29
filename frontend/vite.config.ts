@@ -13,5 +13,9 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src'),
     },
-  }
+  },
+  define: {
+    // Polyfill for SockJS client
+    global: 'globalThis',
+  },
 })
