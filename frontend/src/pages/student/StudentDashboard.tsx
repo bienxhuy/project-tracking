@@ -142,20 +142,12 @@ export const StudentDashboard = () => {
                   </div>
                   <p className="text-3xl font-bold text-foreground">{projects.length}</p>
                 </div>
-                <div className="p-6 rounded-lg border border-border bg-gradient-card">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium text-muted-foreground">Nhiệm vụ chờ xử lý</p>
-                    <FolderKanban className="w-4 h-4 text-warning" />
-                  </div>
-                  <p className="text-3xl font-bold text-foreground">12</p>
-                  <p className="text-xs text-muted-foreground mt-1">8 hạn tuần này</p>
-                </div>
               </div>
             </div>
 
             {/* PROJECTS BLOCK */}
             <div className="flex flex-col rounded-lg gap-2">
-              <h3 className="text-xl font-bold text-foreground">Dự án hiện tại</h3>
+              <h3 className="text-xl font-bold text-foreground">Dự án hiện hoạt</h3>
 
               {/**Displaying projects functional block*/}
               <div className="lg:flex lg:justify-between">

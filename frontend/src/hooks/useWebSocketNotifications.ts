@@ -7,6 +7,8 @@ import {
   countUnreadNotifications, 
   markNotificationAsRead 
 } from '@/services/notification.api';
+import { authService } from '@/services/auth.service';
+import { isTokenExpired } from '@/utils/jwt.utils';
 
 export const useWebSocketNotifications = () => {
   const [notifications, setNotifications] = useState<WebSocketNotification[]>([]);
@@ -85,15 +87,37 @@ export const useWebSocketNotifications = () => {
   // Connect to WebSocket when user is authenticated
   useEffect(() => {
     if (user && user.id) {
-      const token = localStorage.getItem('accessToken');
-      
-      // Subscribe to callbacks
-      webSocketService.onNotification(handleNotification);
-      webSocketService.onNotificationCount(handleNotificationCount);
-      webSocketService.onConnectionChange(handleConnectionChange);
+      const connectWebSocket = async () => {
+        let token = localStorage.getItem('accessToken');
+        
+        // Check if token is expired or about to expire
+        if (token && isTokenExpired(token)) {
+          console.log('🔄 Access token expired, refreshing before WebSocket connection...');
+          
+          try {
+            // Refresh token before connecting
+            const response = await authService.refreshToken();
+            if (response.data?.accessToken) {
+              token = response.data.accessToken;
+              localStorage.setItem('accessToken', token);
+              console.log('✅ Token refreshed successfully for WebSocket connection');
+            }
+          } catch (error) {
+            console.error('❌ Failed to refresh token for WebSocket:', error);
+            // Continue with old token, backend will handle gracefully
+          }
+        }
+        
+        // Subscribe to callbacks
+        webSocketService.onNotification(handleNotification);
+        webSocketService.onNotificationCount(handleNotificationCount);
+        webSocketService.onConnectionChange(handleConnectionChange);
 
-      // Connect
-      webSocketService.connect(user.id, token || undefined);
+        // Connect with fresh token
+        webSocketService.connect(user.id, token || undefined);
+      };
+
+      connectWebSocket();
 
       // Cleanup on unmount
       return () => {

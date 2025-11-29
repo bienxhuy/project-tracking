@@ -42,6 +42,7 @@ import POSE_Project_Tracking.Blog.enums.ENotificationType;
 import POSE_Project_Tracking.Blog.util.AcademicYearUtil;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +62,7 @@ import java.util.stream.Collectors;
 
 import static POSE_Project_Tracking.Blog.enums.ErrorCode.*;
 
+@Slf4j
 @Service
 @Transactional(rollbackOn = Exception.class)
 public class ProjectServiceImpl implements IProjectService {
@@ -197,9 +199,47 @@ public class ProjectServiceImpl implements IProjectService {
         // Add student members if studentIds provided
         if (projectReq.getStudentIds() != null && !projectReq.getStudentIds().isEmpty()) {
             addProjectMembers(project, projectReq.getStudentIds());
+            
+            // Gửi notification cho các students được thêm vào project
+            sendProjectAddedNotifications(project, projectReq.getStudentIds(), currentUser);
         }
 
         return projectMapper.toResponse(project);
+    }
+    
+    /**
+     * Gửi notification cho students khi được thêm vào project
+     */
+    private void sendProjectAddedNotifications(Project project, List<Long> studentIds, User instructor) {
+        try {
+            // Lấy thông tin các students
+            List<User> students = userRepository.findAllById(studentIds);
+            
+            String title = "🎓 Bạn đã được thêm vào dự án mới";
+            String message = String.format(
+                "%s đã thêm bạn vào dự án '%s'",
+                instructor.getDisplayName() != null ? instructor.getDisplayName() : instructor.getUsername(),
+                project.getTitle()
+            );
+            
+            // Gửi notification cho tất cả students được thêm vào
+            notificationHelperService.createNotificationsForUsers(
+                students,
+                title,
+                message,
+                ENotificationType.PROJECT_ASSIGNED,
+                project.getId(),
+                "PROJECT",
+                instructor
+            );
+            
+            log.info("✅ Sent PROJECT_ASSIGNED notifications to {} students for project: {}", 
+                    students.size(), project.getTitle());
+        } catch (Exception e) {
+            // Log lỗi nhưng không throw exception để không ảnh hưởng đến việc tạo project
+            log.error("❌ Error sending project added notifications: {}", e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
