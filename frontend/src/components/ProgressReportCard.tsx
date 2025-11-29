@@ -78,14 +78,16 @@ export const ProgressReportCard = ({
 
   // Fetch report details (comments) when expanding for the first time
   const handleToggleExpand = async () => {
+    console.log("Toggling expand for report ID:", report.id);
     // If current state is not expanded and comments not loaded, fetch comments
     // This is the 1st time expanding
     if (!isExpanded && !commentsLoaded) {
+      console.log("Loading comments for report ID:", report.id);
       setIsLoadingComments(true);
       try {
-        const response = await reportService.getReportById(report.id);
+        const response = await commentService.getCommentsByReport(report.id);
         if (response.status === "success" && response.data) {
-          setComments(response.data.comments);
+          setComments(response.data);
           setCommentsLoaded(true);
         } else {
           toast.error(response.message || "Không thể tải bình luận");
