@@ -65,7 +65,7 @@ class UserService {
 
   async bulkCreateUsers(data: BulkCreateUserDto): Promise<BulkImportResult> {
     const response = await apiClient.post<ApiResponse<BulkImportResult>>(
-      '/api/v1/users/bulk',
+      '/api/v1/auth/bulk-register',
       data
     );
     return response.data.data;

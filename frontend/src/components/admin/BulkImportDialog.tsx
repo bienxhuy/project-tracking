@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download } from "lucide-react";
 import { BulkImportResult, CreateUserDto } from "@/types/user.type";
+import * as XLSX from 'xlsx';
 
 interface BulkImportDialogProps {
   open: boolean;
@@ -55,14 +56,12 @@ export function BulkImportDialog({
   };
 
   const handleFile = (selectedFile: File) => {
-    const validTypes = [
-      "text/csv",
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    ];
+    const validExtensions = ['.csv', '.xls', '.xlsx'];
+    const fileName = selectedFile.name.toLowerCase();
+    const isValidFile = validExtensions.some(ext => fileName.endsWith(ext));
 
-    if (!validTypes.includes(selectedFile.type)) {
-      alert("Please upload a CSV or Excel file");
+    if (!isValidFile) {
+      alert("Please upload a CSV, XLS, or XLSX file");
       return;
     }
 
@@ -80,53 +79,77 @@ export function BulkImportDialog({
     return password;
   };
 
-  const parseCSV = async (file: File): Promise<CreateUserDto[]> => {
+  const parseFile = async (file: File): Promise<CreateUserDto[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
+      
       reader.onload = (e) => {
         try {
-          const text = e.target?.result as string;
-          const lines = text.split("\n").filter(line => line.trim());
-          const headers = lines[0].split(",").map(h => h.trim());
+          const data = e.target?.result;
+          let workbook: XLSX.WorkBook;
 
-          const users: CreateUserDto[] = [];
+          // Parse based on file type
+          const fileName = file.name.toLowerCase();
+          if (fileName.endsWith('.csv')) {
+            // Parse CSV
+            workbook = XLSX.read(data, { type: 'binary' });
+          } else {
+            // Parse XLS/XLSX
+            workbook = XLSX.read(data, { type: 'array' });
+          }
+
+          // Get first sheet
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
           
-          for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(",").map(v => v.trim());
-            const rowData: any = {};
-            
-            headers.forEach((header, index) => {
-              rowData[header] = values[index];
-            });
+          // Convert to JSON
+          const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-            // Transform CSV data to CreateUserDto
-            const displayName = rowData.displayName || rowData.name || "";
-            const email = rowData.email || "";
-            const role = rowData.role || "STUDENT";
+          if (jsonData.length === 0) {
+            reject(new Error("File is empty or has no valid data"));
+            return;
+          }
+
+          // Transform to CreateUserDto
+          const users: CreateUserDto[] = jsonData.map((row) => {
+            const displayName = row.displayName || row.name || row.DisplayName || row.Name || "";
+            const email = row.email || row.Email || "";
+            const role = (row.role || row.Role || "STUDENT").toUpperCase();
             
             // Generate username from email
-            const username = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+            const username = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "") || 
+                           displayName.toLowerCase().replace(/[^a-z0-9]/g, "");
             
-            // Map role: STUDENT -> STUDENT, INSTRUCTOR -> INSTRUCTOR
-            const backendRole = role; // Direct mapping
+            // Validate required fields
+            if (!displayName || !email) {
+              throw new Error(`Missing required fields: displayName or email in row`);
+            }
 
-            users.push({
+            return {
               username: username,
-              password: generatePassword(), // Auto-generate password
+              password: generatePassword(),
               email: email,
               displayName: displayName,
-              role: backendRole as any,
+              role: role as any,
               loginType: "LOCAL" as any
-            });
-          }
+            };
+          });
 
           resolve(users);
         } catch (error) {
           reject(error);
         }
       };
+      
       reader.onerror = reject;
-      reader.readAsText(file);
+      
+      // Read file based on type
+      const fileName = file.name.toLowerCase();
+      if (fileName.endsWith('.csv')) {
+        reader.readAsBinaryString(file);
+      } else {
+        reader.readAsArrayBuffer(file);
+      }
     });
   };
 
@@ -135,12 +158,13 @@ export function BulkImportDialog({
 
     setLoading(true);
     try {
-      const users = await parseCSV(file);
+      const users = await parseFile(file);
       const importResult = await onSubmit(users);
       setResult(importResult);
     } catch (error) {
       console.error("Import failed:", error);
-      alert("Failed to import users. Please check your file format.");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      alert(`Failed to import users: ${errorMessage}\n\nPlease check your file format and ensure all required fields are present.`);
     } finally {
       setLoading(false);
     }
@@ -152,20 +176,35 @@ export function BulkImportDialog({
     onOpenChange(false);
   };
 
-  const downloadTemplate = (type: "student" | "instructor") => {
-    const headers = ["displayName", "email", "role"];
+  const downloadTemplate = (type: "student" | "instructor", format: "csv" | "xlsx" = "csv") => {
     const sampleData = type === "student" 
-      ? ["Nguyễn Văn An,nguyen.van.an@ute.edu.vn,STUDENT"]
-      : ["Dr. Trần Văn Bình,tran.van.binh@ute.edu.vn,INSTRUCTOR"];
+      ? [
+          { displayName: "Nguyễn Văn An", email: "nguyen.van.an@ute.edu.vn", role: "STUDENT" },
+          { displayName: "Trần Thị Bích", email: "tran.thi.bich@ute.edu.vn", role: "STUDENT" }
+        ]
+      : [
+          { displayName: "Dr. Trần Văn Bình", email: "tran.van.binh@ute.edu.vn", role: "INSTRUCTOR" },
+          { displayName: "Prof. Lê Thị Cẩm", email: "le.thi.cam@ute.edu.vn", role: "INSTRUCTOR" }
+        ];
     
-    const csv = [headers.join(","), ...sampleData].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${type}_template.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    if (format === "xlsx") {
+      // Create Excel file
+      const ws = XLSX.utils.json_to_sheet(sampleData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Users");
+      XLSX.writeFile(wb, `${type}_template.xlsx`);
+    } else {
+      // Create CSV file
+      const ws = XLSX.utils.json_to_sheet(sampleData);
+      const csv = XLSX.utils.sheet_to_csv(ws);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${type}_template.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
   };
 
   return (
@@ -174,7 +213,7 @@ export function BulkImportDialog({
         <DialogHeader>
           <DialogTitle>Bulk Import Users</DialogTitle>
           <DialogDescription>
-            Upload a CSV or Excel file to create multiple user accounts at once.
+            Upload a CSV, XLS, or XLSX file to create multiple user accounts at once.
           </DialogDescription>
         </DialogHeader>
 
@@ -219,7 +258,7 @@ export function BulkImportDialog({
                   <div className="space-y-2">
                     <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
                     <p className="font-medium">Click to upload or drag and drop</p>
-                    <p className="text-sm text-muted-foreground">CSV or Excel file</p>
+                    <p className="text-sm text-muted-foreground">CSV, XLS, or XLSX file</p>
                     <Button
                       variant="outline"
                       size="sm"
@@ -237,21 +276,43 @@ export function BulkImportDialog({
                   <Download className="h-4 w-4" />
                   Download Templates
                 </h4>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => downloadTemplate("student")}
-                  >
-                    Student Template
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => downloadTemplate("instructor")}
-                  >
-                    Instructor Template
-                  </Button>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadTemplate("student", "csv")}
+                      className="flex-1"
+                    >
+                      Student CSV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadTemplate("student", "xlsx")}
+                      className="flex-1"
+                    >
+                      Student XLSX
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadTemplate("instructor", "csv")}
+                      className="flex-1"
+                    >
+                      Instructor CSV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadTemplate("instructor", "xlsx")}
+                      className="flex-1"
+                    >
+                      Instructor XLSX
+                    </Button>
+                  </div>
                 </div>
               </div>
 

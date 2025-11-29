@@ -1,8 +1,11 @@
 package POSE_Project_Tracking.Blog.controller;
 
+import POSE_Project_Tracking.Blog.dto.req.BulkRegisterRequest;
 import POSE_Project_Tracking.Blog.dto.req.LoginReq;
 import POSE_Project_Tracking.Blog.dto.req.UserReq;
 import POSE_Project_Tracking.Blog.dto.res.ApiResponse;
+import POSE_Project_Tracking.Blog.dto.res.BulkImportError;
+import POSE_Project_Tracking.Blog.dto.res.BulkImportResult;
 import POSE_Project_Tracking.Blog.dto.res.LoginRes;
 import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
 import POSE_Project_Tracking.Blog.entity.RefreshToken;
@@ -13,6 +16,7 @@ import POSE_Project_Tracking.Blog.facade.UserOTPFacade;
 import POSE_Project_Tracking.Blog.repository.RefreshTokenRepository;
 import POSE_Project_Tracking.Blog.service.IUserService;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +29,9 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -191,6 +198,52 @@ public class AuthController {
     public ApiResponse<UserRes> registerUser(@Valid @RequestBody UserReq user) {
         UserRes created = userOTPFacade.createUser(user);
         return new ApiResponse<>(HttpStatus.CREATED, "User created successfully", created, null);
+    }
+
+    @PostMapping("/bulk-register")
+    @Transactional
+    public ApiResponse<BulkImportResult> bulkRegisterUsers(@Valid @RequestBody BulkRegisterRequest request) {
+        List<UserRes> createdUsers = new ArrayList<>();
+        List<BulkImportError> errors = new ArrayList<>();
+        List<String> originalPasswords = new ArrayList<>();
+        
+        // Step 1: Validate and create all users (without sending emails)
+        for (int i = 0; i < request.getUsers().size(); i++) {
+            UserReq userReq = request.getUsers().get(i);
+            try {
+                // Store original password before hashing
+                String originalPassword = userReq.getPassword();
+                
+                // Create user without sending email
+                UserRes createdUser = userService.createUser(userReq);
+                createdUsers.add(createdUser);
+                originalPasswords.add(originalPassword);
+            } catch (Exception e) {
+                errors.add(new BulkImportError(
+                    i + 1,
+                    userReq.getUsername(),
+                    userReq.getEmail(),
+                    List.of(e.getMessage())
+                ));
+            }
+        }
+        
+        // Step 2: Send batch verification emails asynchronously
+        if (!createdUsers.isEmpty()) {
+            userOTPFacade.sendBatchAccountInfoEmails(createdUsers, originalPasswords);
+        }
+        
+        return new ApiResponse<>(
+            HttpStatus.CREATED,
+            "Bulk registration completed",
+            new BulkImportResult(
+                request.getUsers().size(),
+                createdUsers.size(),
+                errors.size(),
+                errors
+            ),
+            null
+        );
     }
 
 }
