@@ -18,16 +18,15 @@ public interface CommentMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "content", source = "commentReq.content")
-    @Mapping(target = "project", source = "project")
-    @Mapping(target = "milestone", source = "milestone")
-    @Mapping(target = "task", source = "task")
+    @Mapping(target = "project", ignore = true)
+    @Mapping(target = "milestone", ignore = true)
+    @Mapping(target = "task", ignore = true)
     @Mapping(target = "report", source = "report")
     @Mapping(target = "author", source = "author")
     @Mapping(target = "parentComment", source = "parentComment")
     @Mapping(target = "replies", ignore = true)
     @Mapping(target = "attachments", ignore = true)
-    Comment toEntity(CommentReq commentReq, Project project, Milestone milestone, 
-                     Task task, Report report, User author, Comment parentComment);
+    Comment toEntity(CommentReq commentReq, Report report, User author, Comment parentComment);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)

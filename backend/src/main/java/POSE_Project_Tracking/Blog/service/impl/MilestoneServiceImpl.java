@@ -14,6 +14,8 @@ import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.IMilestoneService;
 import POSE_Project_Tracking.Blog.service.ITaskService;
+import POSE_Project_Tracking.Blog.service.NotificationHelperService;
+import POSE_Project_Tracking.Blog.enums.ENotificationType;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +53,9 @@ public class MilestoneServiceImpl implements IMilestoneService {
     @Autowired
     @Lazy
     private ITaskService taskService;
+
+    @Autowired
+    private NotificationHelperService notificationHelperService;
 
     @Override
     public MilestoneRes createMilestone(MilestoneReq milestoneReq) {
@@ -243,6 +248,24 @@ public class MilestoneServiceImpl implements IMilestoneService {
         milestone.setLockedBy(currentUser);
         milestone.setLockedAt(now);
         milestoneRepository.save(milestone);
+
+        // ✅ NOTIFICATION: Milestone bị khóa
+        try {
+            String title = "Milestone bị khóa";
+            String message = String.format("Milestone \"%s\" đã bị khóa bởi giảng viên", milestone.getTitle());
+            
+            notificationHelperService.createNotificationsForStudentsOnly(
+                milestone.getProject(),
+                title,
+                message,
+                ENotificationType.MILESTONE_LOCKED,
+                milestone.getId(),
+                "MILESTONE",
+                currentUser
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Delegate to TaskService to lock all tasks (and their children)
         if (milestone.getTasks() != null) {

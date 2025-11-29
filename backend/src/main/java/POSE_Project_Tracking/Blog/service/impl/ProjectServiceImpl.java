@@ -37,6 +37,8 @@ import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.IMilestoneService;
 import POSE_Project_Tracking.Blog.service.IProjectService;
 import POSE_Project_Tracking.Blog.service.ITaskService;
+import POSE_Project_Tracking.Blog.service.NotificationHelperService;
+import POSE_Project_Tracking.Blog.enums.ENotificationType;
 import POSE_Project_Tracking.Blog.util.AcademicYearUtil;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
@@ -88,6 +90,9 @@ public class ProjectServiceImpl implements IProjectService {
     @Autowired
     @Lazy
     private ITaskService taskService;
+
+    @Autowired
+    private NotificationHelperService notificationHelperService;
 
     private static boolean inspected = false;  // Chỉ inspect 1 lần
 
@@ -367,6 +372,24 @@ public class ProjectServiceImpl implements IProjectService {
         project.setLockedAt(now);
         projectRepository.save(project);
 
+        // ✅ NOTIFICATION: Project bị khóa
+        try {
+            String title = "Dự án bị khóa";
+            String message = String.format("Dự án \"%s\" đã bị khóa bởi giảng viên", project.getTitle());
+            
+            notificationHelperService.createNotificationsForStudentsOnly(
+                project,
+                title,
+                message,
+                ENotificationType.PROJECT_LOCKED,
+                project.getId(),
+                "PROJECT",
+                currentUser
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         // Delegate to MilestoneService to lock all milestones (and their children)
         if (project.getMilestones() != null) {
             project.getMilestones().forEach(milestone -> {
@@ -417,6 +440,24 @@ public class ProjectServiceImpl implements IProjectService {
         project.setLockedAt(LocalDateTime.now());
 
         projectRepository.save(project);
+
+        // ✅ NOTIFICATION: Project content bị khóa
+        try {
+            String title = "Nội dung dự án bị khóa";
+            String message = String.format("Nội dung dự án \"%s\" đã bị khóa bởi giảng viên", project.getTitle());
+            
+            notificationHelperService.createNotificationsForStudentsOnly(
+                project,
+                title,
+                message,
+                ENotificationType.PROJECT_CONTENT_LOCKED,
+                project.getId(),
+                "PROJECT",
+                currentUser
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -456,6 +497,26 @@ public class ProjectServiceImpl implements IProjectService {
         }
 
         project = projectRepository.save(project);
+
+        // ✅ NOTIFICATION: Objective & content được define
+        try {
+            User currentUser = securityUtil.getCurrentUser();
+            String title = "Nội dung dự án được cập nhật";
+            String message = String.format("%s đã định nghĩa nội dung cho dự án \"%s\"", 
+                currentUser.getDisplayName(), project.getTitle());
+            
+            notificationHelperService.createNotificationsForAllProjectMembers(
+                project,
+                title,
+                message,
+                ENotificationType.PROJECT_CONTENT_DEFINED,
+                project.getId(),
+                "PROJECT",
+                currentUser
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return projectMapper.toResponse(project);
     }

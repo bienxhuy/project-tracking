@@ -12,7 +12,7 @@ export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Navigate to HomePage when authenticated (HomePage will handle role-based routing)
+  // Simple navigation after login
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/", { replace: true });
@@ -80,15 +80,15 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <p className="text-lg font-semibold text-blue-900">
-            TRƯỜNG ĐẠI HỌC SƯ PHẠM KỸ THUẬT TP.HCM
-          </p>
-        </div>
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <p className="text-lg font-semibold text-blue-900">
+              TRƯỜNG ĐẠI HỌC SƯ PHẠM KỸ THUẬT TP.HCM
+            </p>
+          </div>
 
-        {/* Login Form */}
-        <div className="bg-white rounded-lg shadow-lg p-8">
+          {/* Login Form */}
+          <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Title */}
           <h2 className="text-3xl font-bold text-blue-900 mb-2 text-center">
             ĐĂNG NHẬP
@@ -226,4 +226,3 @@ export default function LoginPage() {
     </div>
   );
 };
-
