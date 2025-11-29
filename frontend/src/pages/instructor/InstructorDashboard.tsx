@@ -186,24 +186,6 @@ export const InstructorDashboard = () => {
                   </div>
                   <p className="text-3xl font-bold text-foreground">{projects.length}</p>
                 </div>
-                <div className="p-6 rounded-lg border border-border bg-gradient-card">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium text-muted-foreground">Dự án đang hoạt động</p>
-                    <FolderKanban className="w-4 h-4 text-warning" />
-                  </div>
-                  <p className="text-3xl font-bold text-foreground">
-                    {projects.filter(p => p.status === "ACTIVE").length}
-                  </p>
-                </div>
-                <div className="p-6 rounded-lg border border-border bg-gradient-card">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium text-muted-foreground">Dự án hoàn thành</p>
-                    <FolderKanban className="w-4 h-4 text-success" />
-                  </div>
-                  <p className="text-3xl font-bold text-foreground">
-                    {projects.filter(p => p.status === "COMPLETED").length}
-                  </p>
-                </div>
               </div>
             </div>
 
