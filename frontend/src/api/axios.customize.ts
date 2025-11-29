@@ -2,7 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 // Create axios instance
 const apiClient = axios.create({
-  baseURL: "http://localhost:9090",
+  baseURL: "https://project-tracker-backend-latest.onrender.com",
   headers: {
     'Content-Type': 'application/json',
   },
@@ -12,7 +12,7 @@ const apiClient = axios.create({
 
 // Create separate instance for long-running operations
 export const apiClientLongRunning = axios.create({
-  baseURL: "http://localhost:9090",
+  baseURL: "https://project-tracker-backend-latest.onrender.com",
   headers: {
     'Content-Type': 'application/json',
   },
@@ -100,7 +100,7 @@ apiClient.interceptors.response.use(
 
       try {
         // Try to refresh token
-        const response = await axios.get(`http://localhost:9090/api/v1/auth/refresh`, {
+        const response = await axios.get(`https://project-tracker-backend-latest.onrender.com/api/v1/auth/refresh`, {
           withCredentials: true,
         });
 
@@ -160,7 +160,7 @@ apiClientLongRunning.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const response = await axios.get(`http://localhost:9090/api/v1/auth/refresh`, {
+        const response = await axios.get(`https://project-tracker-backend-latest.onrender.com/api/v1/auth/refresh`, {
           withCredentials: true,
         });
 

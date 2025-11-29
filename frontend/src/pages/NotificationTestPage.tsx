@@ -248,7 +248,7 @@ export default function NotificationTestPage() {
             <p>Browser Supported: {isSupported ? '✅' : '❌'}</p>
             <p>Permission: {permission}</p>
             <p>Has Token: {fcmToken ? '✅' : '❌'}</p>
-            <p>API URL: http://localhost:9090</p>
+            <p>API URL: https://project-tracker-backend-latest.onrender.com</p>
           </div>
         </div>
       </div>

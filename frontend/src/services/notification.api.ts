@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: "http://localhost:9090",
+  baseURL: "https://project-tracker-backend-latest.onrender.com",
   headers: {
     'Content-Type': 'application/json',
   },
