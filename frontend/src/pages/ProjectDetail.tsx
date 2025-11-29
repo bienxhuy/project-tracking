@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { CheckCircle2, Clock, Lock, Unlock, Plus, Edit } from "lucide-react";
+import { CheckCircle2, Clock, Lock, Unlock, Plus, Edit, FileDown, MoreVertical } from "lucide-react";
 import { projectService } from "@/services/project.service";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -8,6 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { ProjectDetail } from "@/types/project.type";
 import { statusConfig } from "@/types/project.type";
@@ -45,7 +51,7 @@ export const ProjectDetailPage = () => {
       try {
         setIsLoading(true);
         const response = await projectService.getProjectById(Number(id));
-        
+
         if (response.status === "success" && response.data) {
           setProject(response.data);
         } else {
@@ -57,7 +63,7 @@ export const ProjectDetailPage = () => {
         setIsLoading(false);
       }
     };
-    
+
     loadProjectDetail();
   }, [id]);
 
@@ -115,7 +121,7 @@ export const ProjectDetailPage = () => {
         objectives: editedObjective,
         content: editedContent,
       });
-      
+
       if (response.status === "success") {
         setProject({ ...project, objectives: editedObjective, content: editedContent });
         setIsEditing(false);
@@ -187,13 +193,24 @@ export const ProjectDetailPage = () => {
     setShowCommentSection(false);
   };
 
+  // Event handler for exporting project as PDF
+  const handleExportProject = async () => {
+    try {
+      toast.info("Đang xuất dự án...");
+      await projectService.exportProjectAsPDF(Number(id));
+      toast.success("Xuất dự án thành công");
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi xuất dự án");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Project Title with Lock Badge */}
+        {/* Project Title with Lock Badge and Instructor Actions */}
         <div className="flex items-center gap-3 mb-4">
-          <h1 className="scroll-m-20 text-left text-4xl font-extrabold tracking-tight text-balance">
+          <h1 className="scroll-m-20 text-left text-4xl font-extrabold tracking-tight text-balance flex-1">
             {project.title}
           </h1>
           {project.isLocked && (
@@ -202,20 +219,40 @@ export const ProjectDetailPage = () => {
               Đã khóa
             </span>
           )}
+          {/* Instructor Actions Dropdown */}
+          {userRole === "instructor" && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={handleToggleProjectLock}
+                  className="cursor-pointer">
+                  {project.isLocked ? (
+                    <>
+                      <Unlock className="w-4 h-4 mr-2" />
+                      Mở khóa toàn bộ dự án
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4 mr-2" />
+                      Khóa toàn bộ dự án
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={handleExportProject}>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Xuất dự án
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
-
-        {/* Instructor Lock Project Button */}
-        {userRole === "instructor" && (
-          <div className="mb-6">
-            <Button
-              variant="outline"
-              onClick={handleToggleProjectLock}
-            >
-              {project.isLocked ? <Unlock className="w-4 h-4 mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
-              {project.isLocked ? "Mở khóa toàn bộ dự án" : "Khóa toàn bộ dự án"}
-            </Button>
-          </div>
-        )}
 
         {/* Objectives and Description Card */}
         <Card className="mb-8">
@@ -289,8 +326,8 @@ export const ProjectDetailPage = () => {
             {/* Indicate the content lock status */}
             {(project.isObjDesLocked || project.isLocked) && (
               <p className="text-sm text-destructive">
-                {project.isLocked 
-                  ? "Toàn bộ dự án đã bị khóa bởi giảng viên" 
+                {project.isLocked
+                  ? "Toàn bộ dự án đã bị khóa bởi giảng viên"
                   : "Nội dung đã bị khóa bởi giảng viên"}
               </p>
             )}
@@ -381,7 +418,7 @@ export const ProjectDetailPage = () => {
                 <p>Chưa có cột mốc nào.</p>
               </div>
             )}
-            
+
             {/* Existing Milestone Cards */}
             {project.milestones.map((milestone) => {
               return (
@@ -395,8 +432,8 @@ export const ProjectDetailPage = () => {
                   endDate={milestone.endDate}
                   // TODO: Fix completionPercentage calculation in BE
                   completionPercentage={
-                    milestone.tasksTotal === 0 ? 
-                    0 : Math.round((milestone.tasksCompleted / milestone.tasksTotal) * 100)}
+                    milestone.tasksTotal === 0 ?
+                      0 : Math.round((milestone.tasksCompleted / milestone.tasksTotal) * 100)}
                   tasksTotal={milestone.tasksTotal}
                   tasksCompleted={milestone.tasksCompleted}
                   status={milestone.status}
