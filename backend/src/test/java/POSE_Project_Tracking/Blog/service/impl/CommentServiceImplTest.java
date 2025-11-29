@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import POSE_Project_Tracking.Blog.dto.req.CommentReq;
 import POSE_Project_Tracking.Blog.dto.res.CommentRes;
 import POSE_Project_Tracking.Blog.entity.Comment;
-import POSE_Project_Tracking.Blog.entity.Task;
+import POSE_Project_Tracking.Blog.entity.Report;
 import POSE_Project_Tracking.Blog.entity.User;
 import POSE_Project_Tracking.Blog.exceptionHandler.CustomException;
 import POSE_Project_Tracking.Blog.mapper.CommentMapper;
@@ -28,6 +28,7 @@ import POSE_Project_Tracking.Blog.repository.ProjectRepository;
 import POSE_Project_Tracking.Blog.repository.ReportRepository;
 import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
+import POSE_Project_Tracking.Blog.service.NotificationHelperService;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,11 +58,14 @@ class CommentServiceImplTest {
     @Mock
     private SecurityUtil securityUtil;
 
+    @Mock
+    private NotificationHelperService notificationHelperService;
+
     @InjectMocks
     private CommentServiceImpl service;
 
     private Comment comment;
-    private Task task;
+    private Report report;
     private User author;
     private User otherUser;
 
@@ -73,25 +77,25 @@ class CommentServiceImplTest {
         otherUser = new User();
         otherUser.setId(2L);
 
-        task = new Task();
-        task.setId(1L);
+        report = new Report();
+        report.setId(1L);
 
         comment = new Comment();
         comment.setId(1L);
         comment.setContent("Test comment");
         comment.setAuthor(author);
-        comment.setTask(task);
+        comment.setReport(report);
     }
 
     @Test
     void createComment_validRequest_createsComment() {
         CommentReq req = new CommentReq();
-        req.setTaskId(1L);
+        req.setReportId(1L);
         req.setContent("New comment");
 
         when(securityUtil.getCurrentUser()).thenReturn(author);
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
-        when(commentMapper.toEntity(any(), any(), any(), any(), any(), any(), any())).thenReturn(comment);
+        when(reportRepository.findById(1L)).thenReturn(Optional.of(report));
+        when(commentMapper.toEntity(any(), any(), any(), any())).thenReturn(comment);
         when(commentRepository.save(any(Comment.class))).thenReturn(comment);
         when(commentMapper.toResponse(comment)).thenReturn(new CommentRes());
 
@@ -102,12 +106,12 @@ class CommentServiceImplTest {
     }
 
     @Test
-    void createComment_taskNotFound_throwsException() {
+    void createComment_reportNotFound_throwsException() {
         CommentReq req = new CommentReq();
-        req.setTaskId(999L);
+        req.setReportId(999L);
 
         when(securityUtil.getCurrentUser()).thenReturn(author);
-        when(taskRepository.findById(999L)).thenReturn(Optional.empty());
+        when(reportRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(CustomException.class, () -> service.createComment(req));
     }
