@@ -41,7 +41,7 @@ class WebSocketService {
       return;
     }
 
-    const wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:9090/ws';
+    const wsUrl = import.meta.env.VITE_WS_URL;
 
     console.log('Connecting to WebSocket:', wsUrl);
 
