@@ -1,6 +1,7 @@
 package POSE_Project_Tracking.Blog.service;
 
 import POSE_Project_Tracking.Blog.dto.req.ReportReq;
+import POSE_Project_Tracking.Blog.dto.req.UpdateReportReq;
 import POSE_Project_Tracking.Blog.dto.res.ReportRes;
 import POSE_Project_Tracking.Blog.enums.EReportStatus;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,6 +13,7 @@ public interface IReportService {
     ReportRes createReport(ReportReq reportReq);
     ReportRes createReport(ReportReq reportReq, MultipartFile[] attachments);
     ReportRes updateReport(Long id, ReportReq reportReq);
+    ReportRes updateReport(Long id, UpdateReportReq updateReportReq, MultipartFile[] files);
     ReportRes getReportById(Long id, String include);
     List<ReportRes> getAllReports();
     List<ReportRes> getReportsByProject(Long projectId);
