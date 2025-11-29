@@ -1,4 +1,4 @@
-import apiClient from '../api/axios.customize.ts';
+import apiClient, { apiClientLongRunning } from '../api/axios.customize.ts';
 import { 
   User, 
   CreateUserDto, 
@@ -64,11 +64,15 @@ class UserService {
   }
 
   async bulkCreateUsers(data: BulkCreateUserDto): Promise<BulkImportResult> {
-    const response = await apiClient.post<ApiResponse<BulkImportResult>>(
+    const response = await apiClientLongRunning.post<ApiResponse<BulkImportResult>>(
       '/api/v1/auth/bulk-register',
       data
     );
     return response.data.data;
+  }
+  
+  async cancelBulkEmailSending(taskId: string): Promise<void> {
+    await apiClient.post(`/api/v1/auth/bulk-register/cancel/${taskId}`);
   }
 
   // Calculate stats locally from users array

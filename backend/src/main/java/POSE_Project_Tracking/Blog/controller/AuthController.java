@@ -219,29 +219,59 @@ public class AuthController {
                 createdUsers.add(createdUser);
                 originalPasswords.add(originalPassword);
             } catch (Exception e) {
+                // Provide user-friendly error messages
+                String errorMessage = e.getMessage();
+                if (errorMessage == null || errorMessage.isEmpty()) {
+                    errorMessage = "Failed to create user due to unknown error";
+                } else if (errorMessage.contains("username") || errorMessage.contains("UK_USERNAME")) {
+                    errorMessage = "Username '" + userReq.getUsername() + "' is already taken";
+                } else if (errorMessage.contains("email") || errorMessage.contains("UK_EMAIL")) {
+                    errorMessage = "Email '" + userReq.getEmail() + "' is already registered";
+                } else if (errorMessage.contains("Duplicate")) {
+                    errorMessage = "This user information is already in use";
+                } else if (errorMessage.contains("ConstraintViolation")) {
+                    errorMessage = "Invalid data format. Please check the input fields";
+                }
+                
                 errors.add(new BulkImportError(
                     i + 1,
                     userReq.getUsername(),
                     userReq.getEmail(),
-                    List.of(e.getMessage())
+                    List.of(errorMessage)
                 ));
             }
         }
         
-        // Step 2: Send batch verification emails asynchronously
+        // Step 2: Send batch verification emails asynchronously with taskId
+        String taskId = null;
         if (!createdUsers.isEmpty()) {
-            userOTPFacade.sendBatchAccountInfoEmails(createdUsers, originalPasswords);
+            taskId = java.util.UUID.randomUUID().toString();
+            userOTPFacade.sendBatchAccountInfoEmails(taskId, createdUsers, originalPasswords);
         }
+        
+        BulkImportResult result = new BulkImportResult(
+            request.getUsers().size(),
+            createdUsers.size(),
+            errors.size(),
+            errors,
+            taskId // Add taskId to constructor
+        );
         
         return new ApiResponse<>(
             HttpStatus.CREATED,
             "Bulk registration completed",
-            new BulkImportResult(
-                request.getUsers().size(),
-                createdUsers.size(),
-                errors.size(),
-                errors
-            ),
+            result,
+            null
+        );
+    }
+    
+    @PostMapping("/bulk-register/cancel/{taskId}")
+    public ApiResponse<Void> cancelBulkEmailSending(@PathVariable String taskId) {
+        userOTPFacade.cancelEmailBatchTask(taskId);
+        return new ApiResponse<>(
+            HttpStatus.OK,
+            "Email sending cancelled",
+            null,
             null
         );
     }

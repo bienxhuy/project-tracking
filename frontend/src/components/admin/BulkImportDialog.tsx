@@ -8,9 +8,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download, Minimize2, Loader2 } from "lucide-react";
 import { BulkImportResult, CreateUserDto } from "@/types/user.type";
 import * as XLSX from 'xlsx';
+import { useToast } from "@/components/ui/toast";
+import { userService } from "@/services/user.service";
+import { getErrorMessage } from "@/api/axios.customize";
 
 interface BulkImportDialogProps {
   open: boolean;
@@ -25,9 +28,15 @@ export function BulkImportDialog({
 }: BulkImportDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [result, setResult] = useState<BulkImportResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const { addToast } = useToast();
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -157,42 +166,166 @@ export function BulkImportDialog({
     if (!file) return;
 
     setLoading(true);
+    setIsCancelling(false);
+    setProgress({ current: 0, total: 0 });
+    
+    // Create abort controller
+    abortControllerRef.current = new AbortController();
+    
     try {
       const users = await parseFile(file);
+      setProgress({ current: 0, total: users.length });
+      
+      // Check if cancelled during parsing
+      if (abortControllerRef.current?.signal.aborted) {
+        throw new Error("Import cancelled by user");
+      }
+      
+      // Show toast that import is running in background
+      addToast({
+        title: "Import Started 🚀",
+        description: `Processing ${users.length} users. You can minimize this dialog and continue working.`,
+        variant: "default"
+      });
+      
       const importResult = await onSubmit(users);
+      
+      // Check if cancelled after submit
+      if (abortControllerRef.current?.signal.aborted) {
+        throw new Error("Import cancelled by user");
+      }
+      
       setResult(importResult);
+      setProgress(null);
+      
+      // Store taskId for cancellation
+      if (importResult.taskId) {
+        setCurrentTaskId(importResult.taskId);
+      }
+      
+      // Show completion toast
+      if (importResult.success > 0) {
+        addToast({
+          title: "Import Completed! ✅",
+          description: `Successfully created ${importResult.success} out of ${importResult.total} users.`,
+          variant: "success"
+        });
+      }
+      
+      if (importResult.failed > 0) {
+        addToast({
+          title: "Import Completed with Errors ⚠️",
+          description: `${importResult.failed} users failed to import. Check the details in the dialog.`,
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error("Import failed:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      alert(`Failed to import users: ${errorMessage}\n\nPlease check your file format and ensure all required fields are present.`);
+      setProgress(null);
+      
+      // Use helper function to extract user-friendly error message
+      const errorMessage = getErrorMessage(error);
+      
+      // Determine error type and customize title/description
+      let errorTitle = "Import Failed ❌";
+      let errorDescription = errorMessage;
+      
+      if (errorMessage.includes("cancelled by user")) {
+        errorTitle = "Request Cancelled ⏹️";
+        errorDescription = "Import is processing in background. Users and emails will be created. Refresh the page to see results.";
+      } else if (errorMessage.includes("timeout") || errorMessage.includes("Request timeout")) {
+        errorTitle = "Request Timeout ⏱️";
+        errorDescription = "Import is taking longer than expected. Please try with a smaller file or contact support.";
+      } else if (errorMessage.includes("Network") || errorMessage.includes("internet connection")) {
+        errorTitle = "Connection Error 🔌";
+      } else if (errorMessage.includes("session") || errorMessage.includes("log in again")) {
+        errorTitle = "Session Expired 🔒";
+      } else if (errorMessage.includes("permission")) {
+        errorTitle = "Access Denied ⛔";
+      } else if (errorMessage.includes("Server error")) {
+        errorTitle = "Server Error 🔧";
+      }
+      
+      addToast({
+        title: errorTitle,
+        description: errorDescription,
+        variant: errorTitle.includes("Cancelled") ? "default" : "destructive"
+      });
     } finally {
       setLoading(false);
+      setIsCancelling(false);
+      abortControllerRef.current = null;
     }
   };
 
   const handleClose = () => {
+    // Don't allow closing if import is in progress
+    if (loading) {
+      setIsMinimized(true);
+      return;
+    }
+    
     setFile(null);
     setResult(null);
+    setProgress(null);
+    setIsMinimized(false);
+    setCurrentTaskId(null);
     onOpenChange(false);
   };
+  
+  const handleMinimize = () => {
+    setIsMinimized(true);
+  };
+  
+  const handleRestore = () => {
+    setIsMinimized(false);
+  };
+  
+  const handleStopImport = async () => {
+    if (abortControllerRef.current) {
+      setIsCancelling(true);
+      abortControllerRef.current.abort();
+      
+      // Cancel email sending on backend if taskId exists
+      if (currentTaskId) {
+        try {
+          await userService.cancelBulkEmailSending(currentTaskId);
+          addToast({
+            title: "Import Stopped ⏹️",
+            description: "Users have been created, but email sending has been stopped.",
+            variant: "default"
+          });
+        } catch (error) {
+          console.error("Failed to cancel email sending:", error);
+          addToast({
+            title: "Partial Stop",
+            description: "Some emails may still be sent. Users have been created.",
+            variant: "default"
+          });
+        }
+      } else {
+        addToast({
+          title: "Request Cancelled",
+          description: "You stopped waiting for response. Users are being created in background.",
+          variant: "default"
+        });
+      }
+    }
+  };
 
-  const downloadTemplate = (type: "student" | "instructor", format: "csv" | "xlsx" = "csv") => {
-    const sampleData = type === "student" 
-      ? [
-          { displayName: "Nguyễn Văn An", email: "nguyen.van.an@ute.edu.vn", role: "STUDENT" },
-          { displayName: "Trần Thị Bích", email: "tran.thi.bich@ute.edu.vn", role: "STUDENT" }
-        ]
-      : [
-          { displayName: "Dr. Trần Văn Bình", email: "tran.van.binh@ute.edu.vn", role: "INSTRUCTOR" },
-          { displayName: "Prof. Lê Thị Cẩm", email: "le.thi.cam@ute.edu.vn", role: "INSTRUCTOR" }
-        ];
+  const downloadTemplate = (format: "csv" | "xlsx" = "csv") => {
+    const sampleData = [
+      { displayName: "Nguyễn Văn An", email: "nguyen.van.an@ute.edu.vn", role: "STUDENT" },
+      { displayName: "Trần Thị Bích", email: "tran.thi.bich@ute.edu.vn", role: "STUDENT" },
+      { displayName: "Lê Văn Cường", email: "le.van.cuong@ute.edu.vn", role: "STUDENT" }
+    ];
     
     if (format === "xlsx") {
       // Create Excel file
       const ws = XLSX.utils.json_to_sheet(sampleData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Users");
-      XLSX.writeFile(wb, `${type}_template.xlsx`);
+      XLSX.writeFile(wb, `student_import_template.xlsx`);
     } else {
       // Create CSV file
       const ws = XLSX.utils.json_to_sheet(sampleData);
@@ -201,28 +334,84 @@ export function BulkImportDialog({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${type}_template.csv`;
+      a.download = `student_import_template.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Bulk Import Users</DialogTitle>
-          <DialogDescription>
-            Upload a CSV, XLS, or XLSX file to create multiple user accounts at once.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      {/* Minimized indicator */}
+      {isMinimized && loading && (
+        <div 
+          className="fixed bottom-4 right-4 z-50 bg-white border-2 border-primary rounded-lg shadow-lg p-4 cursor-pointer hover:shadow-xl transition-shadow"
+          onClick={handleRestore}
+        >
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <div>
+              <p className="font-semibold text-sm">Importing Users...</p>
+              {progress && (
+                <p className="text-xs text-muted-foreground">
+                  Processing {progress.total} users
+                </p>
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-blue-600 mt-2">Click to view details</p>
+        </div>
+      )}
+      
+      <Dialog open={open && !isMinimized} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex flex-row items-center justify-between pb-3">
+            <div>
+              <DialogTitle>Bulk Import Users</DialogTitle>
+              <DialogDescription className="text-xs mt-1">
+                Upload a CSV, XLS, or XLSX file to create multiple user accounts at once.
+              </DialogDescription>
+            </div>
+            {loading && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleMinimize}
+                className="h-8 w-8"
+                title="Minimize (continue in background)"
+              >
+                <Minimize2 className="h-4 w-4" />
+              </Button>
+            )}
+          </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-3 overflow-y-auto flex-1 pr-2">
+          {/* Progress indicator */}
+          {loading && progress && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-center gap-3 mb-2">
+                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                <div>
+                  <p className="font-semibold text-sm">Importing users...</p>
+                  <p className="text-xs text-muted-foreground">
+                    Processing {progress.total} users. This may take a few minutes.
+                  </p>
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div className="bg-blue-600 h-2 rounded-full transition-all duration-300 animate-pulse w-full"></div>
+              </div>
+              <p className="text-xs text-blue-600 mt-2">
+                💡 You can click "Stop Import" to cancel waiting (users will still be created in background)
+              </p>
+            </div>
+          )}
+          
           {!result ? (
             <>
               {/* File Upload Area */}
               <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                   dragActive ? "border-primary bg-primary/5" : "border-gray-300"
                 }`}
                 onDragEnter={handleDrag}
@@ -271,55 +460,35 @@ export function BulkImportDialog({
               </div>
 
               {/* Template Downloads */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <h4 className="font-semibold text-xs mb-2 flex items-center gap-2">
                   <Download className="h-4 w-4" />
                   Download Templates
                 </h4>
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => downloadTemplate("student", "csv")}
-                      className="flex-1"
-                    >
-                      Student CSV
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => downloadTemplate("student", "xlsx")}
-                      className="flex-1"
-                    >
-                      Student XLSX
-                    </Button>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => downloadTemplate("instructor", "csv")}
-                      className="flex-1"
-                    >
-                      Instructor CSV
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => downloadTemplate("instructor", "xlsx")}
-                      className="flex-1"
-                    >
-                      Instructor XLSX
-                    </Button>
-                  </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadTemplate("csv")}
+                    className="flex-1"
+                  >
+                    Student CSV
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadTemplate("xlsx")}
+                    className="flex-1"
+                  >
+                    Student XLSX
+                  </Button>
                 </div>
               </div>
 
               {/* Required Fields Info */}
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 <p className="font-medium mb-1">Required fields:</p>
-                <ul className="list-disc list-inside space-y-1">
+                <ul className="list-disc list-inside space-y-0.5">
                   <li>displayName (full name)</li>
                   <li>email (must be unique)</li>
                   <li>role (STUDENT or INSTRUCTOR)</li>
@@ -331,17 +500,17 @@ export function BulkImportDialog({
             </>
           ) : (
             /* Import Result */
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="border rounded-lg p-4 text-center">
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="border rounded-lg p-3 text-center">
                   <div className="text-2xl font-bold">{result.total}</div>
                   <div className="text-xs text-muted-foreground mt-1">Total</div>
                 </div>
-                <div className="border rounded-lg p-4 text-center bg-green-50">
+                <div className="border rounded-lg p-3 text-center bg-green-50">
                   <div className="text-2xl font-bold text-green-600">{result.success}</div>
                   <div className="text-xs text-muted-foreground mt-1">Success</div>
                 </div>
-                <div className="border rounded-lg p-4 text-center bg-red-50">
+                <div className="border rounded-lg p-3 text-center bg-red-50">
                   <div className="text-2xl font-bold text-red-600">{result.failed}</div>
                   <div className="text-xs text-muted-foreground mt-1">Failed</div>
                 </div>
@@ -362,7 +531,7 @@ export function BulkImportDialog({
                     <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                     <div className="text-sm text-red-800">
                       <p className="font-medium mb-1">Failed to create {result.failed} user(s):</p>
-                      <div className="max-h-40 overflow-y-auto space-y-1">
+                      <div className="max-h-32 overflow-y-auto space-y-1">
                         {result.errors.map((error, index) => (
                           <div key={index} className="text-xs">
                             <span className="font-medium">Row {error.row} (@{error.username}, {error.email}):</span>{" "}
@@ -381,12 +550,35 @@ export function BulkImportDialog({
         <DialogFooter>
           {!result ? (
             <>
-              <Button variant="outline" onClick={handleClose}>
-                Cancel
-              </Button>
-              <Button onClick={handleImport} disabled={!file || loading}>
-                {loading ? "Importing..." : "Import Users"}
-              </Button>
+              {loading ? (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleMinimize}
+                  >
+                    Minimize
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    onClick={handleStopImport}
+                    disabled={isCancelling}
+                  >
+                    {isCancelling ? "Cancelling..." : "Stop Waiting"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleClose}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleImport} disabled={!file}>
+                    Import Users
+                  </Button>
+                </>
+              )}
             </>
           ) : (
             <Button onClick={handleClose}>
@@ -396,7 +588,7 @@ export function BulkImportDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
-
 

@@ -17,5 +17,6 @@ public class BulkImportResult {
     private int success;
     private int failed;
     private List<BulkImportError> errors;
+    private String taskId; // For cancelling email sending
     
 }

@@ -4,11 +4,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.nio.charset.Charset;
 
 @SpringBootApplication
 @EnableJpaAuditing
+@EnableAsync
 @EntityScan("POSE_Project_Tracking.Blog.entity")
 public class ProjectTrackingApplication {
 
