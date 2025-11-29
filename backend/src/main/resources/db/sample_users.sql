@@ -1,6 +1,13 @@
 -- Sample Users Data Script
 -- Password for all users: 123456 (hashed with BCrypt)
 -- Hash: $2a$12$Iy6.4cKcgUtFOMeUGRTuw.IPoVuBvPS2e8a4qbz/mzdB7chDFbJ2S
+--
+-- IMPORTANT NOTES:
+-- 1. Tasks now use Many-to-Many relationship with Users via task_assignees junction table
+-- 2. No more assigned_to_id column in tasks table
+-- 3. Projects use is_obj_des_locked (not is_only_des_locked)
+-- 4. Users table does NOT have avatar and level columns (removed from entity)
+-- 5. Make sure to run migration_task_multiple_assignees.sql first if upgrading from old schema
 
 -- Insert 50 sample users
 INSERT INTO users (id, username, password, email, display_name, role, account_status, login_type, created_at, updated_at) VALUES

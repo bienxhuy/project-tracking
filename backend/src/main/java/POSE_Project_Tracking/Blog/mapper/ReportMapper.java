@@ -55,6 +55,7 @@ public interface ReportMapper {
     @Mapping(target = "attachments", ignore = true)
     void updateEntityFromRequest(ReportReq reportReq, @MappingTarget Report report);
 
+    @Named("toResponseSimple")
     @Mapping(target = "isLocked", source = "locked")
     @Mapping(target = "projectId", source = "project.id")
     @Mapping(target = "projectTitle", source = "project.title")
