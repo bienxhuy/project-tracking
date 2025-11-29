@@ -1,24 +1,38 @@
 package POSE_Project_Tracking.Blog.controller;
 
+import java.io.IOException;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import POSE_Project_Tracking.Blog.dto.req.ProjectReq;
 import POSE_Project_Tracking.Blog.dto.req.UpdateContentReq;
 import POSE_Project_Tracking.Blog.dto.res.ApiResponse;
 import POSE_Project_Tracking.Blog.dto.res.ProjectRes;
 import POSE_Project_Tracking.Blog.enums.EProjectStatus;
+import POSE_Project_Tracking.Blog.service.IPdfExportService;
 import POSE_Project_Tracking.Blog.service.IProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/projects")
@@ -28,6 +42,9 @@ public class ProjectController {
 
     @Autowired
     private IProjectService projectService;
+
+    @Autowired
+    private IPdfExportService pdfExportService;
 
     @Operation(summary = "Create new project", description = "Create a new project with the provided information")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -265,5 +282,30 @@ public class ProjectController {
     public ApiResponse<List<ProjectRes>> getAllMyProjectsByStatus(@PathVariable EProjectStatus status) {
         List<ProjectRes> projects = projectService.getAllMyProjectsByStatus(status);
         return new ApiResponse<>(HttpStatus.OK, "Lấy tất cả dự án của tôi theo trạng thái thành công", projects, null);
+    }
+
+    // Export project to PDF
+    @Operation(summary = "Export project to PDF", 
+               description = "Export complete project information including milestones, tasks, and members to PDF format")
+    @GetMapping("/{id}/export-pdf")
+    public ResponseEntity<byte[]> exportProjectToPdf(@PathVariable Long id) {
+        try {
+            byte[] pdfBytes = pdfExportService.exportProjectToPdf(id);
+            
+            // Get project info for filename
+            ProjectRes project = projectService.getProjectById(id);
+            String filename = String.format("project_%d_%s.pdf", 
+                    id, 
+                    project.getTitle().replaceAll("[^a-zA-Z0-9]", "_"));
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", filename);
+            headers.setContentLength(pdfBytes.length);
+            
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }
