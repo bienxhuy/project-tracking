@@ -92,7 +92,7 @@ export const MilestoneDetailPage = () => {
       
       try {
         const members = await projectService.getProjectMembers(Number(projectId));
-        setAvailableMembers(members);
+        setAvailableMembers(members.filter(member => member.role === "STUDENT"));
       } catch (error) {
         console.error("Không thể tải danh sách thành viên:", error);
         toast.error("Không thể tải danh sách thành viên dự án");
