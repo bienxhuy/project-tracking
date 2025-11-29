@@ -2,7 +2,7 @@ name: Frontend CI
 
 on: 
     push:
-        branches: [ main, dev ]
+        branches: [ main, dev, ci ]
         paths:
             - 'frontend/**'
             - '.github/workflows/ci_fe.yml'
@@ -33,11 +33,24 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
+        # Temporarily disable cache to avoid optional dependencies issues
+        # cache: 'npm'
+        # cache-dependency-path: frontend/package-lock.json
     
-    - name: Install dependencies
-      run: npm ci --include=optional
+    - name: Clean install dependencies
+      run: |
+        # Clean any existing files as recommended by npm bug workaround
+        rm -rf node_modules package-lock.json
+        # Set environment to force optional dependencies
+        export npm_config_platform=linux
+        export npm_config_arch=x64
+        # Fresh install (without package-lock.json to avoid npm bug)
+        npm install --legacy-peer-deps
+        # Verify vite can be loaded
+        npx vite --version || echo "Vite not found"
+      env:
+        # Force npm to install optional dependencies
+        npm_config_optional: true
     
     - name: Build application
       run: npm run build

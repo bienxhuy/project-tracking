@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react"
 import { projectService } from "@/services/project.service"
 import { fetchAllYears } from "@/services/semester.service"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -25,23 +27,60 @@ const dateSortOptions = {
 
 
 export const StudentDashboard = () => {
+  const { user } = useAuth();
+  
   // Current displayed projects
   const [projects, setProjects] = useState<Project[]>([]);
   // Available years for filtering
   const [years, setYears] = useState<number[]>([]);
+  // Filter states
+  const [selectedYear, setSelectedYear] = useState<string>("");
+  const [selectedSemester, setSelectedSemester] = useState<string>("");
+  const [selectedBatch, setSelectedBatch] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   // Alphabetical sort state
   const [alphabetSort, setAlphabetSort] = useState<string>('az');
   // Date sort state
   const [dateSort, setDateSort] = useState<string>('newest');
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch data on component mount
   useEffect(() => {
-    const currentBatchProject = projectService.fetchTempProjects();
-    setProjects(currentBatchProject);
+    loadProjects();
 
     const availableYears = fetchAllYears();
     setYears(availableYears);
   }, [])
+
+  const loadProjects = async (filters?: { year?: number; semester?: number; batch?: string }) => {
+    if (!user?.id) {
+      const errorMessage = 'Không tìm thấy thông tin người dùng';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await projectService.getStudentProjects(user.id, filters);
+      
+      if (response.status !== "success") {
+        throw new Error('Không thể tải danh sách dự án');
+      }
+      
+      setProjects(response.data);
+    } catch (error) {
+      const errorMessage = 'Không thể tải danh sách dự án';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Sort displaying projects whenever sort state changes
   const alphabeticallySortProjects = () => setProjects(projects.sort((a, b) => {
@@ -61,8 +100,14 @@ export const StudentDashboard = () => {
   }));
 
   // Fetch projects based on filters
-  const fetchProjectsBasedOnFilter = () => {
-    // TODO: Implement API call to fetch projects based on selected filters
+  const fetchProjectsBasedOnFilter = async () => {
+    const filters: { year?: number; semester?: number; batch?: string } = {};
+    
+    if (selectedYear) filters.year = parseInt(selectedYear);
+    if (selectedSemester) filters.semester = parseInt(selectedSemester);
+    if (selectedBatch) filters.batch = selectedBatch;
+    
+    await loadProjects(filters);
   }
 
   return (
@@ -123,6 +168,8 @@ export const StudentDashboard = () => {
                     <Input
                       placeholder="Tìm kiếm"
                       className="h-10"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
 
@@ -130,7 +177,7 @@ export const StudentDashboard = () => {
                   <div className="flex gap-2">
 
                     {/* Year Select */}
-                    <Select>
+                    <Select value={selectedYear} onValueChange={setSelectedYear}>
                       <SelectTrigger className="w-28 h-10">
                         <SelectValue placeholder="Năm học" />
                       </SelectTrigger>
@@ -142,7 +189,7 @@ export const StudentDashboard = () => {
                     </Select>
 
                     {/* Semester Select */}
-                    <Select>
+                    <Select value={selectedSemester} onValueChange={setSelectedSemester}>
                       <SelectTrigger className="w-24 h-10">
                         <SelectValue placeholder="Học kỳ" />
                       </SelectTrigger>
@@ -154,7 +201,7 @@ export const StudentDashboard = () => {
                     </Select>
 
                     {/* Batch Select */}
-                    <Select>
+                    <Select value={selectedBatch} onValueChange={setSelectedBatch}>
                       <SelectTrigger className="w-20 h-10">
                         <SelectValue placeholder="Đợt" />
                       </SelectTrigger>
@@ -202,22 +249,45 @@ export const StudentDashboard = () => {
 
               {/* PROJECT GRID */}
               <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4 w-full mt-2">
-                {projects.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    id={project.id}
-                    title={project.title}
-                    semester={project.semester}
-                    year={project.year}
-                    batch={project.batch}
-                    progress={project.completionPercentage}
-                    members={project.memberCount}
-                    milestones={project.milestoneCount}
-                    completedMilestones={1}
-                    status={project.status}
-                    isLocked={project.isLocked}
-                  />
-                ))}
+                {isLoading ? (
+                  <div className="col-span-full flex items-center justify-center py-16">
+                    <p className="text-muted-foreground">Đang tải...</p>
+                  </div>
+                ) : error ? (
+                  <div className="col-span-full flex flex-col items-center justify-center py-16 px-4">
+                    <p className="text-destructive text-center mb-2">{error}</p>
+                    <Button variant="outline" onClick={() => loadProjects()}>
+                      Thử lại
+                    </Button>
+                  </div>
+                ) : projects.length === 0 ? (
+                  <div className="col-span-full flex flex-col items-center justify-center py-16 px-4">
+                    <FolderKanban className="w-16 h-16 text-muted-foreground/40 mb-4" />
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                      Chưa có dự án nào
+                    </h3>
+                    <p className="text-muted-foreground text-center max-w-md">
+                      Bạn chưa tham gia dự án nào. Vui lòng liên hệ giảng viên để được thêm vào dự án.
+                    </p>
+                  </div>
+                ) : (
+                  projects.map((project) => (
+                    <ProjectCard
+                      key={project.id}
+                      id={project.id}
+                      title={project.title}
+                      semester={project.semester}
+                      year={project.year}
+                      batch={project.batch}
+                      progress={project.completionPercentage}
+                      members={project.totalMembers}
+                      milestones={project.totalMilestones}
+                      completedMilestones={1}
+                      status={project.status}
+                      isLocked={project.isLocked}
+                    />
+                  ))
+                )}
               </div>
             </div>
           </TabsContent>

@@ -109,7 +109,16 @@ public enum ErrorCode {
     // =======================
     DEADLINE_PASSED(12001, "Deadline has already passed", HttpStatus.BAD_REQUEST),
     DEADLINE_INVALID(12002, "Deadline date is invalid", HttpStatus.BAD_REQUEST),
-    DEADLINE_BEFORE_START_DATE(12003, "Deadline cannot be before start date", HttpStatus.BAD_REQUEST);
+    DEADLINE_BEFORE_START_DATE(12003, "Deadline cannot be before start date", HttpStatus.BAD_REQUEST),
+
+    // ==========================
+    // 13xxx - Attachment-related
+    // ==========================
+    ATTACHMENT_NOT_FOUND(13001, "Attachment does not exist", HttpStatus.NOT_FOUND),
+    FILE_UPLOAD_FAILED(13002, "Failed to upload file", HttpStatus.INTERNAL_SERVER_ERROR),
+    FILE_DELETE_FAILED(13003, "Failed to delete file", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_FILE_TYPE(13004, "Invalid file type", HttpStatus.BAD_REQUEST),
+    FILE_TOO_LARGE(13005, "File size exceeds maximum limit", HttpStatus.PAYLOAD_TOO_LARGE);
 
     private final int code;
     private final String message;

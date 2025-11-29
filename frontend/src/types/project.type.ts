@@ -6,16 +6,16 @@ import { BaseUser } from "./user.type";
 export interface Project {
   id: number;
   title: string;
-  objective: string;
+  objectives: string;
   content: string;
   year: number;
   semester: number;
-  batch: number;
+  batch: string;
   falculty: string;
   startDate: Date;
   endDate: Date;
-  milestoneCount: number;
-  memberCount: number;
+  totalMilestones: number;
+  totalMembers: number;
   completionPercentage: number;
   status: "ACTIVE" | "COMPLETED";
   isLocked: boolean;
@@ -34,17 +34,28 @@ export const statusConfig = {
 
 export interface CreateProjectRequest {
   title: string;
-  objective: string;
+  objectives: string;
   content: string;
   year: number;
   semester: number;
-  batch: number;
+  batch: string;
   falculty: string;
+  startDate: Date;
+  endDate: Date;
   studentIds: number[];
 }
 
-export interface UpdateProjectRequest extends CreateProjectRequest {
-  id: number;
+export interface UpdateProjectRequest {
+  title: string;
+  objectives: string;
+  content: string;
+  year: number;
+  semester: number;
+  batch: string;
+  falculty: string;
+  startDate: Date;
+  endDate: Date;
+  studentIds: number[];
 }
 
 export interface ProjectApiSummary {
@@ -56,4 +67,19 @@ export interface ProjectApiSummary {
   falculty?: string;
   year?: number;
   completionPercentage?: number;
+}
+
+export interface PagedProjects {
+  content: Project[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+export interface UpdateProjectContentRequest {
+  objectives: string;
+  content: string;
 }

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/types/user.type";
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");

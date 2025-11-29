@@ -56,11 +56,12 @@ This document specifies all backend API endpoints required by the frontend appli
 ```typescript
 {
   id: number,
-  full_name: string,
+  displayName: string,
   email: string,
   role: "STUDENT" | "INSTRUCTOR" | "ADMIN"
 }
 ```
+**Note:** Initials are extracted from `displayName` on the frontend using a helper function.
 
 ---
 
@@ -337,32 +338,35 @@ This document specifies all backend API endpoints required by the frontend appli
   orderNumber: number,
   completionPercentage: number,
   tasksTotal: number,
-  tasksCompleted: number,
-  tasks?: Task[]  // Optional - only included when requested via query parameter
+  tasksCompleted: number
+}
+```
+
+### MilestoneDetail
+```typescript
+{
+  ...Milestone,
+  tasks: Task[]
 }
 ```
 
 ### 4.1 Get Milestones by Project
 - **Method:** `GET`
-- **URL:** `/api/v1/projects/{projectId}/milestones`
-- **Description:** Get all milestones for a project
+- **URL:** `/api/v1/milestones/project/{projectId}`
+- **Description:** Get all milestones for a project, optionally including tasks
 - **Query Parameters:**
-  - `include?: string` - Comma-separated list of related entities to include (e.g., "tasks")
-- **Response:** `ApiResponse<Milestone[]>`
-- **Examples:**
-  - `/api/v1/projects/1/milestones` → Returns milestones without tasks
-  - `/api/v1/projects/1/milestones?include=tasks` → Returns milestones with tasks array populated
+  - `include?: string` - If set to `"tasks"`, includes tasks array in each milestone
+- **Response:** `ApiResponse<Milestone[]>` or `ApiResponse<MilestoneDetail[]>` (when `include=tasks`)
+- **Note:** Backend only returns specified fields. When `include=tasks`, response includes `tasks` array; otherwise only milestone data with `tasksTotal` and `tasksCompleted` counts.
 
 ### 4.2 Get Milestone by ID
 - **Method:** `GET`
 - **URL:** `/api/v1/milestones/{id}`
-- **Description:** Get milestone information, optionally with related entities
+- **Description:** Get detailed milestone information, optionally including tasks
 - **Query Parameters:**
-  - `include?: string` - Comma-separated list of related entities to include (e.g., "tasks")
-- **Response:** `ApiResponse<Milestone>`
-- **Examples:**
-  - `/api/v1/milestones/1` → Returns basic milestone info
-  - `/api/v1/milestones/1?include=tasks` → Returns milestone with tasks array populated
+  - `include?: string` - If set to `"tasks"`, includes tasks array in the milestone
+- **Response:** `ApiResponse<Milestone>` or `ApiResponse<MilestoneDetail>` (when `include=tasks`)
+- **Note:** Backend only returns specified fields. When `include=tasks`, response includes `tasks` array; otherwise only milestone data with `tasksTotal` and `tasksCompleted` counts.
 
 ### 4.3 Create Milestone
 - **Method:** `POST`
@@ -522,6 +526,7 @@ This document specifies all backend API endpoints required by the frontend appli
   id: number,
   title: string,
   content: string,
+  reporter: BaseUser,  // User who created the report
   attachments: Attachment[],
   status: "SUBMITTED" | "LOCKED"
 }
@@ -538,29 +543,17 @@ This document specifies all backend API endpoints required by the frontend appli
 ### 6.1 Get Reports by Task
 - **Method:** `GET`
 - **URL:** `/api/v1/tasks/{taskId}/reports`
-- **Description:** Get all progress reports for a task with pagination (load more as needed)
-- **Query Parameters:**
-  - `page?: number` (default: 0)
-  - `size?: number` (default: 10, reports per page)
-- **Response:** `ApiResponse<PagedReports>`
-```typescript
-PagedReports: {
-  content: Report[],
-  totalElements: number,
-  totalPages: number,
-  currentPage: number,
-  pageSize: number,
-  hasNext: boolean,
-  hasPrevious: boolean
-}
-```
+- **Description:** Get all progress reports for a task
+- **Response:** `ApiResponse<Report[]>`
 - **Security Note:** Only returns reports if user has access to the parent task/project
+- **Note:** Each report includes reporter information (BaseUser)
 
 ### 6.2 Get Report by ID
 - **Method:** `GET`
 - **URL:** `/api/v1/reports/{id}`
 - **Description:** Get detailed report with comments
 - **Response:** `ApiResponse<ReportDetail>`
+- **Note:** Includes full reporter information and all comments
 
 ### 6.3 Create Report
 - **Method:** `POST`
@@ -572,11 +565,14 @@ PagedReports: {
   - `content: string`
   - `files: File[]` (multiple files)
 - **Response:** `ApiResponse<Report>`
+- **Authorization:** Uses JWT token to identify the reporter (current user)
+- **Note:** Reporter is automatically set from the authenticated user's token, not from request body
+- **Permission:** Only report creator can edit the report later
 
 ### 6.4 Update Report
 - **Method:** `PUT`
 - **URL:** `/api/v1/reports/{id}`
-- **Description:** Update existing report (if not locked)
+- **Description:** Update existing report (if not locked and user is the reporter)
 - **Content-Type:** `multipart/form-data`
 - **Request Body (Form Data):**
   - `title: string`
@@ -585,6 +581,9 @@ PagedReports: {
   - `existingAttachmentIds: number[]` (keep these attachments)
   - `removedAttachmentIds: number[]` (delete these attachments)
 - **Response:** `ApiResponse<Report>`
+- **Authorization:** Only the original reporter can update the report
+- **Permission Check:** Backend validates that current user ID matches report.reporter.id
+- **Note:** Cannot update if report status is LOCKED
 
 ### 6.5 Toggle Report Lock
 - **Method:** `PATCH`
@@ -597,6 +596,7 @@ PagedReports: {
 }
 ```
 - **Response:** `ApiResponse<Report>`
+- **Permission:** Instructor only
 
 ---
 
@@ -608,7 +608,7 @@ PagedReports: {
   id: number,
   content: string,
   createdDate: Date,
-  commenter: { id: number, name: string, initials: string }
+  commenter: BaseUser  // User who created the comment
 }
 ```
 
@@ -617,6 +617,7 @@ PagedReports: {
 - **URL:** `/api/v1/reports/{reportId}/comments`
 - **Description:** Get all comments for a report
 - **Response:** `ApiResponse<Comment[]>`
+- **Note:** Usually accessed through report detail endpoint, not directly
 
 ### 7.2 Add Comment to Report
 - **Method:** `POST`
@@ -630,12 +631,16 @@ PagedReports: {
 }
 ```
 - **Response:** `ApiResponse<Comment>`
+- **Authorization:** Uses JWT token to identify the commenter (current user)
+- **Note:** Commenter is automatically set from the authenticated user's token
 
 ### 7.3 Delete Comment
 - **Method:** `DELETE`
 - **URL:** `/api/v1/comments/{commentId}`
 - **Description:** Delete a comment (own comment only)
 - **Response:** `ApiResponse<void>`
+- **Permission Check:** Backend validates that current user ID matches comment.commenter.id
+- **Note:** Only the comment creator can delete their own comment
 
 ---
 
@@ -830,10 +835,7 @@ Authorization: Bearer {accessToken}
 
 ## Notes for Backend Implementation
 
-1. **Pagination**: Pagination implemented for Projects (all endpoints) and Reports with 10 items per page default:
-   - `page?: number` (0-based indexing)
-   - `size?: number` (default: 10)
-   - Always return pagination metadata (totalElements, totalPages, hasNext, etc.)
+1. **Pagination**: Removed.
 
 2. **Lazy Loading**: Projects should only load current batch by default. Past projects are only loaded when explicitly filtered
 

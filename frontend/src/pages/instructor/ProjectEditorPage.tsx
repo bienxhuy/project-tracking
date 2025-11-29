@@ -31,7 +31,7 @@ import { StudentSelector } from "@/components/StudentSelector"
 import { BaseUser } from "@/types/user.type"
 import { CreateProjectRequest, UpdateProjectRequest } from "@/types/project.type"
 import { projectService } from "@/services/project.service"
-import { fetchAllYears } from "@/services/semester.service"
+import { fetchAllYears, fetchAllFaculties } from "@/services/semester.service"
 import { projectSchema } from "@/zod_schema/project.schema"
 
 type ProjectFormValues = z.infer<typeof projectSchema>
@@ -53,15 +53,17 @@ export const ProjectEditorPage = () => {
     resolver: zodResolver(projectSchema),
     defaultValues: {
       title: "",
-      objective: "",
+      objectives: "",
       content: "",
       year: 0,
       semester: 0,
-      batch: 0,
+      batch: "",
       falculty: "",
+      startDate: "",
+      endDate: "",
       studentIds: [],
     },
-  })
+  });
 
   // Load available years, faculties and project data if in edit mode
   useEffect(() => {
@@ -69,7 +71,7 @@ export const ProjectEditorPage = () => {
       const years = fetchAllYears()
       setAvailableYears(years)
 
-      const faculties = projectService.fetchAllFaculties()
+      const faculties = fetchAllFaculties()
       setAvailableFaculties(faculties)
 
       // Load project data if in edit mode
@@ -88,28 +90,30 @@ export const ProjectEditorPage = () => {
   // This function is used in editing mode only
   const loadProjectData = async () => {
     try {
-      const projectDetail = projectService.fetchDetailProject(parseInt(projectId!))
-
-      if (projectDetail) {
+      const response = await projectService.getProjectById(parseInt(projectId!))
+      
+      if (response.status === "success" && response.data) {
+        const projectDetail = response.data
 
         // Set form values individually to ensure proper type handling
         form.setValue('title', projectDetail.title)
-        form.setValue('objective', projectDetail.objective)
+        form.setValue('objectives', projectDetail.objectives)
         form.setValue('content', projectDetail.content)
         form.setValue('year', projectDetail.year)
         form.setValue('semester', projectDetail.semester)
         form.setValue('batch', projectDetail.batch)
         form.setValue('falculty', projectDetail.falculty)
+        form.setValue('startDate', new Date(projectDetail.startDate).toISOString().split('T')[0])
+        form.setValue('endDate', new Date(projectDetail.endDate).toISOString().split('T')[0])
         form.setValue('studentIds', projectDetail.students.map((s) => s.id))
 
         // Load selected students from project detail
         setSelectedStudents(projectDetail.students)
       } else {
-        toast.error("Không tìm thấy dự án")
+        toast.error(response.message || "Không tìm thấy dự án")
         navigate("/instructor/dashboard")
       }
     } catch (error) {
-      console.error('Error loading project:', error)
       toast.error("Không thể tải thông tin dự án")
       navigate("/instructor/dashboard")
     }
@@ -128,34 +132,45 @@ export const ProjectEditorPage = () => {
     try {
       if (isEditMode) {
         const updateData: UpdateProjectRequest = {
-          id: parseInt(projectId!),
           title: data.title,
-          objective: data.objective,
+          objectives: data.objectives,
           content: data.content,
           year: data.year,
           semester: data.semester,
           batch: data.batch,
           falculty: data.falculty,
+          startDate: new Date(data.startDate),
+          endDate: new Date(data.endDate),
           studentIds: data.studentIds,
         }
-        await projectService.updateProject(updateData)
-        toast.success("Cập nhật dự án thành công")
+        const response = await projectService.updateProject(parseInt(projectId!), updateData)
+        if (response.status === "success") {
+          toast.success("Cập nhật dự án thành công")
+          navigate("/instructor/dashboard")
+        } else {
+          toast.error(response.message || "Cập nhật dự án thất bại")
+        }
       } else {
         const createData: CreateProjectRequest = {
           title: data.title,
-          objective: data.objective,
+          objectives: data.objectives,
           content: data.content,
           year: data.year,
           semester: data.semester,
           batch: data.batch,
           falculty: data.falculty,
+          startDate: new Date(data.startDate),
+          endDate: new Date(data.endDate),
           studentIds: data.studentIds,
         }
-        await projectService.createProject(createData)
-        toast.success("Tạo dự án thành công")
+        const response = await projectService.createProject(createData)
+        if (response.status === "success") {
+          toast.success("Tạo dự án thành công")
+          navigate("/instructor/dashboard")
+        } else {
+          toast.error(response.message || "Tạo dự án thất bại")
+        }
       }
-
-      navigate("/instructor/dashboard")
     } catch (error) {
       toast.error(isEditMode ? "Cập nhật dự án thất bại" : "Tạo dự án thất bại")
     } finally {
@@ -220,7 +235,7 @@ export const ProjectEditorPage = () => {
                 {/* Objectives */}
                 <FormField
                   control={form.control}
-                  name="objective"
+                  name="objectives"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
@@ -311,9 +326,9 @@ export const ProjectEditorPage = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="1">HK1</SelectItem>
-                            <SelectItem value="2">HK2</SelectItem>
-                            <SelectItem value="3">HK3</SelectItem>
+                            <SelectItem value="1">1</SelectItem>
+                            <SelectItem value="2">2</SelectItem>
+                            <SelectItem value="3">3</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -331,12 +346,12 @@ export const ProjectEditorPage = () => {
                           Đợt <span className="text-destructive">*</span>
                         </FormLabel>
                         <Select
-                          onValueChange={(value) => field.onChange(parseInt(value))}
-                          value={field.value > 0 ? field.value.toString() : ""}
+                          onValueChange={field.onChange}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Đợt" />
+                              <SelectValue placeholder="Chọn đợt" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -372,6 +387,49 @@ export const ProjectEditorPage = () => {
                             ))}
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Date Information Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Start Date */}
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Ngày bắt đầu <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* End Date */}
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Ngày kết thúc <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

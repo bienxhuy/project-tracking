@@ -87,15 +87,6 @@ public class UserController {
         return new ApiResponse<>(HttpStatus.OK, "User updated successfully", updated, null);
     }
 
-
-    @PatchMapping("/avatar")
-    public ApiResponse<UserRes> updateUserAvatar(
-            @RequestParam("userId") Long userId,
-            @RequestParam("avatar") MultipartFile avatar) throws IOException {
-        UserRes userRes = userService.updateUserAvatar(userId, avatar);
-        return new ApiResponse<>(HttpStatus.OK, "User updated successfully", userRes, null);
-    }
-
     // Cập nhật trạng thái user
     @PutMapping("/{id}/status")
     public ApiResponse<UserRes> updateUserStatus(@PathVariable Long id, @RequestParam EUserStatus status) {

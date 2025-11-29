@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircle2, Clock, Lock, Unlock, Plus, Edit } from "lucide-react";
 import { projectService } from "@/services/project.service";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,22 +13,24 @@ import { ProjectDetail } from "@/types/project.type";
 import { statusConfig } from "@/types/project.type";
 import { MilestoneCard } from "@/components/MilestoneCard";
 import { ProjectProgressBar } from "@/components/ProjectProgressBar";
+import { toast } from "sonner";
 
 
 export const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  // TODO: replace with actual auth
-  const [userRole] = useState<"student" | "instructor">("student");
+  const userRole = user?.role === "INSTRUCTOR" ? "instructor" : "student";
 
   // Project content state
   const [project, setProject] = useState<ProjectDetail | null>(null);
-  const [isContentLocked, setIsContentLocked] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const [objective, setObjective] = useState<string>("");
-  const [content, setContent] = useState<string>("");
+  // Editing state - only store temporary edits
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editedObjective, setEditedObjective] = useState<string>("");
+  const [editedContent, setEditedContent] = useState<string>("");
 
   // State to check if creating new milestone or not
   const [creatingMilestone, setCreatingMilestone] = useState<boolean>(false);
@@ -38,12 +41,36 @@ export const ProjectDetailPage = () => {
 
   // Fetch project detail on mount
   useEffect(() => {
-    const data = projectService.fetchDetailProject(Number(id));
-    setProject(data);
-    setIsContentLocked(data.isLocked);
-    setObjective(data.objective);
-    setContent(data.content);
+    const loadProjectDetail = async () => {
+      try {
+        setIsLoading(true);
+        const response = await projectService.getProjectById(Number(id));
+        
+        if (response.status === "success" && response.data) {
+          setProject(response.data);
+        } else {
+          toast.error(response.message || "Không thể tải thông tin dự án");
+        }
+      } catch (error) {
+        toast.error("Đã xảy ra lỗi khi tải thông tin dự án");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadProjectDetail();
   }, [id]);
+
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-extrabold text-foreground mb-4">Đang tải...</h1>
+        </div>
+      </div>
+    );
+  }
 
   // Handle case where project is not found
   if (!project) {
@@ -69,16 +96,63 @@ export const ProjectDetailPage = () => {
   const overallProgress = totalTasks > 0 ? Math.round((totalCompletedTasks / totalTasks) * 100) : 0;
 
   // Event handlers for content editing
-  const handleSaveContent = () => {
-    setProject({ ...project, objective, content });
+  const handleStartEditing = () => {
+    setEditedObjective(project.objectives);
+    setEditedContent(project.content);
+    setIsEditing(true);
+  };
+
+  // Event handler to cancel editing
+  const handleCancelEditing = () => {
     setIsEditing(false);
-    // In real app, save to backend
+    setEditedObjective("");
+    setEditedContent("");
+  };
+
+  const handleSaveContent = async () => {
+    try {
+      const response = await projectService.updateProjectContent(Number(id), {
+        objectives: editedObjective,
+        content: editedContent,
+      });
+      
+      if (response.status === "success") {
+        setProject({ ...project, objectives: editedObjective, content: editedContent });
+        setIsEditing(false);
+        setEditedObjective("");
+        setEditedContent("");
+        toast.success("Cập nhật nội dung thành công");
+      } else {
+        toast.error(response.message || "Không thể cập nhật nội dung");
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi cập nhật nội dung");
+    }
   };
 
   // Event handler for locking/unlocking content & objective
-  const handleToggleLock = () => {
-    setIsContentLocked(!isContentLocked);
-    // In real app, update backend
+  const handleToggleLock = async () => {
+    try {
+      if (project.isObjDesLocked) {
+        const response = await projectService.unlockProjectContent(Number(id));
+        if (response.status === "success") {
+          setProject({ ...project, isObjDesLocked: false });
+          toast.success("Đã mở khóa nội dung");
+        } else {
+          toast.error(response.message || "Không thể mở khóa nội dung");
+        }
+      } else {
+        const response = await projectService.lockProjectContent(Number(id));
+        if (response.status === "success") {
+          setProject({ ...project, isObjDesLocked: true });
+          toast.success("Đã khóa nội dung");
+        } else {
+          toast.error(response.message || "Không thể khóa nội dung");
+        }
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi thay đổi trạng thái khóa");
+    }
   };
 
   const handleSubmitComment = () => {
@@ -110,16 +184,16 @@ export const ProjectDetailPage = () => {
                       variant="outline"
                       onClick={handleToggleLock}
                     >
-                      {isContentLocked ? <Unlock className="w-4 h-4 mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
-                      {isContentLocked ? "Mở khóa nội dung" : "Khóa nội dung"}
+                      {project.isObjDesLocked ? <Unlock className="w-4 h-4 mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+                      {project.isObjDesLocked ? "Mở khóa nội dung" : "Khóa nội dung"}
                     </Button>
                   </>
                 )}
-                {userRole === "student" && !isContentLocked && (
+                {userRole === "student" && !project.isObjDesLocked && (
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={() => isEditing ? handleCancelEditing() : handleStartEditing()}
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     {isEditing ? "Hủy" : "Chỉnh sửa"}
@@ -133,25 +207,25 @@ export const ProjectDetailPage = () => {
             {/* Objective */}
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">Mục tiêu</h3>
-              {isEditing && !isContentLocked ? (
+              {isEditing && !project.isObjDesLocked ? (
                 <Textarea
-                  value={objective}
-                  onChange={(e) => setObjective(e.target.value)}
+                  value={editedObjective}
+                  onChange={(e) => setEditedObjective(e.target.value)}
                   placeholder="Nhập mục tiêu dự án..."
                   className="min-h-[80px]"
                 />
               ) : (
-                <p className="text-foreground">{project.objective}</p>
+                <p className="text-foreground">{project.objectives}</p>
               )}
             </div>
             <Separator />
             {/* Content */}
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">Mô tả</h3>
-              {isEditing && !isContentLocked ? (
+              {isEditing && !project.isObjDesLocked ? (
                 <Textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
                   placeholder="Nhập mô tả dự án..."
                   className="min-h-[100px]"
                 />
@@ -160,13 +234,13 @@ export const ProjectDetailPage = () => {
               )}
             </div>
             {/* Save Button */}
-            {isEditing && !isContentLocked && (
+            {isEditing && !project.isObjDesLocked && (
               <Button onClick={handleSaveContent}>
                 Lưu
               </Button>
             )}
             {/* Indicate the content lock status */}
-            {isContentLocked && (
+            {project.isObjDesLocked && (
               <p className="text-sm text-destructive">Nội dung đã bị khóa bởi giảng viên</p>
             )}
             {showCommentSection && userRole === "instructor" && (
@@ -228,7 +302,7 @@ export const ProjectDetailPage = () => {
               </div>
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-1">Quy mô nhóm</h3>
-                <p className="text-foreground">{project.memberCount} thành viên</p>
+                <p className="text-foreground">{project.totalMembers} thành viên</p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-1">Trạng thái</h3>
@@ -261,10 +335,28 @@ export const ProjectDetailPage = () => {
                   description={milestone.description}
                   startDate={milestone.startDate}
                   endDate={milestone.endDate}
-                  completionPercentage={milestone.completionPercentage}
+                  // TODO: Fix completionPercentage calculation in BE
+                  completionPercentage={
+                    milestone.tasksTotal === 0 ? 
+                    0 : Math.round((milestone.tasksCompleted / milestone.tasksTotal) * 100)}
                   tasksTotal={milestone.tasksTotal}
                   tasksCompleted={milestone.tasksCompleted}
                   status={milestone.status}
+                  userRole={userRole}
+                  onUpdated={(updatedMilestone) => {
+                    setProject({
+                      ...project,
+                      milestones: project.milestones.map((m) =>
+                        m.id === updatedMilestone.id ? { ...m, ...updatedMilestone } : m
+                      ),
+                    });
+                  }}
+                  onDeleted={(deletedId) => {
+                    setProject({
+                      ...project,
+                      milestones: project.milestones.filter((m) => m.id !== deletedId),
+                    });
+                  }}
                 />
               )
             })}
@@ -272,6 +364,7 @@ export const ProjectDetailPage = () => {
             {creatingMilestone && (
               <MilestoneCard
                 projectId={project.id}
+                userRole={userRole}
                 // All fields empty or undefined
                 autoFocus={true}
                 onCancel={() => setCreatingMilestone(false)}

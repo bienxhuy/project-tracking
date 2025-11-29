@@ -2,128 +2,204 @@
 
 import apiClient from "@/api/axios.customize";
 import { ApiResponse } from "@/types/auth.type";
-import { ProjectApiSummary, CreateProjectRequest, UpdateProjectRequest, Project, ProjectDetail } from "@/types/project.type";
-import { currentBatchProjects, projectDetailDummy } from "@/data/dummy/projects.dummy";
+import {
+  Project,
+  ProjectDetail,
+  CreateProjectRequest,
+  UpdateProjectRequest,
+  UpdateProjectContentRequest,
+} from "@/types/project.type";
+import { BaseUser, ProjectMemberResponse } from "@/types/user.type";
 
-// Dummy faculty data
-const faculties = [
-  "Công nghệ Thông tin",
-  "Đào tạo quốc tế",
-  "Cơ khí Chế tạo máy",
-];
+/**
+ * Helper function to parse date strings to Date objects in Project
+ */
+function parseProjectDates<T extends Project | ProjectDetail>(project: any): T {
+  return {
+    ...project,
+    startDate: new Date(project.startDate),
+    endDate: new Date(project.endDate),
+    milestones: project.milestones?.map((milestone: any) => ({
+      ...milestone,
+      startDate: new Date(milestone.startDate),
+      endDate: new Date(milestone.endDate),
+    })),
+  };
+}
 
 class ProjectService {
   /**
-   * Get all projects
-   */
-  async getProjects(): Promise<ProjectApiSummary[]> {
-    const response = await apiClient.get<ApiResponse<ProjectApiSummary[]>>("/api/v1/projects");
-    return response.data.data;
-  }
-
-  /**
    * Get project detail by ID
-   * TODO: Replace with real API call
    */
-  fetchDetailProject(_projectId: number): ProjectDetail {
-    // TODO: Replace with real API call
-    // For now, return the dummy data regardless of projectId
-    return projectDetailDummy;
+  async getProjectById(projectId: number): Promise<ApiResponse<ProjectDetail>> {
+    const response = await apiClient.get<ApiResponse<ProjectDetail>>(
+      `/api/v1/projects/${projectId}`
+    );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseProjectDates<ProjectDetail>(response.data.data);
+    }
+    return response.data;
   }
 
   /**
-   * Get all faculties
-   * TODO: Replace with real API call
+   * Create a new project (Instructor only)
    */
-  fetchAllFaculties(): string[] {
-    // TODO: Replace with real API call
-    return faculties;
+  async createProject(data: CreateProjectRequest): Promise<ApiResponse<Project>> {
+    const response = await apiClient.post<ApiResponse<Project>>(
+      '/api/v1/projects',
+      data
+    );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseProjectDates<Project>(response.data.data);
+    }
+    return response.data;
   }
 
   /**
-   * Get temporary projects (dummy data)
-   * TODO: Replace with real API call
+   * Update an existing project (Instructor only)
    */
-  fetchTempProjects(): Project[] {
-    // TODO: Replace with real API call
-    return currentBatchProjects;
+  async updateProject(projectId: number, data: UpdateProjectRequest): Promise<ApiResponse<Project>> {
+    const response = await apiClient.put<ApiResponse<Project>>(
+      `/api/v1/projects/${projectId}`,
+      data
+    );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseProjectDates<Project>(response.data.data);
+    }
+    return response.data;
   }
 
   /**
-   * Create a new project
-   * TODO: Replace with real API call
+   * Delete a project by ID (Instructor only)
    */
-  async createProject(data: CreateProjectRequest): Promise<Project> {
-    // TODO: Replace with real API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newProject: Project = {
-          id: Math.floor(Math.random() * 10000),
-          title: data.title,
-          objective: data.objective,
-          content: data.content,
-          year: data.year,
-          semester: data.semester,
-          batch: data.batch,
-          falculty: data.falculty,
-          startDate: new Date(),
-          endDate: new Date(new Date().setMonth(new Date().getMonth() + 4)),
-          memberCount: data.studentIds.length,
-          milestoneCount: 0,
-          completionPercentage: 0,
-          status: "ACTIVE",
-          isLocked: false,
-        };
-        currentBatchProjects.push(newProject);
-        resolve(newProject);
-      }, 500);
-    });
+  async deleteProject(projectId: number): Promise<ApiResponse<void>> {
+    const response = await apiClient.delete<ApiResponse<void>>(
+      `/api/v1/projects/${projectId}`
+    );
+    return response.data;
   }
 
   /**
-   * Update an existing project
-   * TODO: Replace with real API call
+   * Update project objective and content (Student)
    */
-  async updateProject(data: UpdateProjectRequest): Promise<Project> {
-    // TODO: Replace with real API call
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const index = currentBatchProjects.findIndex(p => p.id === data.id);
-        if (index !== -1) {
-          currentBatchProjects[index] = {
-            ...currentBatchProjects[index],
-            title: data.title,
-            objective: data.objective,
-            content: data.content,
-            year: data.year,
-            semester: data.semester,
-            batch: data.batch,
-            falculty: data.falculty,
-            memberCount: data.studentIds.length,
-          };
-          resolve(currentBatchProjects[index]);
-        } else {
-          reject(new Error("Project not found"));
-        }
-      }, 500);
-    });
+  async updateProjectContent(
+    projectId: number,
+    data: UpdateProjectContentRequest
+  ): Promise<ApiResponse<Project>> {
+    const response = await apiClient.patch<ApiResponse<Project>>(
+      `/api/v1/projects/${projectId}/content`,
+      data
+    );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseProjectDates<Project>(response.data.data);
+    }
+    return response.data;
   }
 
   /**
-   * Delete a project by ID
-   * TODO: Replace with real API call
+   * Lock project objective and description (Instructor only)
    */
-  async deleteProject(projectId: number): Promise<void> {
-    // TODO: Replace with real API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = currentBatchProjects.findIndex(p => p.id === projectId);
-        if (index !== -1) {
-          currentBatchProjects.splice(index, 1);
-        }
-        resolve();
-      }, 500);
-    });
+  async lockProjectContent(projectId: number): Promise<ApiResponse<null>> {
+    const response = await apiClient.patch<ApiResponse<null>>(
+      `/api/v1/projects/${projectId}/content/lock`
+    );
+    return response.data;
+  }
+
+  /**
+   * Unlock project objective and description (Instructor only)
+   */
+  async unlockProjectContent(projectId: number): Promise<ApiResponse<null>> {
+    const response = await apiClient.patch<ApiResponse<null>>(
+      `/api/v1/projects/${projectId}/content/unlock`
+    );
+    return response.data;
+  }
+
+  /**
+   * Lock entire project including content, milestones, tasks, and reports (Instructor only)
+   */
+  async lockEntireProject(projectId: number): Promise<ApiResponse<null>> {
+    const response = await apiClient.patch<ApiResponse<null>>(
+      `/api/v1/projects/${projectId}/lock`
+    );
+    return response.data;
+  }
+
+  /**
+   * Unlock entire project including content, milestones, tasks, and reports (Instructor only)
+   */
+  async unlockEntireProject(projectId: number): Promise<ApiResponse<null>> {
+    const response = await apiClient.patch<ApiResponse<null>>(
+      `/api/v1/projects/${projectId}/unlock`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get all projects (Admin only)
+   */
+  async getProjects(): Promise<ApiResponse<Project[]>> {
+    const response = await apiClient.get<ApiResponse<Project[]>>(
+      '/api/v1/projects'
+    );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = response.data.data.map(project => parseProjectDates<Project>(project));
+    }
+    return response.data;
+  }
+
+  /**
+   * Get student's projects
+   */
+  async getStudentProjects(
+    studentId: number,
+    params?: {
+      year?: number;
+      semester?: number;
+      batch?: string;
+    }
+  ): Promise<ApiResponse<Project[]>> {
+    const response = await apiClient.get<ApiResponse<Project[]>>(
+      `/api/v1/projects/student/${studentId}`,
+      { params }
+    );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = response.data.data.map(project => parseProjectDates<Project>(project));
+    }
+    return response.data;
+  }
+
+  /**
+   * Get instructor's projects
+   */
+  async getInstructorProjects(
+    instructorId: number
+  ): Promise<ApiResponse<Project[]>> {
+    const response = await apiClient.get<ApiResponse<Project[]>>(
+      `/api/v1/projects/instructor/${instructorId}`
+    );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = response.data.data.map(project => parseProjectDates<Project>(project));
+    }
+    return response.data;
+  }
+
+  /**
+   * Get project members and parse to BaseUser array
+   */
+  async getProjectMembers(projectId: number): Promise<BaseUser[]> {
+    const response = await apiClient.get<ApiResponse<ProjectMemberResponse[]>>(
+      `/api/v1/project-members/project/${projectId}`
+    );
+    
+    // Parse ProjectMemberResponse array to BaseUser array
+    return response.data.data.map((member) => ({
+      id: member.userId,
+      displayName: member.userName,
+      email: member.userEmail,
+      role: member.role,
+    }));
   }
 }
 

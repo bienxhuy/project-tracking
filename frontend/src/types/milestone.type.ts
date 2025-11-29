@@ -18,3 +18,22 @@ export interface Milestone {
 export interface MilestoneDetail extends Milestone {
   tasks: Task[];
 }
+
+export interface CreateMilestoneRequest {
+  projectId: number;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface UpdateMilestoneRequest {
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface ToggleMilestoneLockRequest {
+  isLocked: boolean;
+}

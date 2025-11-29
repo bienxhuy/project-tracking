@@ -30,9 +30,6 @@ public class User extends BaseEntity {
     @Column(name = "display_name")
     private String displayName;
 
-    @Column(name = "avatar")
-    private String avatar;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private EUserRole role;
@@ -40,9 +37,6 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "account_status")
     private EUserStatus accountStatus;
-
-    @Column(name = "level")
-    private double level;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "login_type")
