@@ -174,7 +174,6 @@ class MilestoneServiceImplTest {
         milestone.setLockedBy(user);
 
         when(milestoneRepository.findById(1L)).thenReturn(Optional.of(milestone));
-        when(securityUtil.getCurrentUser()).thenReturn(currentUser);
         when(milestoneRepository.save(any(Milestone.class))).thenReturn(milestone);
         when(milestoneMapper.toResponse(milestone)).thenReturn(new MilestoneRes());
 
