@@ -71,7 +71,6 @@ public interface ReportMapper {
     @Mapping(target = "totalAttachments", expression = "java(report.getAttachments() != null ? report.getAttachments().size() : 0)")
     @Mapping(target = "comments", ignore = true)
     @Mapping(target = "attachments", source = "attachments")
-    @Named("toResponse")
     ReportRes toResponse(Report report);
     
     @Mapping(target = "isLocked", source = "locked")
