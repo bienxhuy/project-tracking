@@ -375,6 +375,13 @@ export const ProjectDetailPage = () => {
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Empty state */}
+            {project.milestones.length === 0 && !creatingMilestone && (
+              <div className="col-span-full text-center py-8 text-muted-foreground">
+                <p>Chưa có cột mốc nào.</p>
+              </div>
+            )}
+            
             {/* Existing Milestone Cards */}
             {project.milestones.map((milestone) => {
               return (

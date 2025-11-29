@@ -464,6 +464,13 @@ export const MilestoneDetailPage = () => {
             )}
           </div>
           <div className="space-y-3">
+            {/* Empty state */}
+            {milestone.tasks.length === 0 && !creatingTask && (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Chưa có công việc nào.</p>
+              </div>
+            )}
+            
             {/* Existing Tasks */}
             {milestone.tasks.map((task) => (
               <TaskCard
