@@ -569,6 +569,8 @@ export const TaskDetailPage = () => {
           <div className="w-full sm:w-3/5 order-2">
             <ProgressReportThread
               taskId={task.id}
+              projectId={Number(projectId)}
+              milestoneId={Number(milestoneId)}
               reports={task.reports}
               projectMembers={projectMembers}
               userRole={userRole}

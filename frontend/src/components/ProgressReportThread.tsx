@@ -13,6 +13,8 @@ import { BaseUser } from "@/types/user.type";
 
 interface ProgressReportThreadProps {
   taskId: number; // Required for creating reports
+  projectId: number; // Required for creating reports
+  milestoneId: number; // Required for creating reports
   reports: Report[];
   projectMembers: BaseUser[];
   userRole: "student" | "instructor";
@@ -24,6 +26,8 @@ interface ProgressReportThreadProps {
 
 export const ProgressReportThread = ({
   taskId,
+  projectId,
+  milestoneId,
   reports,
   projectMembers,
   userRole,
@@ -72,6 +76,8 @@ export const ProgressReportThread = ({
                 <ProgressReportEditor
                   mode="create"
                   taskId={taskId}
+                  projectId={projectId}
+                  milestoneId={milestoneId}
                   onSuccess={handleCreateSuccess}
                   onCancel={handleCancelNewReport}
                 />
@@ -92,6 +98,9 @@ export const ProgressReportThread = ({
               <ProgressReportCard
                 key={report.id}
                 report={report}
+                projectId={projectId}
+                milestoneId={milestoneId}
+                taskId={taskId}
                 projectMembers={projectMembers}
                 userRole={userRole}
                 isTaskLocked={isTaskLocked}

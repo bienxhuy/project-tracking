@@ -29,6 +29,9 @@ import { toast } from "sonner";
 
 interface ProgressReportCardProps {
   report: Report;
+  projectId: number;
+  milestoneId: number;
+  taskId: number;
   projectMembers: BaseUser[];
   userRole: "student" | "instructor";
   isTaskLocked: boolean;
@@ -37,6 +40,9 @@ interface ProgressReportCardProps {
 
 export const ProgressReportCard = ({
   report,
+  projectId,
+  milestoneId,
+  taskId,
   projectMembers,
   userRole,
   isTaskLocked,
@@ -231,6 +237,9 @@ export const ProgressReportCard = ({
             {isEditing ? (
               <ProgressReportEditor
                 mode="edit"
+                taskId={taskId}
+                projectId={projectId}
+                milestoneId={milestoneId}
                 reportId={report.id}
                 initialData={{
                   title: report.title,
@@ -331,9 +340,9 @@ export const ProgressReportCard = ({
                 {report.attachments.map((attachment) => (
                   <FileCard
                     key={attachment.id}
-                    fileName={attachment.originalFilename}
+                    fileName={attachment.fileName}
                     fileSize={attachment.fileSize}
-                    downloadUrl={attachment.storageUrl}
+                    downloadUrl={attachment.url}
                     variant="existing"
                   />
                 ))}

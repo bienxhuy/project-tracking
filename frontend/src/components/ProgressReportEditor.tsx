@@ -16,7 +16,9 @@ import { toast } from "sonner";
 
 interface ProgressReportEditorProps {
   mode: "create" | "edit";
-  taskId?: number; // Required for create mode
+  taskId: number; // Required for both modes
+  projectId: number; // Required for create mode
+  milestoneId: number; // Required for create mode
   reportId?: number; // Required for edit mode
   initialData?: {
     title: string;
@@ -45,6 +47,8 @@ const ACCEPTED_FILE_TYPES = [
 export const ProgressReportEditor = ({
   mode,
   taskId,
+  projectId,
+  milestoneId,
   reportId,
   initialData,
   onSuccess,
@@ -128,12 +132,15 @@ export const ProgressReportEditor = ({
         } else {
           toast.error(response.message || "Không thể cập nhật báo cáo");
         }
-      } else if (mode === "create" && taskId) {
+      } else if (mode === "create") {
         // Create mode: create new report
-        const response = await reportService.createReport(taskId, {
+        const response = await reportService.createReport({
           title: data.title,
           content: data.content,
-          files: newFiles,
+          projectId,
+          milestoneId,
+          taskId,
+          attachments: newFiles,
         });
         
         if (response.status === "success" && response.data) {
@@ -226,9 +233,9 @@ export const ProgressReportEditor = ({
               {attachments.map((attachment) => (
                 <FileCard
                   key={attachment.id}
-                  fileName={attachment.originalFilename}
+                  fileName={attachment.fileName}
                   fileSize={attachment.fileSize}
-                  downloadUrl={attachment.storageUrl}
+                  downloadUrl={attachment.url}
                   onRemove={() => handleRemoveExistingAttachment(attachment.id)}
                   variant="existing"
                 />

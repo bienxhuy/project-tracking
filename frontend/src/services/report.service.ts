@@ -12,12 +12,25 @@ import {
 
 /**
  * Helper function to parse date strings to Date objects in Report
+ * and map BE response to frontend Report type
  */
 function parseReportDates<T extends Report | ReportDetail>(report: any): T {
   return {
-    ...report,
-    submittedAt: new Date(report.submittedAt),
-  };
+    id: report.id,
+    title: report.title,
+    content: report.content,
+    status: report.status,
+    attachments: report.attachments || [],
+    // Computed reporter field from BE submittedById/submittedByName
+    reporter: {
+      id: report.submittedById,
+      displayName: report.submittedByName,
+      email: '', // Not provided by BE
+      role: 'STUDENT' as const,
+    },
+    // Include comments if this is ReportDetail
+    ...(report.comments !== undefined && { comments: report.comments || [] }),
+  } as T;
 }
 
 class ReportService {
@@ -51,20 +64,22 @@ class ReportService {
    * Create a new progress report with file uploads
    */
   async createReport(
-    taskId: number,
     data: CreateReportRequest
   ): Promise<ApiResponse<Report>> {
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("content", data.content);
+    formData.append("projectId", data.projectId.toString());
+    formData.append("milestoneId", data.milestoneId.toString());
+    formData.append("taskId", data.taskId.toString());
     
-    // Append multiple files
-    data.files.forEach((file) => {
-      formData.append("files", file);
+    // Append multiple files as 'attachments' to match BE expectation
+    data.attachments.forEach((file) => {
+      formData.append("attachments", file);
     });
 
     const response = await apiClient.post<ApiResponse<Report>>(
-      `/api/v1/tasks/${taskId}/reports`,
+      `/api/v1/reports`,
       formData,
       {
         headers: {

@@ -8,7 +8,7 @@ export interface Report {
   id: number;
   title: string;
   content: string;
-  reporter: BaseUser;
+  reporter: BaseUser; 
   attachments: Attachment[];
   status: "SUBMITTED" | "LOCKED";
 }
@@ -20,7 +20,10 @@ export interface ReportDetail extends Report {
 export interface CreateReportRequest {
   title: string;
   content: string;
-  files: File[];
+  projectId: number;
+  milestoneId: number;
+  taskId: number;
+  attachments: File[];
 }
 
 export interface UpdateReportRequest {
