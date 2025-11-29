@@ -341,6 +341,7 @@ export const InstructorDashboard = () => {
                       progress={project.completionPercentage}
                       members={project.totalMembers}
                       milestones={project.totalMilestones}
+                      // TODO: Fix hardcoded value
                       completedMilestones={1}
                       status={project.status}
                       isLocked={project.isLocked}

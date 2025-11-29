@@ -14,6 +14,7 @@ export interface Project {
   falculty: string;
   startDate: Date;
   endDate: Date;
+  totalCompletedMilestones: number;
   totalMilestones: number;
   totalMembers: number;
   completionPercentage: number;

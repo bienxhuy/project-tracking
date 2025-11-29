@@ -31,7 +31,7 @@ const notificationTypes = [
 export const Header = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -189,7 +189,7 @@ export const Header = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
+              <DropdownMenuLabel>{user?.displayName || "Tài khoản"}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onSelect={(event) => {
