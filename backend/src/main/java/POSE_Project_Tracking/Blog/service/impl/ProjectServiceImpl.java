@@ -217,15 +217,34 @@ public class ProjectServiceImpl implements IProjectService {
 
         // Update project members if studentIds provided
         if (projectReq.getStudentIds() != null) {
-            // Clear all existing members (orphanRemoval = true will delete them from DB)
+            // Save the instructor member before clearing
+            ProjectMember instructorMember = null;
             if (project.getMembers() != null) {
+                instructorMember = project.getMembers().stream()
+                        .filter(member -> member.getRole() == EUserRole.INSTRUCTOR || member.getRole() == EUserRole.ADMIN)
+                        .findFirst()
+                        .orElse(null);
+                
+                // Clear all existing members (orphanRemoval = true will delete them from DB)
                 project.getMembers().clear();
             }
 
             // Save to trigger orphan removal
             project = projectRepository.save(project);
 
-            // Add new members
+            // Re-add the instructor if existed
+            if (instructorMember != null) {
+                ProjectMember newInstructorMember = ProjectMember.builder()
+                        .project(project)
+                        .user(instructorMember.getUser())
+                        .role(instructorMember.getRole())
+                        .joinedAt(instructorMember.getJoinedAt())
+                        .isActive(instructorMember.getIsActive())
+                        .build();
+                projectMemberRepository.save(newInstructorMember);
+            }
+
+            // Add new student members
             if (!projectReq.getStudentIds().isEmpty()) {
                 addProjectMembers(project, projectReq.getStudentIds());
             }
