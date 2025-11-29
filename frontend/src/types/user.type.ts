@@ -56,6 +56,7 @@ export interface BulkImportResult {
   success: number;
   failed: number;
   errors: BulkImportError[];
+  taskId?: string; // For cancelling email sending
 }
 
 export interface BulkImportError {

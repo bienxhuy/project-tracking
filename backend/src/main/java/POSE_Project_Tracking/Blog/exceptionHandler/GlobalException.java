@@ -69,5 +69,44 @@ public class GlobalException {
         );
         return ResponseEntity.status(errorCode.getHttpStatus()).body(result);
     }
+    
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<?>> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex) {
+        String userMessage = "Unable to process request due to data conflict. ";
+        
+        // Parse specific constraint violations
+        String exMessage = ex.getMessage();
+        if (exMessage != null) {
+            if (exMessage.contains("username") || exMessage.contains("UK_USERNAME")) {
+                userMessage = "This username is already taken. Please use a different username.";
+            } else if (exMessage.contains("email") || exMessage.contains("UK_EMAIL")) {
+                userMessage = "This email address is already registered. Please use a different email.";
+            } else if (exMessage.contains("Duplicate entry")) {
+                userMessage = "This information is already in use. Please check your input and try again.";
+            }
+        }
+        
+        var result = new ApiResponse<>(HttpStatus.CONFLICT, userMessage, null, "DATA_CONFLICT");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(result);
+    }
+    
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<?>> handleConstraintViolation(jakarta.validation.ConstraintViolationException ex) {
+        List<String> errors = ex.getConstraintViolations().stream()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .collect(Collectors.toList());
+        
+        var result = new ApiResponse<>(HttpStatus.BAD_REQUEST, "Invalid data provided. Please check your input.", errors, "VALIDATION_ERROR");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+    }
+    
+    @ExceptionHandler(org.springframework.transaction.TransactionException.class)
+    public ResponseEntity<ApiResponse<?>> handleTransactionException(org.springframework.transaction.TransactionException ex) {
+        var result = new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, 
+            "Unable to complete the operation. Please try again later.", 
+            null, 
+            "TRANSACTION_ERROR");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+    }
 
 }

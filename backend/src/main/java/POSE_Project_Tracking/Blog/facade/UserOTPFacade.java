@@ -1,5 +1,12 @@
 package POSE_Project_Tracking.Blog.facade;
 
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
 import POSE_Project_Tracking.Blog.dto.req.UserReq;
 import POSE_Project_Tracking.Blog.dto.res.MessageDTO;
 import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
@@ -8,11 +15,12 @@ import POSE_Project_Tracking.Blog.enums.EUserStatus;
 import POSE_Project_Tracking.Blog.service.IEmailService;
 import POSE_Project_Tracking.Blog.service.IOTPService;
 import POSE_Project_Tracking.Blog.service.IUserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 @Service
 public class UserOTPFacade {
+
+    // Track active email batch tasks
+    private final ConcurrentHashMap<String, Boolean> cancelledTasks = new ConcurrentHashMap<>();
 
     @Autowired
     IUserService userService;
@@ -103,5 +111,45 @@ public class UserOTPFacade {
         userService.updateUserStatus(userId, EUserStatus.ACTIVE);
         return true;
 
+    }
+
+    /**
+     * Send batch account info emails asynchronously for bulk user creation
+     * @param taskId Unique identifier for this batch task
+     * @param users List of created users
+     * @param passwords List of original passwords corresponding to users
+     */
+    @Async
+    public void sendBatchAccountInfoEmails(String taskId, List<UserRes> users, List<String> passwords) {
+        if (users.size() != passwords.size()) {
+            throw new IllegalArgumentException("Users and passwords lists must have the same size");
+        }
+        
+        for (int i = 0; i < users.size(); i++) {
+            // Check if task has been cancelled
+            if (cancelledTasks.getOrDefault(taskId, false)) {
+                System.out.println("Email batch task " + taskId + " cancelled at email " + (i + 1) + "/" + users.size());
+                cancelledTasks.remove(taskId); // Clean up
+                return;
+            }
+            
+            try {
+                sendAccountInfoToEmail(users.get(i), passwords.get(i));
+            } catch (Exception e) {
+                // Log error but continue with other emails
+                System.err.println("Failed to send email to " + users.get(i).getEmail() + ": " + e.getMessage());
+            }
+        }
+        
+        // Clean up task tracking after completion
+        cancelledTasks.remove(taskId);
+    }
+    
+    /**
+     * Cancel an active email batch task
+     * @param taskId The task identifier to cancel
+     */
+    public void cancelEmailBatchTask(String taskId) {
+        cancelledTasks.put(taskId, true);
     }
 }
