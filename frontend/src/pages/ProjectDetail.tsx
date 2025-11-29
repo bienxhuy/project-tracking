@@ -90,9 +90,9 @@ export const ProjectDetailPage = () => {
   const statusInfo = statusConfig[project.status];
   const completedMilestones = project.milestones.filter(m => m.status === "COMPLETED").length;
 
-  // Calculate overall progress based on all tasks across milestones
-  const totalTasks = project.milestones.reduce((sum, milestone) => sum + milestone.tasksTotal, 0);
-  const totalCompletedTasks = project.milestones.reduce((sum, milestone) => sum + milestone.tasksCompleted, 0);
+  // Use API-provided task totals for overall progress
+  const totalTasks = project.totalTasks;
+  const totalCompletedTasks = project.totalCompletedTasks;
   const overallProgress = totalTasks > 0 ? Math.round((totalCompletedTasks / totalTasks) * 100) : 0;
 
   // Event handlers for content editing

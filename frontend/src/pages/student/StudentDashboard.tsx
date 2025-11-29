@@ -287,10 +287,12 @@ export const StudentDashboard = () => {
                       semester={project.semester}
                       year={project.year}
                       batch={project.batch}
-                      progress={project.completionPercentage}
+                      progress={
+                        project.totalTasks === 0 ? 
+                        0 : Math.round((project.totalCompletedTasks / project.totalTasks) * 100)}
                       members={project.totalMembers}
                       milestones={project.totalMilestones}
-                      completedMilestones={1}
+                      completedMilestones={project.totalCompletedMilestones}
                       status={project.status}
                       isLocked={project.isLocked}
                     />
