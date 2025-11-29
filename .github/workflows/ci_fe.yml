@@ -1,0 +1,71 @@
+name: Frontend CI
+
+on: 
+    push:
+        branches: [ main, dev, ci ]
+        paths:
+            - 'frontend/**'
+            - '.github/workflows/ci_fe.yml'
+    pull_request:
+        branches: [ main, dev ]
+        paths:
+            - 'frontend/**'
+            - '.github/workflows/ci_fe.yml'
+
+permissions:
+    contents: read
+    checks: write
+    pull-requests: write
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        # Temporarily disable cache to avoid optional dependencies issues
+        # cache: 'npm'
+        # cache-dependency-path: frontend/package-lock.json
+    
+    - name: Clean install dependencies
+      run: |
+        # Clean any existing files as recommended by npm bug workaround
+        rm -rf node_modules package-lock.json
+        # Set environment to force optional dependencies
+        export npm_config_platform=linux
+        export npm_config_arch=x64
+        # Fresh install (without package-lock.json to avoid npm bug)
+        npm install --legacy-peer-deps
+        # Verify vite can be loaded
+        npx vite --version || echo "Vite not found"
+      env:
+        # Force npm to install optional dependencies
+        npm_config_optional: true
+    
+    - name: Build application
+      run: npm run build
+      
+    - name: Display build info
+      run: |
+        echo "✅ Frontend build completed successfully!"
+        echo "📦 Build output:"
+        ls -lh dist/
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: |
+          frontend/build/
+          frontend/dist/
+        retention-days: 7
