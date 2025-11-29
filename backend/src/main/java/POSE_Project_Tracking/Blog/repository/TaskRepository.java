@@ -36,6 +36,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("SELECT DISTINCT t FROM Task t JOIN t.assignedUsers u WHERE u.id = :userId AND t.status = :status")
     List<Task> findUserTasksByStatus(@Param("userId") Long userId, @Param("status") ETaskStatus status);
 
+    List<Task> findByEndDate(LocalDate endDate);
+
     @Query("SELECT t FROM Task t WHERE t.endDate < :date AND t.status != 'COMPLETED'")
     List<Task> findOverdueTasks(@Param("date") LocalDate date);
 

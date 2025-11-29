@@ -114,7 +114,7 @@ export const ProgressReportThread = ({
 
         {isTaskLocked && (
           <p className="text-sm text-destructive text-center">
-            Công việc đã bị khóa. Không thể thêm báo cáo mới.
+            Nhiệm vụ đã bị khóa. Không thể thêm báo cáo mới.
           </p>
         )}
       </CardContent>

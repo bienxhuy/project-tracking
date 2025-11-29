@@ -17,6 +17,8 @@ import POSE_Project_Tracking.Blog.repository.ReportRepository;
 import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.ICommentService;
+import POSE_Project_Tracking.Blog.service.NotificationHelperService;
+import POSE_Project_Tracking.Blog.enums.ENotificationType;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,33 +58,15 @@ public class CommentServiceImpl implements ICommentService {
     @Autowired
     private SecurityUtil securityUtil;
 
+    @Autowired
+    private NotificationHelperService notificationHelperService;
+
     @Override
     public CommentRes createComment(CommentReq commentReq) {
         // Lấy author (current user)
         User author = securityUtil.getCurrentUser();
 
-        // Lấy project (nếu có)
-        Project project = null;
-        if (commentReq.getProjectId() != null) {
-            project = projectRepository.findById(commentReq.getProjectId())
-                    .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
-        }
-
-        // Lấy milestone (nếu có)
-        Milestone milestone = null;
-        if (commentReq.getMilestoneId() != null) {
-            milestone = milestoneRepository.findById(commentReq.getMilestoneId())
-                    .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
-        }
-
-        // Lấy task (nếu có)
-        Task task = null;
-        if (commentReq.getTaskId() != null) {
-            task = taskRepository.findById(commentReq.getTaskId())
-                    .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
-        }
-
-        // Lấy report (nếu có)
+        // Lấy report
         Report report = null;
         if (commentReq.getReportId() != null) {
             report = reportRepository.findById(commentReq.getReportId())
@@ -97,10 +81,58 @@ public class CommentServiceImpl implements ICommentService {
         }
 
         // Map request to entity
-        Comment comment = commentMapper.toEntity(commentReq, project, milestone, task, report, author, parentComment);
+        Comment comment = commentMapper.toEntity(commentReq, report, author, parentComment);
 
         // Save
         comment = commentRepository.save(comment);
+
+        // ✅ NOTIFICATION 1: Comment được thêm vào report - thông báo cho toàn bộ thành viên
+        if (report != null) {
+            try {
+                // Lấy project từ report -> task -> milestone -> project
+                Project project = report.getTask().getMilestone().getProject();
+                
+                String title = "Bình luận mới";
+                String message = String.format("%s đã bình luận trong báo cáo \"%s\"", 
+                    author.getDisplayName(), report.getTitle());
+                
+                notificationHelperService.createNotificationsForAllProjectMembers(
+                    project,
+                    title,
+                    message,
+                    ENotificationType.COMMENT_ADDED,
+                    comment.getId(),
+                    "COMMENT",
+                    author
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        // ✅ NOTIFICATION 2: Mention - thông báo riêng cho user được mention
+        try {
+            // Lấy danh sách mentions từ request (frontend đã parse sẵn)
+            List<Long> mentionedUserIds = commentReq.getMentions();
+            if (mentionedUserIds != null && !mentionedUserIds.isEmpty()) {
+                List<User> mentionedUsers = userRepository.findAllById(mentionedUserIds);
+                
+                String title = "Bạn được nhắc đến";
+                String message = String.format("%s đã nhắc đến bạn trong một bình luận", author.getDisplayName());
+                
+                notificationHelperService.createNotificationsForUsers(
+                    mentionedUsers,
+                    title,
+                    message,
+                    ENotificationType.MENTION,
+                    comment.getId(),
+                    "COMMENT",
+                    author
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return commentMapper.toResponse(comment);
     }

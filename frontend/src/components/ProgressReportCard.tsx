@@ -83,9 +83,9 @@ export const ProgressReportCard = ({
     if (!isExpanded && !commentsLoaded) {
       setIsLoadingComments(true);
       try {
-        const response = await reportService.getReportById(report.id);
+        const response = await commentService.getCommentsByReport(report.id);
         if (response.status === "success" && response.data) {
-          setComments(response.data.comments);
+          setComments(response.data);
           setCommentsLoaded(true);
         } else {
           toast.error(response.message || "Không thể tải bình luận");
@@ -159,10 +159,10 @@ export const ProgressReportCard = ({
   // Handle comment submit
   const handleSubmitComment = async () => {
     if (!commentText.trim()) return;
-    try {
+    try {    
       const response = await commentService.addComment(report.id, {
         content: commentText,
-        mentions: mentionedUsers,
+        mentions: Array.from(new Set(mentionedUsers)),
       });
       
       if (response.status === "success" && response.data) {
@@ -435,6 +435,11 @@ export const ProgressReportCard = ({
                         </AvatarFallback>
                       </Avatar>
                         <span className="text-sm text-foreground">{member.displayName}</span>
+                        {member.role === "INSTRUCTOR" && (
+                          <Badge variant="outline" className="text-xs ml-auto">
+                            Giảng viên
+                          </Badge>
+                        )}
                       </button>
                     ))}
                   </div>

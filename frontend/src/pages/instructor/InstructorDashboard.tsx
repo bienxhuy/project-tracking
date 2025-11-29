@@ -66,7 +66,7 @@ export const InstructorDashboard = () => {
     setYears(availableYears)
   }, [])
 
-  const loadProjects = async () => {
+  const loadProjects = async (filters?: { year?: number; semester?: number; batch?: string }) => {
     if (!user?.id) {
       const errorMessage = "Không tìm thấy thông tin người dùng";
       setError(errorMessage);
@@ -78,7 +78,7 @@ export const InstructorDashboard = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await projectService.getInstructorProjects(user.id);
+      const response = await projectService.getInstructorProjects(user.id, filters);
       
       if (response.status !== "success") {
         throw new Error('Không thể tải danh sách dự án');
@@ -119,8 +119,13 @@ export const InstructorDashboard = () => {
 
   // Fetch projects based on filters
   const fetchProjectsBasedOnFilter = async () => {
-    // Note: Instructor endpoint does not support filtering yet
-    await loadProjects();
+    const filters: { year?: number; semester?: number; batch?: string } = {};
+    
+    if (selectedYear) filters.year = parseInt(selectedYear);
+    if (selectedSemester) filters.semester = parseInt(selectedSemester);
+    if (selectedBatch) filters.batch = selectedBatch;
+    
+    await loadProjects(filters);
   }
 
   // Handle project deletion

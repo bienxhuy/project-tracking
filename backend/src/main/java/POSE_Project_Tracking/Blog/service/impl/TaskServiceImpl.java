@@ -18,6 +18,8 @@ import POSE_Project_Tracking.Blog.service.IMilestoneService;
 import POSE_Project_Tracking.Blog.service.IProjectService;
 import POSE_Project_Tracking.Blog.service.IReportService;
 import POSE_Project_Tracking.Blog.service.ITaskService;
+import POSE_Project_Tracking.Blog.service.NotificationHelperService;
+import POSE_Project_Tracking.Blog.enums.ENotificationType;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +67,9 @@ public class TaskServiceImpl implements ITaskService {
     @Autowired
     @Lazy
     private IReportService reportService;
+
+    @Autowired
+    private NotificationHelperService notificationHelperService;
 
     @Override
     public TaskRes createTask(TaskReq taskReq) {
@@ -356,13 +361,37 @@ public class TaskServiceImpl implements ITaskService {
         }
 
         // Add user to assigned users if not already present
+        boolean isNewAssignment = false;
         if (task.getAssignedUsers() == null) {
             task.setAssignedUsers(new ArrayList<>());
         }
         if (!task.getAssignedUsers().contains(user)) {
             task.getAssignedUsers().add(user);
+            isNewAssignment = true;
         }
         taskRepository.save(task);
+
+        // ✅ NOTIFICATION: Sinh viên được giao task
+        if (isNewAssignment) {
+            try {
+                User triggeredBy = securityUtil.getCurrentUser();
+                String title = "Bạn được giao nhiệm vụ mới";
+                String message = String.format("Bạn được giao nhiệm vụ \"%s\" trong dự án \"%s\"", 
+                    task.getTitle(), task.getProject().getTitle());
+                
+                notificationHelperService.createNotification(
+                    user,
+                    title,
+                    message,
+                    ENotificationType.TASK_ASSIGNED,
+                    task.getId(),
+                    "TASK",
+                    triggeredBy
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -397,6 +426,25 @@ public class TaskServiceImpl implements ITaskService {
         task.setStatus(ETaskStatus.COMPLETED);
         taskRepository.save(task);
 
+        // ✅ NOTIFICATION: Task được đánh dấu hoàn thành
+        try {
+            User triggeredBy = securityUtil.getCurrentUser();
+            String title = "Nhiệm vụ hoàn thành";
+            String message = String.format("Nhiệm vụ \"%s\" đã được đánh dấu hoàn thành", task.getTitle());
+            
+            notificationHelperService.createNotificationsForAllProjectMembers(
+                task.getProject(),
+                title,
+                message,
+                ENotificationType.TASK_COMPLETED,
+                task.getId(),
+                "TASK",
+                triggeredBy
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         // Update completion percentages
         Long projectId = task.getProject().getId();
         Long milestoneId = task.getMilestone() != null ? task.getMilestone().getId() : null;
@@ -420,6 +468,24 @@ public class TaskServiceImpl implements ITaskService {
         task.setLockedBy(currentUser);
         task.setLockedAt(now);
         taskRepository.save(task);
+
+        // ✅ NOTIFICATION: Task bị khóa
+        try {
+            String title = "Nhiệm vụ bị khóa";
+            String message = String.format("Nhiệm vụ \"%s\" đã bị khóa bởi giảng viên", task.getTitle());
+            
+            notificationHelperService.createNotificationsForStudentsOnly(
+                task.getProject(),
+                title,
+                message,
+                ENotificationType.TASK_LOCKED,
+                task.getId(),
+                "TASK",
+                currentUser
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Delegate to ReportService to lock all reports (and their children - comments)
         if (task.getReports() != null) {

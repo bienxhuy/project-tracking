@@ -78,4 +78,113 @@ export const sendTestNotification = async () => {
   }
 };
 
+// ============================================
+// Notification Management APIs
+// ============================================
+
+/**
+ * Get notification by ID
+ */
+export const getNotificationById = async (id: number) => {
+  try {
+    const response = await apiClient.get(`/api/v1/notifications/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting notification:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all notifications for current user
+ * Note: You need to pass the current user's ID
+ */
+export const getMyNotifications = async (userId: number) => {
+  try {
+    const response = await apiClient.get(`/api/v1/notifications/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting my notifications:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get notifications by user ID
+ */
+export const getNotificationsByUser = async (userId: number) => {
+  try {
+    const response = await apiClient.get(`/api/v1/notifications/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting user notifications:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get unread notifications for user
+ */
+export const getUnreadNotifications = async (userId: number) => {
+  try {
+    const response = await apiClient.get(`/api/v1/notifications/user/${userId}/unread`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting unread notifications:', error);
+    throw error;
+  }
+};
+
+/**
+ * Count unread notifications
+ */
+export const countUnreadNotifications = async (userId: number) => {
+  try {
+    const response = await apiClient.get(`/api/v1/notifications/user/${userId}/unread/count`);
+    return response.data;
+  } catch (error) {
+    console.error('Error counting unread notifications:', error);
+    throw error;
+  }
+};
+
+/**
+ * Mark notification as read
+ */
+export const markNotificationAsRead = async (id: number) => {
+  try {
+    const response = await apiClient.patch(`/api/v1/notifications/${id}/read`);
+    return response.data;
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    throw error;
+  }
+};
+
+/**
+ * Mark all notifications as read for user
+ */
+export const markAllNotificationsAsRead = async (userId: number) => {
+  try {
+    const response = await apiClient.patch(`/api/v1/notifications/user/${userId}/read-all`);
+    return response.data;
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete notification
+ */
+export const deleteNotification = async (id: number) => {
+  try {
+    const response = await apiClient.delete(`/api/v1/notifications/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    throw error;
+  }
+};
+
 export default apiClient;
