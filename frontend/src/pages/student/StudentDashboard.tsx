@@ -147,7 +147,7 @@ export const StudentDashboard = () => {
 
             {/* PROJECTS BLOCK */}
             <div className="flex flex-col rounded-lg gap-2">
-              <h3 className="text-xl font-bold text-foreground">Dự án hiện tại</h3>
+              <h3 className="text-xl font-bold text-foreground">Dự án hiện hoạt</h3>
 
               {/**Displaying projects functional block*/}
               <div className="lg:flex lg:justify-between">
