@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 const API_BASE_URL = import.meta.env.API_BASE_URL;
+console.log('API_BASE_URL:', API_BASE_URL);
 
 // Create axios instance
 const apiClient = axios.create({
