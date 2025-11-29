@@ -11,6 +11,7 @@ export interface Report {
   reporter: BaseUser; 
   attachments: Attachment[];
   status: "SUBMITTED" | "LOCKED";
+  createdAt: Date;
 }
 
 export interface ReportDetail extends Report {

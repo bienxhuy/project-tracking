@@ -94,19 +94,21 @@ export const ProgressReportThread = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {reports.map((report) => (
-              <ProgressReportCard
-                key={report.id}
-                report={report}
-                projectId={projectId}
-                milestoneId={milestoneId}
-                taskId={taskId}
-                projectMembers={projectMembers}
-                userRole={userRole}
-                isTaskLocked={isTaskLocked}
-                onReportUpdated={handleReportUpdated}
-              />
-            ))}
+            {[...reports]
+              .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+              .map((report) => (
+                <ProgressReportCard
+                  key={report.id}
+                  report={report}
+                  projectId={projectId}
+                  milestoneId={milestoneId}
+                  taskId={taskId}
+                  projectMembers={projectMembers}
+                  userRole={userRole}
+                  isTaskLocked={isTaskLocked}
+                  onReportUpdated={handleReportUpdated}
+                />
+              ))}
           </div>
         )}
 

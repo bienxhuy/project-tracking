@@ -233,7 +233,7 @@ export const ProgressReportCard = ({
     <Card className="border-border">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex-1">
+          <div className="flex-1 pb-2">
             {isEditing ? (
               <ProgressReportEditor
                 mode="edit"
@@ -251,37 +251,39 @@ export const ProgressReportCard = ({
               />
             ) : (
               <>
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-lg text-foreground">{report.title}</h3>
-                  {isLocked && (
-                    <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
-                      <Lock className="w-3 h-3" />
-                    </Badge>
-                  )}
-                </div>
-                {/* Reporter Information */}
-                <div className="flex items-center gap-2 mb-2">
+                {/* Top: Reporter Information & Created Time */}
+                <div className="flex items-center gap-2 mb-3">
                   <Avatar className="w-6 h-6">
                     <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                       {getInitials(report.reporter.displayName)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm text-muted-foreground">{report.reporter.displayName}</span>
+                  <span className="text-sm font-medium text-foreground">{report.reporter.displayName}</span>
+                  <span className="text-sm text-muted-foreground">•</span>
+                  <span className="text-sm text-muted-foreground">
+                    {report.createdAt.toLocaleString("vi-VN")}
+                  </span>
+                  {isLocked && (
+                    <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 ml-2">
+                      <Lock className="w-3 h-3" />
+                    </Badge>
+                  )}
                 </div>
-                {/* Show content preview */}
+
+                {/* Mid: Title & Content */}
+                <h3 className="font-semibold text-lg text-foreground mb-2">{report.title}</h3>
                 {!isExpanded && (
-                  <>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {report.content}
-                    </p>
-                    {/* Show attachments preview */}
-                    {report.attachments.length > 0 && (
-                      <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                        <FileText className="w-3 h-3" />
-                        <span>{report.attachments.length} tệp đính kèm</span>
-                      </div>
-                    )}
-                  </>
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {report.content}
+                  </p>
+                )}
+
+                {/* Bottom: Attachment Counts */}
+                {!isExpanded && report.attachments.length > 0 && (
+                  <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                    <FileText className="w-3 h-3" />
+                    <span>{report.attachments.length} tệp đính kèm</span>
+                  </div>
                 )}
               </>
             )}

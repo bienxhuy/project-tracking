@@ -21,6 +21,7 @@ function parseReportData(report: any): Report {
     content: report.content,
     status: report.status,
     attachments: report.attachments || [],
+    createdAt: new Date(report.createdAt),
     reporter: {
       id: report.submittedById,
       displayName: report.submittedByName,

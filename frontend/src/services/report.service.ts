@@ -21,6 +21,7 @@ function parseReportDates<T extends Report | ReportDetail>(report: any): T {
     content: report.content,
     status: report.status,
     attachments: report.attachments || [],
+    createdAt: new Date(report.createdAt),
     // Computed reporter field from BE submittedById/submittedByName
     reporter: {
       id: report.submittedById,
