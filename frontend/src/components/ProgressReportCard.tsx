@@ -159,10 +159,10 @@ export const ProgressReportCard = ({
   // Handle comment submit
   const handleSubmitComment = async () => {
     if (!commentText.trim()) return;
-    try {
+    try {    
       const response = await commentService.addComment(report.id, {
         content: commentText,
-        mentions: mentionedUsers,
+        mentions: Array.from(new Set(mentionedUsers)),
       });
       
       if (response.status === "success" && response.data) {
