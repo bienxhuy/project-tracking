@@ -296,7 +296,7 @@ export const TaskCard = ({
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="Tên công việc"
+                        placeholder="Tên nhiệm vụ"
                         ref={titleRef}
                         className="bg-white"
                       />
@@ -315,7 +315,7 @@ export const TaskCard = ({
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Mô tả công việc"
+                        placeholder="Mô tả nhiệm vụ"
                         rows={2}
                         className="bg-white"
                       />
