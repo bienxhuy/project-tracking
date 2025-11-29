@@ -186,6 +186,45 @@ class ProjectService {
   }
 
   /**
+   * Export project as PDF (Instructor only)
+   */
+  async exportProjectAsPDF(projectId: number): Promise<void> {
+    try {
+      const response = await apiClient.get(
+        `/api/v1/projects/${projectId}/export-pdf`,
+        {
+          responseType: 'blob',
+        }
+      );
+
+      // Extract filename from Content-Disposition header
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `project_${projectId}.pdf`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/i);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Create blob and download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting project as PDF:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get project members and parse to BaseUser array
    */
   async getProjectMembers(projectId: number): Promise<BaseUser[]> {

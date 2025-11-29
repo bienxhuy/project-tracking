@@ -71,6 +71,23 @@ public interface ProjectMapper {
     @Mapping(target = "students", source = "members", qualifiedByName = "toAssignedUserRes")
     ProjectRes toResponse(Project project);
     
+    // Specialized mapping for detailed project view with nested tasks in milestones
+    @Mapping(target = "isLocked", source = "locked")
+    @Mapping(target = "instructorId", source = "instructor.id")
+    @Mapping(target = "instructorName", source = "instructor.displayName")
+    @Mapping(target = "lockedById", source = "lockedBy.id")
+    @Mapping(target = "lockedByName", source = "lockedBy.displayName")
+    @Mapping(target = "createdById", source = "createdBy.id")
+    @Mapping(target = "createdByName", source = "createdBy.displayName")
+    @Mapping(target = "totalMilestones", expression = "java(project.getMilestones() != null ? project.getMilestones().size() : 0)")
+    @Mapping(target = "totalCompletedMilestones", expression = "java(project.getMilestones() != null ? (int) project.getMilestones().stream().filter(m -> m.getStatus() == POSE_Project_Tracking.Blog.enums.EMilestoneStatus.COMPLETED).count() : 0)")
+    @Mapping(target = "totalTasks", expression = "java(project.getTasks() != null ? project.getTasks().size() : 0)")
+    @Mapping(target = "totalCompletedTasks", expression = "java(project.getTasks() != null ? (int) project.getTasks().stream().filter(t -> t.getStatus() == POSE_Project_Tracking.Blog.enums.ETaskStatus.COMPLETED).count() : 0)")
+    @Mapping(target = "totalMembers", expression = "java(project.getMembers() != null ? project.getMembers().size() : 0)")
+    @Mapping(target = "milestones", source = "milestones", qualifiedByName = "toResponseWithTasks")
+    @Mapping(target = "students", source = "members", qualifiedByName = "toAssignedUserRes")
+    ProjectRes toResponseWithDetails(Project project);
+    
     // Map ProjectMember to AssignedUserRes
     @Named("toAssignedUserRes")
     default AssignedUserRes toAssignedUserRes(ProjectMember member) {

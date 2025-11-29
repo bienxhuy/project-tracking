@@ -134,10 +134,12 @@ export function ViewUserDialog({
                 <Activity className="h-4 w-4 text-muted-foreground" />
                 <span>Status: {user.accountStatus}</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Star className="h-4 w-4 text-muted-foreground" />
-                <span>Level: {user.level.toFixed(1)}</span>
-              </div>
+              {user.level !== undefined && user.level !== null && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Star className="h-4 w-4 text-muted-foreground" />
+                  <span>Level: {user.level.toFixed(1)}</span>
+                </div>
+              )}
               <div className="flex items-center gap-3 text-sm">
                 <Activity className="h-4 w-4 text-muted-foreground" />
                 <span>Login Type: {user.loginType}</span>

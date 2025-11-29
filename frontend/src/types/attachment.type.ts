@@ -2,9 +2,8 @@
 
 export interface Attachment {
   id: number;
-  originalFilename: string;
-  storedFilename: string;
+  fileName: string; // Maps to fileName from BE
   fileSize: number;
   fileType: string;
-  storageUrl: string;
+  url: string; // Maps to url from BE (download URL)
 }

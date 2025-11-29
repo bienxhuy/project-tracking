@@ -12,7 +12,7 @@ import { PublicRoute } from "./components/auth/PublicRoute"
 import { ProtectedRoute } from "./components/auth/ProtectedRoute"
 import { RoleBasedRoute } from "./components/auth/RoleBasedRoute"
 import { UserRole } from "./types/user.type"
-// import { NotificationManager } from "./components/NotificationManager"
+import { NotificationManager } from "./components/NotificationManager"
 
 import { InstructorDashboard } from "./pages/instructor/InstructorDashboard"
 import { ProjectEditorPage } from "./pages/instructor/ProjectEditorPage"
@@ -131,7 +131,7 @@ function App() {
         </Routes>
 
         {/* Notification Manager - Active on all pages */}
-        {/* <NotificationManager /> */}
+        <NotificationManager />
       </BrowserRouter>
       <Toaster />
     </>

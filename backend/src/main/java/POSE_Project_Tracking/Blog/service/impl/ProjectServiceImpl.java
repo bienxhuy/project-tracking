@@ -1,5 +1,21 @@
 package POSE_Project_Tracking.Blog.service.impl;
 
+import java.lang.reflect.Method;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.aop.framework.AopProxyUtils;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
+
 import POSE_Project_Tracking.Blog.config.CacheConfig;
 import POSE_Project_Tracking.Blog.dto.req.ProjectReq;
 import POSE_Project_Tracking.Blog.dto.res.ProjectRes;
@@ -8,10 +24,14 @@ import POSE_Project_Tracking.Blog.entity.ProjectMember;
 import POSE_Project_Tracking.Blog.entity.User;
 import POSE_Project_Tracking.Blog.enums.EProjectStatus;
 import POSE_Project_Tracking.Blog.enums.EUserRole;
+import static POSE_Project_Tracking.Blog.enums.ErrorCode.INSTRUCTOR_CANNOT_BE_ASSIGNED_TASK;
+import static POSE_Project_Tracking.Blog.enums.ErrorCode.PROJECT_LOCKED;
+import static POSE_Project_Tracking.Blog.enums.ErrorCode.PROJECT_NOT_FOUND;
+import static POSE_Project_Tracking.Blog.enums.ErrorCode.USER_NON_EXISTENT;
 import POSE_Project_Tracking.Blog.exceptionHandler.CustomException;
 import POSE_Project_Tracking.Blog.mapper.ProjectMapper;
-import POSE_Project_Tracking.Blog.repository.ProjectRepository;
 import POSE_Project_Tracking.Blog.repository.ProjectMemberRepository;
+import POSE_Project_Tracking.Blog.repository.ProjectRepository;
 import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.IMilestoneService;
@@ -240,12 +260,18 @@ public class ProjectServiceImpl implements IProjectService {
         // Hibernate cannot fetch multiple bags in one query
         if (project.getMilestones() != null) {
             project.getMilestones().size();
+            // Force load tasks for each milestone
+            project.getMilestones().forEach(milestone -> {
+                if (milestone.getTasks() != null) {
+                    milestone.getTasks().size();
+                }
+            });
         }
         if (project.getMembers() != null) {
             project.getMembers().size();
         }
         
-        return projectMapper.toResponse(project);
+        return projectMapper.toResponseWithDetails(project);
     }
 
     @Override
@@ -484,6 +510,11 @@ public class ProjectServiceImpl implements IProjectService {
             Long completedTasks = taskRepository.countCompletedTasksByProject(id);
             float percentage = (float) completedTasks / totalTasks * 100;
             project.setCompletionPercentage(percentage);
+            
+            // Automatically update status to COMPLETED when completion reaches 100%
+            if (percentage >= 100.0f) {
+                project.setStatus(EProjectStatus.COMPLETED);
+            }
         }
 
         projectRepository.save(project);

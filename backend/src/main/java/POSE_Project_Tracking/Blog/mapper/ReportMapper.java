@@ -55,6 +55,7 @@ public interface ReportMapper {
     @Mapping(target = "attachments", ignore = true)
     void updateEntityFromRequest(ReportReq reportReq, @MappingTarget Report report);
 
+    @Named("toResponse")
     @Mapping(target = "isLocked", source = "locked")
     @Mapping(target = "projectId", source = "project.id")
     @Mapping(target = "projectTitle", source = "project.title")
@@ -70,7 +71,6 @@ public interface ReportMapper {
     @Mapping(target = "totalAttachments", expression = "java(report.getAttachments() != null ? report.getAttachments().size() : 0)")
     @Mapping(target = "comments", ignore = true)
     @Mapping(target = "attachments", source = "attachments")
-    @Named("toResponse")
     ReportRes toResponse(Report report);
     
     @Mapping(target = "isLocked", source = "locked")

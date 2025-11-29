@@ -214,7 +214,7 @@ export const TaskCard = ({
             checked={completed} 
             onCheckedChange={onToggle}
             className="mt-1"
-            disabled={isEffectiveLocked}
+            disabled={isEffectiveLocked || userRole === "instructor"}
           />
           <div className="flex-1 space-y-2 cursor-pointer" onClick={handleClick}>
             <div className="flex items-start justify-between gap-2">
