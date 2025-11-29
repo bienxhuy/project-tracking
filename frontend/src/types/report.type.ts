@@ -34,7 +34,3 @@ export interface UpdateReportRequest {
   existingAttachmentIds: number[];
   removedAttachmentIds: number[];
 }
-
-export interface ToggleReportLockRequest {
-  isLocked: boolean;
-}

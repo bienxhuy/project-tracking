@@ -207,19 +207,24 @@ export const ProgressReportCard = ({
   // Handle report lock toggle
   const handleToggleLock = async () => {
     try {
-      const newLockStatus = report.status === "LOCKED" ? false : true;
-      const response = await reportService.toggleReportLock(report.id, {
-        isLocked: newLockStatus,
-      });
+      const isCurrentlyLocked = report.status === "LOCKED";
+      const response = isCurrentlyLocked
+        ? await reportService.submitReport(report.id)
+        : await reportService.lockReport(report.id);
       
-      if (response.status === "success" && response.data) {
-        report.status = response.data.status;
-        setIsLocked(report.status === "LOCKED" || isTaskLocked);
-        onReportUpdated?.(report);
+      if (response.status === "success") {
+        // Update report status manually since BE returns null data
+        const updatedReport = {
+          ...report,
+          status: isCurrentlyLocked ? "SUBMITTED" : "LOCKED"
+        } as Report;
+        
+        onReportUpdated?.(updatedReport);
+        setIsLocked(updatedReport.status === "LOCKED" || isTaskLocked);
         toast.success(
-          newLockStatus
-            ? "Đã khóa báo cáo thành công"
-            : "Đã mở khóa báo cáo thành công"
+          isCurrentlyLocked
+            ? "Đã mở khóa báo cáo thành công"
+            : "Đã khóa báo cáo thành công"
         );
       } else {
         toast.error(response.message || "Không thể thay đổi trạng thái khóa");

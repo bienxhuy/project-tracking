@@ -7,7 +7,6 @@ import {
   ReportDetail,
   CreateReportRequest,
   UpdateReportRequest,
-  ToggleReportLockRequest,
 } from "@/types/report.type";
 
 /**
@@ -136,19 +135,26 @@ class ReportService {
   }
 
   /**
-   * Toggle report lock status (Instructor only)
+   * Submit report - change status to SUBMITTED (Instructor only)
    */
-  async toggleReportLock(
-    reportId: number,
-    data: ToggleReportLockRequest
-  ): Promise<ApiResponse<Report>> {
-    const response = await apiClient.patch<ApiResponse<Report>>(
-      `/api/v1/reports/${reportId}/lock`,
-      data
+  async submitReport(
+    reportId: number
+  ): Promise<ApiResponse<null>> {
+    const response = await apiClient.patch<ApiResponse<null>>(
+      `/api/v1/reports/${reportId}/submit`
     );
-    if (response.data.status === "success" && response.data.data) {
-      response.data.data = parseReportDates<Report>(response.data.data);
-    }
+    return response.data;
+  }
+
+  /**
+   * Lock report - change status to LOCKED (Instructor only)
+   */
+  async lockReport(
+    reportId: number
+  ): Promise<ApiResponse<null>> {
+    const response = await apiClient.patch<ApiResponse<null>>(
+      `/api/v1/reports/${reportId}/lock`
+    );
     return response.data;
   }
 }
