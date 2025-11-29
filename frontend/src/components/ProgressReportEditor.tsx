@@ -122,7 +122,7 @@ export const ProgressReportEditor = ({
           removedAttachmentIds,
         });
         
-        if (response.status === 200 && response.data) {
+        if (response.status === "success" && response.data) {
           onSuccess?.(response.data);
           toast.success("Cập nhật báo cáo thành công");
         } else {
@@ -136,7 +136,7 @@ export const ProgressReportEditor = ({
           files: newFiles,
         });
         
-        if (response.status === 201 && response.data) {
+        if (response.status === "success" && response.data) {
           onSuccess?.(response.data);
           toast.success("Tạo báo cáo thành công");
         } else {

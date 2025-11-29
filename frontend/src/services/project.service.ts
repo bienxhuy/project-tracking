@@ -9,6 +9,23 @@ import {
   UpdateProjectRequest,
   UpdateProjectContentRequest,
 } from "@/types/project.type";
+import { BaseUser, ProjectMemberResponse } from "@/types/user.type";
+
+/**
+ * Helper function to parse date strings to Date objects in Project
+ */
+function parseProjectDates<T extends Project | ProjectDetail>(project: any): T {
+  return {
+    ...project,
+    startDate: new Date(project.startDate),
+    endDate: new Date(project.endDate),
+    milestones: project.milestones?.map((milestone: any) => ({
+      ...milestone,
+      startDate: new Date(milestone.startDate),
+      endDate: new Date(milestone.endDate),
+    })),
+  };
+}
 
 class ProjectService {
   /**
@@ -18,6 +35,9 @@ class ProjectService {
     const response = await apiClient.get<ApiResponse<ProjectDetail>>(
       `/api/v1/projects/${projectId}`
     );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseProjectDates<ProjectDetail>(response.data.data);
+    }
     return response.data;
   }
 
@@ -29,6 +49,9 @@ class ProjectService {
       '/api/v1/projects',
       data
     );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseProjectDates<Project>(response.data.data);
+    }
     return response.data;
   }
 
@@ -40,6 +63,9 @@ class ProjectService {
       `/api/v1/projects/${projectId}`,
       data
     );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseProjectDates<Project>(response.data.data);
+    }
     return response.data;
   }
 
@@ -64,15 +90,18 @@ class ProjectService {
       `/api/v1/projects/${projectId}/content`,
       data
     );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseProjectDates<Project>(response.data.data);
+    }
     return response.data;
   }
 
   /**
    * Lock project objective and description (Instructor only)
    */
-  async lockProject(projectId: number): Promise<ApiResponse<Project>> {
-    const response = await apiClient.patch<ApiResponse<Project>>(
-      `/api/v1/projects/${projectId}/lock`
+  async lockProjectContent(projectId: number): Promise<ApiResponse<null>> {
+    const response = await apiClient.patch<ApiResponse<null>>(
+      `/api/v1/projects/${projectId}/content/lock`
     );
     return response.data;
   }
@@ -80,8 +109,28 @@ class ProjectService {
   /**
    * Unlock project objective and description (Instructor only)
    */
-  async unlockProject(projectId: number): Promise<ApiResponse<Project>> {
-    const response = await apiClient.patch<ApiResponse<Project>>(
+  async unlockProjectContent(projectId: number): Promise<ApiResponse<null>> {
+    const response = await apiClient.patch<ApiResponse<null>>(
+      `/api/v1/projects/${projectId}/content/unlock`
+    );
+    return response.data;
+  }
+
+  /**
+   * Lock entire project including content, milestones, tasks, and reports (Instructor only)
+   */
+  async lockEntireProject(projectId: number): Promise<ApiResponse<null>> {
+    const response = await apiClient.patch<ApiResponse<null>>(
+      `/api/v1/projects/${projectId}/lock`
+    );
+    return response.data;
+  }
+
+  /**
+   * Unlock entire project including content, milestones, tasks, and reports (Instructor only)
+   */
+  async unlockEntireProject(projectId: number): Promise<ApiResponse<null>> {
+    const response = await apiClient.patch<ApiResponse<null>>(
       `/api/v1/projects/${projectId}/unlock`
     );
     return response.data;
@@ -94,21 +143,30 @@ class ProjectService {
     const response = await apiClient.get<ApiResponse<Project[]>>(
       '/api/v1/projects'
     );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = response.data.data.map(project => parseProjectDates<Project>(project));
+    }
     return response.data;
   }
 
   /**
    * Get student's projects
    */
-  async getStudentProjects(params?: {
-    year?: number;
-    semester?: number;
-    batch?: number;
-  }): Promise<ApiResponse<Project[]>> {
+  async getStudentProjects(
+    studentId: number,
+    params?: {
+      year?: number;
+      semester?: number;
+      batch?: string;
+    }
+  ): Promise<ApiResponse<Project[]>> {
     const response = await apiClient.get<ApiResponse<Project[]>>(
-      '/api/v1/projects/my-projects',
+      `/api/v1/projects/student/${studentId}`,
       { params }
     );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = response.data.data.map(project => parseProjectDates<Project>(project));
+    }
     return response.data;
   }
 
@@ -116,18 +174,32 @@ class ProjectService {
    * Get instructor's projects
    */
   async getInstructorProjects(
-    instructorId: number,
-    params?: {
-      year?: number;
-      semester?: number;
-      batch?: number;
-    }
+    instructorId: number
   ): Promise<ApiResponse<Project[]>> {
     const response = await apiClient.get<ApiResponse<Project[]>>(
-      `/api/v1/projects/instructor/${instructorId}`,
-      { params }
+      `/api/v1/projects/instructor/${instructorId}`
     );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = response.data.data.map(project => parseProjectDates<Project>(project));
+    }
     return response.data;
+  }
+
+  /**
+   * Get project members and parse to BaseUser array
+   */
+  async getProjectMembers(projectId: number): Promise<BaseUser[]> {
+    const response = await apiClient.get<ApiResponse<ProjectMemberResponse[]>>(
+      `/api/v1/project-members/project/${projectId}`
+    );
+    
+    // Parse ProjectMemberResponse array to BaseUser array
+    return response.data.data.map((member) => ({
+      id: member.userId,
+      displayName: member.userName,
+      email: member.userEmail,
+      role: member.role,
+    }));
   }
 }
 

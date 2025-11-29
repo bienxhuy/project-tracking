@@ -126,7 +126,7 @@ export const MilestoneCard = ({
     if (!id) return;
     try {
       const response = await milestoneService.deleteMilestone(id);
-      if (response.status === 200) {
+      if (response.status === "success") {
         onDeleted?.(id);
         toast.success("Xóa cột mốc thành công");
       } else {
@@ -142,14 +142,15 @@ export const MilestoneCard = ({
     try {
       if (isNew) {
         // Create new milestone via API
-        const response = await milestoneService.createMilestone(projectId, {
+        const response = await milestoneService.createMilestone({
+          projectId,
           title: data.title,
           description: data.description ?? "",
           startDate: data.startDate,
           endDate: data.endDate,
         });
 
-        if (response.status === 201 && response.data) {
+        if (response.status === "success" && response.data) {
           onCreated?.(response.data);
           toast.success("Tạo cột mốc thành công");
         } else {
@@ -164,7 +165,7 @@ export const MilestoneCard = ({
           endDate: data.endDate,
         });
 
-        if (response.status === 200 && response.data) {
+        if (response.status === "success" && response.data) {
           onUpdated?.(response.data);
           toast.success("Cập nhật cột mốc thành công");
           setIsEditing(false);
@@ -176,7 +177,7 @@ export const MilestoneCard = ({
       toast.error("Đã xảy ra lỗi khi lưu cột mốc");
     }
   };
-
+  
   return (
     <Card className="border-border bg-card hover:bg-gray-50 transition-colors h-fit">
       {/* Normal (display) mode: only show when not editing and not creating new */}

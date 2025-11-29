@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { X, Search, UserPlus } from "lucide-react"
+import { X, Search, UserPlus, Loader2 } from "lucide-react"
 import { BaseUser } from "@/types/user.type"
 import { searchStudents } from "@/services/user.service"
 import { getInitials } from "@/utils/user.utils"
@@ -18,21 +18,37 @@ export const StudentSelector = ({ selectedStudents, onStudentsChange }: StudentS
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<BaseUser[]>([])
   const [showResults, setShowResults] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
 
   useEffect(() => {
-    if (searchQuery.trim()) {
-      // Call the search service from user.service.ts
-      const results = searchStudents(searchQuery)
-      // Filter out already selected students
-      const filteredResults = results.filter(
-        (student) => !selectedStudents.find((s) => s.id === student.id)
-      )
-      setSearchResults(filteredResults)
-      setShowResults(true)
-    } else {
-      setSearchResults([])
-      setShowResults(false)
+    const performSearch = async () => {
+      if (searchQuery.trim()) {
+        setIsSearching(true)
+        try {
+          // Call the async search service from user.service.ts
+          const results = await searchStudents(searchQuery)
+          // Filter out already selected students
+          const filteredResults = results.filter(
+            (student) => !selectedStudents.find((s) => s.id === student.id)
+          )
+          setSearchResults(filteredResults)
+          setShowResults(true)
+        } catch (error) {
+          console.error("Error searching students:", error)
+          setSearchResults([])
+        } finally {
+          setIsSearching(false)
+        }
+      } else {
+        setSearchResults([])
+        setShowResults(false)
+        setIsSearching(false)
+      }
     }
+
+    // Debounce search
+    const timeoutId = setTimeout(performSearch, 300)
+    return () => clearTimeout(timeoutId)
   }, [searchQuery, selectedStudents])
 
   const addStudent = (student: BaseUser) => {
@@ -56,12 +72,15 @@ export const StudentSelector = ({ selectedStudents, onStudentsChange }: StudentS
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => searchQuery && setShowResults(true)}
-            className="pl-10"
+            className="pl-10 pr-10"
           />
+          {isSearching && (
+            <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+          )}
         </div>
 
         {/* Search Results Dropdown */}
-        {showResults && searchResults.length > 0 && (
+        {showResults && !isSearching && searchResults.length > 0 && (
           <Card className="absolute z-10 w-full mt-2 max-h-64 overflow-y-auto">
             <CardContent className="p-2">
               {searchResults.map((student) => (
@@ -86,6 +105,25 @@ export const StudentSelector = ({ selectedStudents, onStudentsChange }: StudentS
                   </Button>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Loading State */}
+        {isSearching && (
+          <Card className="absolute z-10 w-full mt-2">
+            <CardContent className="p-4 text-center">
+              <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground mt-2">Đang tìm kiếm...</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* No Results */}
+        {showResults && !isSearching && searchResults.length === 0 && searchQuery.trim() && (
+          <Card className="absolute z-10 w-full mt-2">
+            <CardContent className="p-4 text-center">
+              <p className="text-sm text-muted-foreground">Không tìm thấy sinh viên nào</p>
             </CardContent>
           </Card>
         )}

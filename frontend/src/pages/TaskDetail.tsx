@@ -18,8 +18,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ProgressReportThread } from "@/components/ProgressReportThread";
 import { TaskDetail } from "@/types/task.type";
 import { Report } from "@/types/report.type";
+import { BaseUser } from "@/types/user.type";
 import { taskService } from "@/services/task.service";
-import { projectMembers } from "@/data/dummy/task-detail.dummy";
+import { projectService } from "@/services/project.service";
 import { getInitials } from "@/utils/user.utils";
 import { toast } from "sonner";
 
@@ -41,6 +42,7 @@ export const TaskDetailPage = () => {
 
   const userRole = user?.role === "INSTRUCTOR" ? "instructor" : "student";
   const [task, setTask] = useState<TaskDetail | null>(null);
+  const [projectMembers, setProjectMembers] = useState<BaseUser[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -62,10 +64,10 @@ export const TaskDetailPage = () => {
     const fetchTaskDetail = async () => {
       try {
         setIsLoading(true);
-        const response = await taskService.getTaskById(Number(taskId));
+        const response = await taskService.getTaskById(Number(taskId), true);
         
-        if (response.status === 200 && response.data) {
-          setTask(response.data);
+        if (response.status === "success" && response.data) {
+          setTask(response.data as TaskDetail);
           setSelectedAssignees(response.data.assignees.map((a) => a.id));
 
           form.reset({
@@ -87,6 +89,23 @@ export const TaskDetailPage = () => {
 
     fetchTaskDetail();
   }, [taskId, form]);
+
+  // Fetch project members on mount
+  useEffect(() => {
+    const fetchProjectMembers = async () => {
+      if (!projectId) return;
+      
+      try {
+        const members = await projectService.getProjectMembers(Number(projectId));
+        setProjectMembers(members);
+      } catch (error) {
+        console.error("Không thể tải danh sách thành viên:", error);
+        toast.error("Không thể tải danh sách thành viên dự án");
+      }
+    };
+
+    fetchProjectMembers();
+  }, [projectId]);
 
   if (isLoading) {
     return (
@@ -132,7 +151,7 @@ export const TaskDetailPage = () => {
         assigneeIds: selectedAssignees,
       });
 
-      if (response.status === 200 && response.data) {
+      if (response.status === "success" && response.data) {
         setTask({
           ...task,
           title: response.data.title,
@@ -167,12 +186,10 @@ export const TaskDetailPage = () => {
   const handleToggleComplete = async () => {
     try {
       const newStatus = isCompleted ? "IN_PROGRESS" : "COMPLETED";
-      const response = await taskService.toggleTaskStatus(Number(taskId), {
-        status: newStatus,
-      });
+      const response = await taskService.toggleTaskStatus(Number(taskId), newStatus);
 
-      if (response.status === 200 && response.data) {
-        setTask({ ...task, status: response.data.status });
+      if (response.status === "success") {
+        setTask({ ...task, status: newStatus });
         toast.success(
           newStatus === "COMPLETED"
             ? "Đã đánh dấu hoàn thành"
@@ -193,7 +210,7 @@ export const TaskDetailPage = () => {
         isLocked: !task.isLocked,
       });
 
-      if (response.status === 200 && response.data) {
+      if (response.status === "success" && response.data) {
         setTask({ ...task, isLocked: response.data.isLocked });
         toast.success(
           response.data.isLocked
@@ -215,7 +232,7 @@ export const TaskDetailPage = () => {
     try {
       const response = await taskService.deleteTask(Number(taskId));
 
-      if (response.status === 200) {
+      if (response.status === "success") {
         toast.success("Xóa nhiệm vụ thành công");
         navigate(`/project/${projectId}/milestone/${milestoneId}`);
       } else {

@@ -59,6 +59,15 @@ public interface MilestoneMapper {
     @Mapping(target = "tasks", ignore = true)
     MilestoneRes toResponse(Milestone milestone);
     
+    @AfterMapping
+    default void mapTasksAfterMapping(Milestone source, @MappingTarget MilestoneRes target) {
+        if (source.getTasks() != null && !source.getTasks().isEmpty()) {
+            target.setTasks(source.getTasks().stream()
+                .map(this::mapTask)
+                .collect(java.util.stream.Collectors.toList()));
+        }
+    }
+    
     // Helper method for mapping list of milestones with tasks
     default MilestoneRes toResponseWithTasks(Milestone milestone) {
         if (milestone == null) {

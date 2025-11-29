@@ -7,6 +7,7 @@ interface Milestone {
   title: string;
   completionPercentage: number;
   tasksTotal: number;
+  tasksCompleted: number;
   color?: string;
 }
 
@@ -23,6 +24,13 @@ export const ProjectProgressBar = ({ milestones, projectTotalTasks, projectId, c
   // State to track which milestone segment is hovered
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
+  // Replace milestone completionPercentage 
+  // TODO: Fix back to completionPercentage calculation when BE is fixed
+  milestones = milestones.map(milestone => ({
+    ...milestone,
+    completionPercentage: milestone.tasksTotal === 0 ? 0 : Math.round((milestone.tasksCompleted / milestone.tasksTotal) * 100)
+  }));
+
   return (
     <TooltipProvider>
       <div className={`relative w-full h-4 bg-muted rounded-full${className}`}>
@@ -31,7 +39,7 @@ export const ProjectProgressBar = ({ milestones, projectTotalTasks, projectId, c
             <Tooltip key={milestone.id} delayDuration={0}>
               <TooltipTrigger asChild>
                 <div
-                  className="relative h-full transition-all duration-200 cursor-pointer overflow-hidden z-0 hover:scale-200 hover:z-100 hover:border hover:border-white hover:shadow-lg hover:rounded-md"
+                  className="relative h-full transition-all duration-200 cursor-pointer overflow-hidden z-0 hover:scale-110 hover:z-100 hover:border hover:border-white hover:shadow-lg hover:rounded-md"
                   style={{ width: `${(milestone.tasksTotal / projectTotalTasks) * 100}%` }}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}

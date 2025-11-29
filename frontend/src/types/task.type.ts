@@ -19,6 +19,8 @@ export interface TaskDetail extends Task {
 }
 
 export interface CreateTaskRequest {
+  milestoneId: number;
+  projectId: number;
   title: string;
   description: string;
   startDate: string; // ISO date format

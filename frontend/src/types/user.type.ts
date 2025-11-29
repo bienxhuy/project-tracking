@@ -14,7 +14,7 @@ export interface User {
   avatar?: string;
   role: UserRole;
   accountStatus: UserStatus;
-  level: number;  // double in backend
+  level?: number;  // Optional - removed from backend entity
   loginType: LoginType;
   createdAt: string;  // LocalDateTime from BaseEntity
   updatedAt: string;  // LocalDateTime from BaseEntity
@@ -90,4 +90,18 @@ export interface BaseUser {
   displayName: string; 
   email: string;
   role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
+}
+
+// Interface for project member from API response
+export interface ProjectMemberResponse {
+  id: number;
+  role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
+  isActive: boolean;
+  joinedAt: string;
+  projectId: number;
+  projectTitle: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  userAvatar: string | null;
 }

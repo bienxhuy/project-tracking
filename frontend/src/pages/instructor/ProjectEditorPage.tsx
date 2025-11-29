@@ -57,13 +57,13 @@ export const ProjectEditorPage = () => {
       content: "",
       year: 0,
       semester: 0,
-      batch: 0,
+      batch: "",
       falculty: "",
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: "",
+      endDate: "",
       studentIds: [],
     },
-  })
+  });
 
   // Load available years, faculties and project data if in edit mode
   useEffect(() => {
@@ -91,9 +91,9 @@ export const ProjectEditorPage = () => {
   const loadProjectData = async () => {
     try {
       const response = await projectService.getProjectById(parseInt(projectId!))
-      const projectDetail = response.data
-
-      if (projectDetail) {
+      
+      if (response.status === "success" && response.data) {
+        const projectDetail = response.data
 
         // Set form values individually to ensure proper type handling
         form.setValue('title', projectDetail.title)
@@ -103,14 +103,14 @@ export const ProjectEditorPage = () => {
         form.setValue('semester', projectDetail.semester)
         form.setValue('batch', projectDetail.batch)
         form.setValue('falculty', projectDetail.falculty)
-        form.setValue('startDate', new Date(projectDetail.startDate))
-        form.setValue('endDate', new Date(projectDetail.endDate))
+        form.setValue('startDate', new Date(projectDetail.startDate).toISOString().split('T')[0])
+        form.setValue('endDate', new Date(projectDetail.endDate).toISOString().split('T')[0])
         form.setValue('studentIds', projectDetail.students.map((s) => s.id))
 
         // Load selected students from project detail
         setSelectedStudents(projectDetail.students)
       } else {
-        toast.error("Không tìm thấy dự án")
+        toast.error(response.message || "Không tìm thấy dự án")
         navigate("/instructor/dashboard")
       }
     } catch (error) {
@@ -139,12 +139,17 @@ export const ProjectEditorPage = () => {
           semester: data.semester,
           batch: data.batch,
           falculty: data.falculty,
-          startDate: data.startDate,
-          endDate: data.endDate,
+          startDate: new Date(data.startDate),
+          endDate: new Date(data.endDate),
           studentIds: data.studentIds,
         }
-        await projectService.updateProject(parseInt(projectId!), updateData)
-        toast.success("Cập nhật dự án thành công")
+        const response = await projectService.updateProject(parseInt(projectId!), updateData)
+        if (response.status === "success") {
+          toast.success("Cập nhật dự án thành công")
+          navigate("/instructor/dashboard")
+        } else {
+          toast.error(response.message || "Cập nhật dự án thất bại")
+        }
       } else {
         const createData: CreateProjectRequest = {
           title: data.title,
@@ -154,15 +159,18 @@ export const ProjectEditorPage = () => {
           semester: data.semester,
           batch: data.batch,
           falculty: data.falculty,
-          startDate: data.startDate,
-          endDate: data.endDate,
+          startDate: new Date(data.startDate),
+          endDate: new Date(data.endDate),
           studentIds: data.studentIds,
         }
-        await projectService.createProject(createData)
-        toast.success("Tạo dự án thành công")
+        const response = await projectService.createProject(createData)
+        if (response.status === "success") {
+          toast.success("Tạo dự án thành công")
+          navigate("/instructor/dashboard")
+        } else {
+          toast.error(response.message || "Tạo dự án thất bại")
+        }
       }
-
-      navigate("/instructor/dashboard")
     } catch (error) {
       toast.error(isEditMode ? "Cập nhật dự án thất bại" : "Tạo dự án thất bại")
     } finally {
@@ -318,9 +326,9 @@ export const ProjectEditorPage = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="1">HK1</SelectItem>
-                            <SelectItem value="2">HK2</SelectItem>
-                            <SelectItem value="3">HK3</SelectItem>
+                            <SelectItem value="1">1</SelectItem>
+                            <SelectItem value="2">2</SelectItem>
+                            <SelectItem value="3">3</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -338,12 +346,12 @@ export const ProjectEditorPage = () => {
                           Đợt <span className="text-destructive">*</span>
                         </FormLabel>
                         <Select
-                          onValueChange={(value) => field.onChange(parseInt(value))}
-                          value={field.value > 0 ? field.value.toString() : ""}
+                          onValueChange={field.onChange}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Đợt" />
+                              <SelectValue placeholder="Chọn đợt" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -399,8 +407,7 @@ export const ProjectEditorPage = () => {
                         <FormControl>
                           <Input
                             type="date"
-                            value={field.value ? field.value.toISOString().split('T')[0] : ''}
-                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -420,8 +427,7 @@ export const ProjectEditorPage = () => {
                         <FormControl>
                           <Input
                             type="date"
-                            value={field.value ? field.value.toISOString().split('T')[0] : ''}
-                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />

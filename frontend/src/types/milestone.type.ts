@@ -20,6 +20,7 @@ export interface MilestoneDetail extends Milestone {
 }
 
 export interface CreateMilestoneRequest {
+  projectId: number;
   title: string;
   description: string;
   startDate: string;

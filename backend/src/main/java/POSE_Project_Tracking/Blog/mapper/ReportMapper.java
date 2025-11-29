@@ -70,6 +70,7 @@ public interface ReportMapper {
     @Mapping(target = "totalComments", expression = "java(report.getComments() != null ? report.getComments().size() : 0)")
     @Mapping(target = "totalAttachments", expression = "java(report.getAttachments() != null ? report.getAttachments().size() : 0)")
     @Mapping(target = "comments", ignore = true)
+    @Named("toResponse")
     ReportRes toResponse(Report report);
     
     @Mapping(target = "isLocked", source = "locked")
@@ -86,5 +87,6 @@ public interface ReportMapper {
     @Mapping(target = "totalComments", expression = "java(report.getComments() != null ? report.getComments().size() : 0)")
     @Mapping(target = "totalAttachments", expression = "java(report.getAttachments() != null ? report.getAttachments().size() : 0)")
     @Mapping(target = "comments", source = "comments")
+    @Named("toResponseWithComments")
     ReportRes toResponseWithComments(Report report);
 }

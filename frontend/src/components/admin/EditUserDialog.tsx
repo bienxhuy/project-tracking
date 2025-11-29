@@ -44,7 +44,7 @@ export function EditUserDialog({
         email: user.email,
         role: user.role,
         accountStatus: user.accountStatus,
-        level: user.level
+        ...(user.level !== undefined && user.level !== null && { level: user.level })
       });
     }
   }, [user]);

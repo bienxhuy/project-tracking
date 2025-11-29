@@ -86,24 +86,47 @@ class UserService {
 export const userService = new UserService();
 
 
-// API Service to fetch user data
+// API Service to fetch user data (students specifically)
 
 import { BaseUser } from "@/types/user.type";
-import { dummyStudents } from "@/data/dummy/users.dummy";
 
-export function fetchAllStudents(): BaseUser[] {
-  // TODO: Replace with real API call
-  return dummyStudents;
+/**
+ * Fetch all students
+ */
+export async function fetchAllStudents(): Promise<BaseUser[]> {
+  const response = await apiClient.get<ApiResponse<User[]>>(
+    '/api/v1/users?role=STUDENT'
+  );
+  
+  // Parse to BaseUser array
+  return response.data.data.map(user => ({
+    id: user.id,
+    displayName: user.displayName,
+    email: user.email,
+    role: user.role
+  }));
 }
 
-export function searchStudents(query: string): BaseUser[] {
-  // TODO: Replace with real API call
-  if (!query) return dummyStudents;
+/**
+ * Search students by query
+ */
+export async function searchStudents(query: string): Promise<BaseUser[]> {
+  const params = new URLSearchParams();
+  params.append('role', 'STUDENT');
   
-  const lowerQuery = query.toLowerCase();
-  return dummyStudents.filter(
-    student => 
-      student.full_name.toLowerCase().includes(lowerQuery) ||
-      student.email.toLowerCase().includes(lowerQuery)
+  if (query.trim()) {
+    params.append('search', query.trim());
+  }
+  
+  const response = await apiClient.get<ApiResponse<User[]>>(
+    `/api/v1/users?${params.toString()}`
   );
+  
+  // Parse to BaseUser array
+  return response.data.data.map(user => ({
+    id: user.id,
+    displayName: user.displayName,
+    email: user.email,
+    role: user.role
+  }));
 }

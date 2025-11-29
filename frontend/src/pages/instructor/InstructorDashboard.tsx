@@ -66,7 +66,7 @@ export const InstructorDashboard = () => {
     setYears(availableYears)
   }, [])
 
-  const loadProjects = async (filters?: { year?: number; semester?: number; batch?: number }) => {
+  const loadProjects = async () => {
     if (!user?.id) {
       const errorMessage = "Không tìm thấy thông tin người dùng";
       setError(errorMessage);
@@ -78,9 +78,9 @@ export const InstructorDashboard = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await projectService.getInstructorProjects(user.id, filters);
+      const response = await projectService.getInstructorProjects(user.id);
       
-      if (response.status !== 200) {
+      if (response.status !== "success") {
         throw new Error('Không thể tải danh sách dự án');
       }
       
@@ -119,13 +119,8 @@ export const InstructorDashboard = () => {
 
   // Fetch projects based on filters
   const fetchProjectsBasedOnFilter = async () => {
-    const filters: { year?: number; semester?: number; batch?: number } = {}
-    
-    if (selectedYear) filters.year = parseInt(selectedYear)
-    if (selectedSemester) filters.semester = parseInt(selectedSemester)
-    if (selectedBatch) filters.batch = parseInt(selectedBatch)
-    
-    await loadProjects(filters)
+    // Note: Instructor endpoint does not support filtering yet
+    await loadProjects();
   }
 
   // Handle project deletion
@@ -135,7 +130,7 @@ export const InstructorDashboard = () => {
     try {
       const response = await projectService.deleteProject(deleteDialog.projectId);
       
-      if (response.status !== 200) {
+      if (response.status !== "success") {
         throw new Error('Xóa dự án thất bại');
       }
       

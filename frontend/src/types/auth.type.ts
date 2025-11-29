@@ -23,7 +23,7 @@ export interface ChangePasswordRequest {
 }
 
 export interface ApiResponse<T> {
-  status: number;
+  status: string;
   message: string;
   data: T;
   errorCode?: string;
