@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,9 +29,9 @@ import POSE_Project_Tracking.Blog.repository.ProjectRepository;
 import POSE_Project_Tracking.Blog.repository.ReportRepository;
 import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
+import POSE_Project_Tracking.Blog.service.NotificationHelperService;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 
-@Disabled("Temporarily disabled - needs fixing after recent changes")
 @ExtendWith(MockitoExtension.class)
 class ReportServiceImplTest {
 
@@ -56,6 +55,12 @@ class ReportServiceImplTest {
 
     @Mock
     private SecurityUtil securityUtil;
+
+    @Mock
+    private jakarta.persistence.EntityManager entityManager;
+
+    @Mock
+    private NotificationHelperService notificationHelperService;
 
     @InjectMocks
     private ReportServiceImpl service;
@@ -93,6 +98,7 @@ class ReportServiceImplTest {
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(reportMapper.toEntity(any(), any(), any(), any(), any())).thenReturn(report);
         when(reportRepository.save(any(Report.class))).thenReturn(report);
+        when(reportRepository.findByIdWithAttachments(1L)).thenReturn(Optional.of(report));
         when(reportMapper.toResponse(report)).thenReturn(new ReportRes());
 
         ReportRes result = service.createReport(req);

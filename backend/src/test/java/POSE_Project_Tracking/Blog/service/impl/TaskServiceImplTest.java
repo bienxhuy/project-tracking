@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,9 +32,9 @@ import POSE_Project_Tracking.Blog.repository.TaskRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.IMilestoneService;
 import POSE_Project_Tracking.Blog.service.IProjectService;
+import POSE_Project_Tracking.Blog.service.NotificationHelperService;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 
-@Disabled("Temporarily disabled - needs fixing after recent changes")
 @ExtendWith(MockitoExtension.class)
 class TaskServiceImplTest {
 
@@ -56,6 +55,9 @@ class TaskServiceImplTest {
 
     @Mock
     private SecurityUtil securityUtil;
+
+    @Mock
+    private NotificationHelperService notificationHelperService;
 
     @Mock
     private IProjectService projectService;
@@ -217,7 +219,7 @@ class TaskServiceImplTest {
     @Test
     void lockTask_validRequest_locksTask() {
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(securityUtil.getCurrentUser()).thenReturn(user);
         when(taskRepository.save(any(Task.class))).thenReturn(task);
 
         service.lockTask(1L, 1L);
