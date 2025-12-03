@@ -2,6 +2,8 @@ package POSE_Project_Tracking.Blog.service;
 
 import POSE_Project_Tracking.Blog.dto.WebSocketNotificationMessage;
 import POSE_Project_Tracking.Blog.entity.Notification;
+import POSE_Project_Tracking.Blog.entity.User;
+import POSE_Project_Tracking.Blog.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -17,6 +19,8 @@ import org.springframework.stereotype.Service;
 public class WebSocketNotificationService {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final UserRepository userRepository;
+    private final org.springframework.messaging.simp.user.SimpUserRegistry simpUserRegistry;
 
     /**
      * Send notification to a specific user
@@ -27,15 +31,49 @@ public class WebSocketNotificationService {
      */
     public void sendNotificationToUser(Long userId, WebSocketNotificationMessage message) {
         try {
-            String destination = "/user/queue/notifications";
+            // Lookup username from userId
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                log.warn("⚠️ User not found for userId: {}", userId);
+                return;
+            }
+            
+            String username = user.getUsername();
+            String destination = "/queue/notifications";
+            
+            log.info("🔍 Sending notification to userId={}, username='{}' (length: {})", 
+                userId, username, username.length());
+            
+            // Debug: Check all active users
+            log.info("📋 Active WebSocket users:");
+            simpUserRegistry.getUsers().forEach(simpUser -> {
+                log.info("  - User: '{}' (length: {}), Sessions: {}", 
+                    simpUser.getName(), 
+                    simpUser.getName().length(), 
+                    simpUser.getSessions().size());
+            });
+            
+            // Check if target user exists in registry
+            org.springframework.messaging.simp.user.SimpUser targetUser = simpUserRegistry.getUser(username);
+            if (targetUser == null) {
+                log.warn("⚠️ User '{}' NOT found in SimpUserRegistry!", username);
+                log.warn("   Available users: {}", 
+                    simpUserRegistry.getUsers().stream()
+                        .map(org.springframework.messaging.simp.user.SimpUser::getName)
+                        .toList());
+            } else {
+                log.info("✅ User '{}' found in registry with {} session(s)", 
+                    username, targetUser.getSessions().size());
+            }
+            
             messagingTemplate.convertAndSendToUser(
-                userId.toString(), 
+                username,  // Use username instead of userId
                 destination, 
                 message
             );
-            log.info("Sent WebSocket notification to user {}: {}", userId, message.getTitle());
+            log.info("✅ Sent WebSocket notification to user {} ({}): {}", userId, username, message.getTitle());
         } catch (Exception e) {
-            log.error("Error sending WebSocket notification to user {}: {}", userId, e.getMessage());
+            log.error("❌ Error sending WebSocket notification to user {}: {}", userId, e.getMessage(), e);
         }
     }
 
@@ -63,12 +101,21 @@ public class WebSocketNotificationService {
      */
     public void sendNotificationCount(Long userId, Long unreadCount) {
         try {
+            // Lookup username from userId
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                log.warn("⚠️ User not found for userId: {}", userId);
+                return;
+            }
+            
+            String username = user.getUsername();
+            
             messagingTemplate.convertAndSendToUser(
-                userId.toString(),
+                username,  // Use username instead of userId
                 "/queue/notification-count",
                 unreadCount
             );
-            log.debug("Sent notification count to user {}: {}", userId, unreadCount);
+            log.debug("Sent notification count to user {} ({}): {}", userId, username, unreadCount);
         } catch (Exception e) {
             log.error("Error sending notification count to user {}: {}", userId, e.getMessage());
         }
@@ -83,17 +130,26 @@ public class WebSocketNotificationService {
      */
     public void notifyNotificationRead(Long userId, Long notificationId) {
         try {
+            // Lookup username from userId
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                log.warn("⚠️ User not found for userId: {}", userId);
+                return;
+            }
+            
+            String username = user.getUsername();
+            
             WebSocketNotificationMessage message = WebSocketNotificationMessage.builder()
                 .id(notificationId)
                 .action("NOTIFICATION_READ")
                 .build();
             
             messagingTemplate.convertAndSendToUser(
-                userId.toString(),
+                username,  // Use username instead of userId
                 "/queue/notification-updates",
                 message
             );
-            log.debug("Notified user {} that notification {} was read", userId, notificationId);
+            log.debug("Notified user {} ({}) that notification {} was read", userId, username, notificationId);
         } catch (Exception e) {
             log.error("Error notifying read status to user {}: {}", userId, e.getMessage());
         }
