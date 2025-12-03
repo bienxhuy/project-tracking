@@ -10,7 +10,7 @@ export interface WebSocketNotification {
   referenceType?: string;
   triggeredById?: number;
   triggeredByName?: string;
-  timestamp: string;
+  createdAt: string;  // Changed from timestamp to createdAt to match backend
   isRead: boolean;
   action: string; // 'NEW_NOTIFICATION', 'NOTIFICATION_READ', 'NOTIFICATION_DELETED'
 }

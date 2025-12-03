@@ -61,7 +61,7 @@ public class WebSocketNotificationMessage {
     /**
      * Timestamp when notification was created
      */
-    private LocalDateTime timestamp;
+    private LocalDateTime createdAt;
     
     /**
      * Is this notification read?

@@ -20,6 +20,17 @@ export const NotificationManager = () => {
     }
   }, [isSupported, permission]);
 
+  // Auto-hide notification after 5 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        clearNotification();
+      }, 5000); // 5 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [notification, clearNotification]);
+
   if (!isSupported) {
     return (
       <div className="fixed bottom-4 right-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
@@ -68,12 +79,23 @@ export const NotificationManager = () => {
                 {notification.notification?.body}
               </p>
               {notification.data && (
-                <div className="mt-2 text-xs text-gray-500">
-                  {Object.entries(notification.data).map(([key, value]) => (
-                    <div key={key}>
-                      <strong>{key}:</strong> {value}
+                <div className="mt-2 text-xs text-gray-500 space-y-1">
+                  {notification.data.type && (
+                    <div>
+                      <strong>Loại thông báo:</strong> {notification.data.type.replace(/_/g, ' ')}
                     </div>
-                  ))}
+                  )}
+                  {notification.data.timestamp && (
+                    <div>
+                      <strong>Thời gian:</strong> {new Date(notification.data.timestamp).toLocaleString('vi-VN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

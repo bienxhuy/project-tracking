@@ -67,9 +67,9 @@ public class WebSocketDebugController {
             .id(999L)
             .title("🧪 Test Notification")
             .message("This is a test notification sent from debug endpoint at " + LocalDateTime.now())
-            .type(ENotificationType.valueOf("INFO"))
+            .type(ENotificationType.COMMENT_ADDED)
             .action("NEW_NOTIFICATION")
-            .timestamp(LocalDateTime.parse(LocalDateTime.now().toString()))
+            .createdAt(LocalDateTime.parse(LocalDateTime.now().toString()))
             .build();
         
         log.info("Sending test notification to user {}: {}", userId, message);
@@ -112,9 +112,9 @@ public class WebSocketDebugController {
             .id(888L)
             .title("📢 Broadcast Test")
             .message("This is a broadcast test notification at " + LocalDateTime.now())
-            .type(ENotificationType.valueOf("INFO"))
+            .type(ENotificationType.COMMENT_ADDED)
             .action("NEW_NOTIFICATION")
-            .timestamp(LocalDateTime.parse(LocalDateTime.now().toString()))
+            .createdAt(LocalDateTime.parse(LocalDateTime.now().toString()))
             .build();
         
         log.info("Broadcasting test notification: {}", message);
@@ -145,7 +145,7 @@ public class WebSocketDebugController {
                 .message("This is test notification number " + i + " of " + count)
                 .type(ENotificationType.valueOf("INFO"))
                 .action("NEW_NOTIFICATION")
-                .timestamp(LocalDateTime.parse(LocalDateTime.now().toString()))
+                .createdAt(LocalDateTime.parse(LocalDateTime.now().toString()))
                 .build();
             
             webSocketNotificationService.sendNotificationToUser(userId, message);

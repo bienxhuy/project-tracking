@@ -25,7 +25,7 @@ public class OpenApiConfig {
         return GroupedOpenApi.builder()
                 .group("public")
                 .packagesToScan("POSE_Project_Tracking.Blog.controller")
-                .pathsToMatch("/api/v1/**")
+                .pathsToMatch("/api/v1/**", "/api/debug/**")
                 .build();
     }
 

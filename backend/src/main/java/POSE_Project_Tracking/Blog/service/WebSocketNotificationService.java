@@ -27,7 +27,7 @@ public class WebSocketNotificationService {
      */
     public void sendNotificationToUser(Long userId, WebSocketNotificationMessage message) {
         try {
-            String destination = "/queue/notifications";
+            String destination = "/user/queue/notifications";
             messagingTemplate.convertAndSendToUser(
                 userId.toString(), 
                 destination, 
@@ -118,7 +118,7 @@ public class WebSocketNotificationService {
                 notification.getTriggeredBy().getId() : null)
             .triggeredByName(notification.getTriggeredBy() != null ? 
                 notification.getTriggeredBy().getDisplayName() : null)
-            .timestamp(notification.getCreatedAt())
+            .createdAt(notification.getCreatedAt())
             .isRead(notification.getIsRead())
             .action(action)
             .build();

@@ -258,7 +258,7 @@ export const Header = () => {
                         <div className="flex justify-between items-center">
                           <h3 className="text-sm font-semibold text-gray-800">{notification.title}</h3>
                           <span className="text-xs text-gray-500">
-                            {new Date(notification.timestamp).toLocaleDateString()} {new Date(notification.timestamp).toLocaleTimeString()}
+                            {notification.createdAt ? new Date(notification.createdAt).toLocaleDateString('vi-VN') : ''} {notification.createdAt ? new Date(notification.createdAt).toLocaleTimeString('vi-VN') : ''}
                           </span>
                         </div>
                         <p className="text-sm text-gray-700 mt-1">{notification.message}</p>
@@ -295,7 +295,7 @@ export const Header = () => {
                         <div className="flex justify-between items-center">
                           <h3 className="text-sm font-semibold text-gray-800">{notification.title}</h3>
                           <span className="text-xs text-gray-500">
-                            {new Date(notification.timestamp).toLocaleDateString()} {new Date(notification.timestamp).toLocaleTimeString()}
+                            {notification.createdAt ? new Date(notification.createdAt).toLocaleDateString('vi-VN') : ''} {notification.createdAt ? new Date(notification.createdAt).toLocaleTimeString('vi-VN') : ''}
                           </span>
                         </div>
                         <p className="text-sm text-gray-700 mt-1">{notification.message}</p>
