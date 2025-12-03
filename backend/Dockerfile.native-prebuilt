@@ -1,0 +1,29 @@
+# Dockerfile for Native Image (pre-built executable)
+# Use this after building native image with: ./mvnw -Pnative native:compile
+
+FROM alpine:3.19
+
+# Install runtime dependencies only (native image doesn't need JVM!)
+# gcompat: GNU C Library compatibility for native executables
+RUN apk add --no-cache \
+    gcompat \
+    libstdc++ \
+    zlib \
+    ca-certificates
+
+WORKDIR /app
+
+# Copy the native executable
+COPY target/project-tracker /app/project-tracker
+
+# Make it executable
+RUN chmod +x /app/project-tracker
+
+# Expose port
+EXPOSE 9090
+
+# Set default environment variables
+ENV PORT=9090
+
+# Run native executable with dynamic PORT support
+ENTRYPOINT ["/bin/sh", "-c", "/app/project-tracker --server.port=${PORT}"]

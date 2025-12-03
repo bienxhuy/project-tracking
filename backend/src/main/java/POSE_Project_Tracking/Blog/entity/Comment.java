@@ -3,9 +3,6 @@ package POSE_Project_Tracking.Blog.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.envers.Audited;
-import org.hibernate.envers.NotAudited;
-import org.hibernate.envers.RelationTargetAuditMode;
 
 import java.util.List;
 
@@ -16,7 +13,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@Audited // Track feedback/comment changes (who gave feedback, what was old feedback)
 public class Comment extends ProgressEntity {
 
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
@@ -40,7 +36,6 @@ public class Comment extends ProgressEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
-    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private User author;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -171,12 +171,6 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
-        <!-- Hibernate Envers for Audit History -->
-        <dependency>
-            <groupId>org.hibernate.orm</groupId>
-            <artifactId>hibernate-envers</artifactId>
-        </dependency>
-
         <!-- iText 7 for PDF generation -->
         <dependency>
             <groupId>com.itextpdf</groupId>
