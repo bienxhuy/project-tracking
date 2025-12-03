@@ -144,10 +144,14 @@ export const ProjectEditorPage = () => {
           studentIds: data.studentIds,
         }
         const response = await projectService.updateProject(parseInt(projectId!), updateData)
-        if (response.status === "success") {
+        console.log("✅ Update Project Response:", response)
+        
+        // Check for success (case-insensitive)
+        if (response.status?.toLowerCase() === "success") {
           toast.success("Cập nhật dự án thành công")
           navigate("/instructor/dashboard")
         } else {
+          console.warn("⚠️ Update response status is not 'success':", response.status)
           toast.error(response.message || "Cập nhật dự án thất bại")
         }
       } else {
@@ -164,14 +168,22 @@ export const ProjectEditorPage = () => {
           studentIds: data.studentIds,
         }
         const response = await projectService.createProject(createData)
-        if (response.status === "success") {
+        console.log("✅ Create Project Response:", response)
+        console.log("✅ Response Status:", response.status)
+        console.log("✅ Response Status Type:", typeof response.status)
+        console.log("✅ Full Response Object:", JSON.stringify(response, null, 2))
+        
+        // Check for success (case-insensitive)
+        if (response.status?.toLowerCase() === "success") {
           toast.success("Tạo dự án thành công")
           navigate("/instructor/dashboard")
         } else {
+          console.warn("⚠️ Response status is not 'success':", response.status)
           toast.error(response.message || "Tạo dự án thất bại")
         }
       }
     } catch (error) {
+      console.error("❌ Create Project Error:", error)
       toast.error(isEditMode ? "Cập nhật dự án thất bại" : "Tạo dự án thất bại")
     } finally {
       setIsSubmitting(false)

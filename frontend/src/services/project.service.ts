@@ -19,12 +19,12 @@ function parseProjectDates<T extends Project | ProjectDetail>(project: any): T {
     ...project,
     startDate: new Date(project.startDate),
     endDate: new Date(project.endDate),
-    students: project.students.filter((mem: any) => mem.role === "STUDENT"),
+    students: project.students?.filter((mem: any) => mem.role === "STUDENT") || [],
     milestones: project.milestones?.map((milestone: any) => ({
       ...milestone,
       startDate: new Date(milestone.startDate),
       endDate: new Date(milestone.endDate),
-    })),
+    })) || [],
   };
 }
 
