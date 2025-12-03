@@ -120,13 +120,6 @@ class WebSocketService {
       this.notifyNotificationCallbacks(notification);
     });
 
-    // Subscribe to broadcast notifications (optional)
-    this.client.subscribe(`/topic/notifications`, (message: IMessage) => {
-      const notification: WebSocketNotification = JSON.parse(message.body);
-      console.log('Received broadcast notification:', notification);
-      this.notifyNotificationCallbacks(notification);
-    });
-
     console.log(`Subscribed to notification topics for user ${userId}`);
   }
 

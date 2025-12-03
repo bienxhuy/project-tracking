@@ -69,7 +69,7 @@ export const NotificationManager = () => {
 
       {/* Foreground Notification Toast */}
       {notification && (
-        <div className="fixed top-4 right-4 bg-white shadow-lg rounded-lg p-4 max-w-sm border-l-4 border-blue-500 animate-slide-in">
+        <div className="fixed top-16 right-4 bg-white shadow-lg rounded-lg p-4 max-w-sm border-l-4 border-blue-500 animate-slide-in">
           <div className="flex justify-between items-start gap-2">
             <div className="flex-1">
               <h4 className="font-semibold text-gray-900">
