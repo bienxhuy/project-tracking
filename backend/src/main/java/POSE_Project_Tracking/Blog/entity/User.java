@@ -1,8 +1,6 @@
 package POSE_Project_Tracking.Blog.entity;
 
-import POSE_Project_Tracking.Blog.enums.ELoginType;
 import POSE_Project_Tracking.Blog.enums.EUserRole;
-import POSE_Project_Tracking.Blog.enums.EUserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -30,17 +28,12 @@ public class User extends BaseEntity {
     @Column(name = "display_name")
     private String displayName;
 
+    @Column(name = "student_id")
+    private String studentId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private EUserRole role;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "account_status")
-    private EUserStatus accountStatus;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "login_type")
-    private ELoginType loginType;
 
     @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL)
     private List<Project> instructedProjects;

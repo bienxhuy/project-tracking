@@ -105,10 +105,8 @@ public class UserOTPFacade {
         }
         if (userId == null) {
             var user=userService.getUserByEmail(email);
-            userService.updateUserStatus(user.getId(), EUserStatus.ACTIVE);
             return true;
         }
-        userService.updateUserStatus(userId, EUserStatus.ACTIVE);
         return true;
 
     }

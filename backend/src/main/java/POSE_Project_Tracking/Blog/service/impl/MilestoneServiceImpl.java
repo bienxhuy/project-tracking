@@ -20,6 +20,7 @@ import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -58,6 +59,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
     private NotificationHelperService notificationHelperService;
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @projectSecurityService.isProjectMember(#milestoneReq.projectId) and !@lockValidationService.isLocked('PROJECT', #milestoneReq.projectId)")
     public MilestoneRes createMilestone(MilestoneReq milestoneReq) {
         // Lấy project
         Project project = projectRepository.findById(milestoneReq.getProjectId())
@@ -77,6 +79,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and !@lockValidationService.isLocked('MILESTONE', #id)")
     public MilestoneRes updateMilestone(Long id, MilestoneReq milestoneReq) {
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
@@ -95,6 +98,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT') and @projectSecurityService.isMilestoneMember(#id)")
     public MilestoneRes getMilestoneById(Long id, String include) {
         Milestone milestone;
         
@@ -157,6 +161,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and !@lockValidationService.isLocked('MILESTONE', #id)")
     public void deleteMilestone(Long id) {
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));
@@ -169,6 +174,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
     }
 
     @Override
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isMilestoneInstructor(#id)")
     public MilestoneRes toggleMilestoneLock(Long id, Boolean isLocked) {
         if (Boolean.TRUE.equals(isLocked)) {
             // Lock milestone and all children
@@ -236,6 +242,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
     }
 
     @Override
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isMilestoneInstructor(#id)")
     public void lockMilestoneWithChildren(Long id) {
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new CustomException(MILESTONE_NOT_FOUND));

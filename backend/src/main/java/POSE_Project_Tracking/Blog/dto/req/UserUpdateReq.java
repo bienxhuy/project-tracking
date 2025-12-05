@@ -17,4 +17,7 @@ public class UserUpdateReq {
     @Pattern(regexp = "^\\s*\\S.*$", message = "Không được chỉ chứa khoảng trắng nếu có giá trị")
     private String displayName;
 
+    @Pattern(regexp = "^\\s*\\S.*$", message = "Không được chỉ chứa khoảng trắng nếu có giá trị")
+    private String studentId;
+
 }

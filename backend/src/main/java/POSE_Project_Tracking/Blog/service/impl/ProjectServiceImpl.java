@@ -9,14 +9,11 @@ import java.util.stream.Collectors;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
-import POSE_Project_Tracking.Blog.config.CacheConfig;
 import POSE_Project_Tracking.Blog.dto.req.ProjectReq;
 import POSE_Project_Tracking.Blog.dto.res.ProjectRes;
 import POSE_Project_Tracking.Blog.entity.Project;
@@ -46,10 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -169,10 +163,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ProjectRes createProject(ProjectReq projectReq) {
         // Lấy current user làm instructor
         User currentUser = securityUtil.getCurrentUser();
@@ -243,11 +234,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isProjectInstructor(#id)")
     public ProjectRes updateProject(Long id, ProjectReq projectReq) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -301,7 +288,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT') and @projectSecurityService.isProjectMember(#id)")
     public ProjectRes getProjectById(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -310,7 +297,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "'detailed_' + #id")
     public ProjectRes getProjectWithDetails(Long id) {
         Project project = projectRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -334,7 +320,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all'")
     public List<ProjectRes> getAllProjects() {
         return projectRepository.findAll().stream()
                 .map(projectMapper::toResponse)
@@ -370,6 +355,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT')")
     public List<ProjectRes> searchProjects(String keyword) {
         return projectRepository.searchByKeyword(keyword).stream()
                 .map(projectMapper::toResponse)
@@ -377,11 +363,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isProjectInstructor(#id)")
     public void deleteProject(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -394,10 +376,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isProjectInstructor(#id)")
     public void lockProject(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -448,10 +427,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isProjectInstructor(#id)")
     public void unlockProject(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -464,10 +440,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isProjectInstructor(#id)")
     public void lockProjectContent(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -501,10 +474,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isProjectInstructor(#id)")
     public void unlockProjectContent(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -515,10 +485,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('STUDENT') and @projectSecurityService.isProjectMember(#id) and !@lockValidationService.isLocked('PROJECT', #id)")
     public ProjectRes updateProjectContent(Long id, String objective, String content) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -613,8 +580,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, 
-               key = "'my_projects_' + #root.target.securityUtil.getCurrentUser().id + '_' + #year + '_' + #semester + '_' + #batch")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT')")
     public List<ProjectRes> getMyProjects(Integer year, Integer semester, String batch) {
         User currentUser = securityUtil.getCurrentUser();
         
@@ -631,8 +597,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, 
-               key = "'my_projects_' + #root.target.securityUtil.getCurrentUser().id + '_' + #status + '_' + #year + '_' + #semester + '_' + #batch")
     public List<ProjectRes> getMyProjectsByStatus(EProjectStatus status, Integer year, Integer semester, String batch) {
         User currentUser = securityUtil.getCurrentUser();
         
@@ -649,8 +613,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, 
-               key = "'all_projects_' + #year + '_' + #semester + '_' + #batch")
     public List<ProjectRes> getAllProjectsWithFilters(Integer year, Integer semester, String batch) {
         // Use current academic year/semester/batch as defaults if not provided
         Integer effectiveYear = year != null ? year : AcademicYearUtil.getCurrentYear();
@@ -665,7 +627,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all_projects_student_' + #studentId")
     public List<ProjectRes> getAllProjectsByStudent(Long studentId) {
         return projectRepository.findProjectsByMemberUserId(studentId).stream()
                 .map(projectMapper::toResponse)
@@ -673,7 +634,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all_projects_student_' + #studentId + '_' + #status")
     public List<ProjectRes> getAllProjectsByStudentAndStatus(Long studentId, EProjectStatus status) {
         return projectRepository.findProjectsByMemberUserIdAndStatus(studentId, status).stream()
                 .map(projectMapper::toResponse)
@@ -681,7 +641,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all_my_projects_' + #root.target.securityUtil.getCurrentUser().id")
     public List<ProjectRes> getAllMyProjects() {
         User currentUser = securityUtil.getCurrentUser();
         return projectRepository.findProjectsByMemberUserId(currentUser.getId()).stream()
@@ -690,7 +649,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all_my_projects_' + #root.target.securityUtil.getCurrentUser().id + '_' + #status")
     public List<ProjectRes> getAllMyProjectsByStatus(EProjectStatus status) {
         User currentUser = securityUtil.getCurrentUser();
         return projectRepository.findProjectsByMemberUserIdAndStatus(currentUser.getId(), status).stream()

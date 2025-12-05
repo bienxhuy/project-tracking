@@ -34,7 +34,9 @@ public class SecurityConfiguration {
                 "/swagger-ui/**",
                 "/swagger-ui.html",
                 "/swagger-resources/**",
-                "/webjars/**"
+                "/webjars/**",
+                // WebSocket endpoint
+                "/ws/**"
         };
 
         @Autowired
@@ -51,16 +53,10 @@ public class SecurityConfiguration {
                                 .cors(withDefaults())
                                 .csrf(csrf -> csrf.disable()) // Tắt CSRF để đơn giản hóa
                                 .authorizeHttpRequests(authorize -> authorize
-                                                // .requestMatchers(HttpMethod.GET, PUBLIC_URLS)
-                                                // .permitAll() // Cho phép tất cả yêu cầu mà
-                                                // không cần xác thực
-                                                // .requestMatchers(HttpMethod.POST, PUBLIC_URLS)
-                                                // .permitAll() // Cho phép tất cả yêu cầu mà
-                                                // không cần xác thực
-                                                .anyRequest()
-                                                .permitAll()
-                                // .authenticated()
-
+                                                // Allow public endpoints without authentication
+                                                .requestMatchers(PUBLIC_URLS).permitAll()
+                                                // All other endpoints require authentication
+                                                .anyRequest().authenticated()
                                 )
                                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults())
                                                 .authenticationEntryPoint(

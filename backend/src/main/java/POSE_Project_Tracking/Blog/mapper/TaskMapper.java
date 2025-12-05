@@ -102,6 +102,7 @@ public interface TaskMapper {
                 .id(user.getId())
                 .displayName(user.getDisplayName())
                 .email(user.getEmail())
+                .studentId(user.getStudentId())
                 .role(user.getRole() != null ? user.getRole() : null)
                 .build();
     }

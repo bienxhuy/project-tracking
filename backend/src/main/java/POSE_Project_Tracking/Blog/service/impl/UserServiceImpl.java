@@ -1,21 +1,17 @@
 package POSE_Project_Tracking.Blog.service.impl;
 
-import POSE_Project_Tracking.Blog.config.CacheConfig;
 import POSE_Project_Tracking.Blog.dto.req.UserReq;
 import POSE_Project_Tracking.Blog.dto.req.UserUpdateReq;
 import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
 import POSE_Project_Tracking.Blog.entity.User;
-import POSE_Project_Tracking.Blog.enums.ELoginType;
 import POSE_Project_Tracking.Blog.enums.EUserRole;
-import POSE_Project_Tracking.Blog.enums.EUserStatus;
 import POSE_Project_Tracking.Blog.mapper.UserMapper;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.IUserService;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,6 +42,7 @@ public class UserServiceImpl implements IUserService {
 
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public UserRes createUser(UserReq userReq) {
         User user = new User();
         userMapper.transformToEntityFromRequest(userReq, user);
@@ -65,8 +62,6 @@ public class UserServiceImpl implements IUserService {
 
         // Thiết lập giá trị mặc định
         user.setRole(EUserRole.STUDENT);
-        user.setAccountStatus(EUserStatus.VERIFYING);
-        user.setLoginType(ELoginType.LOCAL);
 
         user = userRepository.save(user);
 
@@ -75,7 +70,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    //    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UserRes> getAllUsers() {
         var users = userRepository.findAll();
         return users.stream()
@@ -84,18 +79,19 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public List<UserRes> getAllUsers(String search, String role, String accountStatus, String loginType) {
+    public List<UserRes> getAllUsers(String search, String role) {
         var users = userRepository.findAll();
         
         // Apply filters
         return users.stream()
                 .filter(user -> {
-                    // Search filter (username, email, displayName, id)
+                    // Search filter (username, email, displayName, studentId, id)
                     if (search != null && !search.isEmpty()) {
                         String searchLower = search.toLowerCase();
                         boolean matchesSearch = user.getUsername().toLowerCase().contains(searchLower) ||
                                 user.getEmail().toLowerCase().contains(searchLower) ||
                                 user.getDisplayName().toLowerCase().contains(searchLower) ||
+                                (user.getStudentId() != null && user.getStudentId().toLowerCase().contains(searchLower)) ||
                                 user.getId().toString().contains(searchLower);
                         if (!matchesSearch) return false;
                     }
@@ -105,16 +101,6 @@ public class UserServiceImpl implements IUserService {
                         if (!user.getRole().name().equals(role)) return false;
                     }
                     
-                    // Account status filter
-                    if (accountStatus != null && !accountStatus.isEmpty() && !accountStatus.equals("ALL")) {
-                        if (!user.getAccountStatus().name().equals(accountStatus)) return false;
-                    }
-                    
-                    // Login type filter
-                    if (loginType != null && !loginType.isEmpty() && !loginType.equals("ALL")) {
-                        if (!user.getLoginType().name().equals(loginType)) return false;
-                    }
-                    
                     return true;
                 })
                 .map(this::changeToRes)
@@ -122,7 +108,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.USER_PROFILE_CACHE, key = "#id")
+    @PreAuthorize("isAuthenticated() and (@projectSecurityService.canViewUserProfile(#id) or hasRole('ADMIN'))")
     public UserRes getUserById(Long id) {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User Not found"));
@@ -130,7 +116,6 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.USER_PROFILE_CACHE, key = "'username_' + #username")
     public UserRes getUserByUsername(String username) {
         var user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User Not found"));
@@ -145,7 +130,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    @CacheEvict(value = CacheConfig.USER_PROFILE_CACHE, key = "#id")
+    @PreAuthorize("hasRole('ADMIN')")
     public UserRes updateUser(Long id, UserUpdateReq userDetails) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
@@ -169,21 +154,12 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
             throw new IllegalArgumentException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
-    }
-
-    @Override
-    @CacheEvict(value = CacheConfig.USER_PROFILE_CACHE, allEntries = true)
-    public UserRes updateUserStatus(Long id, EUserStatus status) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
-        user.setAccountStatus(status);
-        user = userRepository.save(user);
-        return changeToRes(user);
     }
 
     @Override

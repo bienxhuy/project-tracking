@@ -31,9 +31,6 @@ public class OTPServiceImpl implements IOTPService {
     public OTP generateOTP(Long userId) {
         User user = userRepository.findById(userId)
                                   .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
-        if (user.getAccountStatus() != EUserStatus.VERIFYING) {
-            throw new IllegalArgumentException("User is not in verifying status");
-        }
 
         // Xóa OTP cũ nếu tồn tại
         otpRepository.findByUserId(userId)

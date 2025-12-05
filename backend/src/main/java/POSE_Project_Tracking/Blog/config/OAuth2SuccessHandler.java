@@ -61,9 +61,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                        .displayName(displayName)
                        .email(email)
                        .password("")
-                       .loginType(ELoginType.GOOGLE)
                        .role(EUserRole.STUDENT)
-                       .accountStatus(EUserStatus.ACTIVE)
                        .username(displayName)
                        .build();
             userRepository.save(user);

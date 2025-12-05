@@ -24,4 +24,6 @@ public class UserReq {
     @NotBlank(message = "Tên hiển thị không được để trống")
     private String displayName;
 
+    private String studentId;
+
 }
