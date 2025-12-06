@@ -33,7 +33,7 @@ class UserService {
   }
 
   async createUser(data: CreateUserDto): Promise<User> {
-    const response = await apiClient.post<ApiResponse<User>>('/api/v1/auth/register', data);
+    const response = await apiClient.post<ApiResponse<User>>('/api/v1/users', data);
     return response.data.data;
   }
 
@@ -62,14 +62,14 @@ class UserService {
 
   async bulkCreateUsers(data: BulkCreateUserDto): Promise<BulkImportResult> {
     const response = await apiClientLongRunning.post<ApiResponse<BulkImportResult>>(
-      '/api/v1/auth/bulk-register',
+      '/api/v1/users/bulk-import',
       data
     );
     return response.data.data;
   }
   
   async cancelBulkEmailSending(taskId: string): Promise<void> {
-    await apiClient.post(`/api/v1/auth/bulk-register/cancel/${taskId}`);
+    await apiClient.post(`/api/v1/users/bulk-import/cancel/${taskId}`);
   }
 
   // Calculate stats locally from users array

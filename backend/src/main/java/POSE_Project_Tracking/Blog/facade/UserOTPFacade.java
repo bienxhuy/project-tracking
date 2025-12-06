@@ -11,7 +11,6 @@ import POSE_Project_Tracking.Blog.dto.req.UserReq;
 import POSE_Project_Tracking.Blog.dto.res.MessageDTO;
 import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
 import POSE_Project_Tracking.Blog.entity.OTP;
-import POSE_Project_Tracking.Blog.enums.EUserStatus;
 import POSE_Project_Tracking.Blog.service.IEmailService;
 import POSE_Project_Tracking.Blog.service.IOTPService;
 import POSE_Project_Tracking.Blog.service.IUserService;

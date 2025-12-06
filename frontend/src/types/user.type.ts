@@ -30,6 +30,7 @@ export interface CreateUserDto {
   password: string;
   email: string;
   displayName: string;
+  studentId?: string;  // Student ID (only for students)
   role: UserRole;
   loginType?: LoginType;  // Default to LOCAL if not provided
   avatar?: string;

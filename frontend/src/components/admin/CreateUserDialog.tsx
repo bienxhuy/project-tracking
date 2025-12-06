@@ -35,6 +35,7 @@ export function CreateUserDialog({
 }: CreateUserDialogProps) {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
+  const [studentId, setStudentId] = useState("");
   const [role, setRole] = useState<FormRole>("STUDENT");
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -68,6 +69,9 @@ export function CreateUserDialog({
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Invalid email format";
     }
+    if (role === "STUDENT" && !studentId.trim()) {
+      newErrors.studentId = "Student ID is required";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -89,6 +93,7 @@ export function CreateUserDialog({
         password: generatedPassword,
         email: email,
         displayName: displayName,
+        studentId: role === "STUDENT" ? studentId.trim() : undefined,
         role: backendRole,
         loginType: LoginType.LOCAL
       };
@@ -102,6 +107,7 @@ export function CreateUserDialog({
       // Reset form
       setDisplayName("");
       setEmail("");
+      setStudentId("");
       setRole("STUDENT");
       setGeneratedPassword("");
       setErrors({});
@@ -163,7 +169,13 @@ export function CreateUserDialog({
             </label>
             <Select
               value={role}
-              onValueChange={(value) => setRole(value as FormRole)}
+              onValueChange={(value) => {
+                setRole(value as FormRole);
+                // Clear studentId when switching to INSTRUCTOR
+                if (value === "INSTRUCTOR") {
+                  setStudentId("");
+                }
+              }}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -174,6 +186,25 @@ export function CreateUserDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {role === "STUDENT" && (
+            <div className="space-y-2">
+              <label htmlFor="studentId" className="text-sm font-medium">
+                Student ID <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="studentId"
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
+                placeholder="22000001"
+                maxLength={8}
+                className={errors.studentId ? "border-red-500" : ""}
+              />
+              {errors.studentId && (
+                <p className="text-xs text-red-500">{errors.studentId}</p>
+              )}
+            </div>
+          )}
 
           {/* Show generated password and email notification info */}
           <div className="space-y-3">
