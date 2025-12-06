@@ -24,8 +24,7 @@ export function ManageUsers() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [filters, setFilters] = useState<UserFiltersType>({
     search: "",
-    role: "ALL",
-    accountStatus: "ALL"
+    role: "ALL"
   });
   const [loading, setLoading] = useState(true);
   const [isFiltering, setIsFiltering] = useState(false);
@@ -167,20 +166,7 @@ export function ManageUsers() {
       );
       setFilteredUsers(updatedUsers);
 
-      // Recalculate stats from updated users
-      setStats(prevStats => {
-        if (!prevStats) return prevStats;
-        const newStats = { ...prevStats };
-        
-        // Update inactive count based on status change
-        if (updatedUser.accountStatus === UserStatus.INACTIVE && user.accountStatus !== UserStatus.INACTIVE) {
-          newStats.totalInactive += 1;
-        } else if (updatedUser.accountStatus !== UserStatus.INACTIVE && user.accountStatus === UserStatus.INACTIVE) {
-          newStats.totalInactive = Math.max(0, newStats.totalInactive - 1);
-        }
-        
-        return newStats;
-      });
+      // Recalculate stats from updated users (removed accountStatus logic)
 
       addToast({
         title: "Success",
@@ -226,10 +212,6 @@ export function ManageUsers() {
             newStats.totalInstructors = Math.max(0, newStats.totalInstructors - 1);
           } else if (deletedUser.role === UserRole.STUDENT) {
             newStats.totalStudents = Math.max(0, newStats.totalStudents - 1);
-          }
-          
-          if (deletedUser.accountStatus === UserStatus.INACTIVE) {
-            newStats.totalInactive = Math.max(0, newStats.totalInactive - 1);
           }
           
           return newStats;

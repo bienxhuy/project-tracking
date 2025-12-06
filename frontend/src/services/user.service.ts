@@ -17,9 +17,6 @@ class UserService {
     
     if (filters?.search) params.append('search', filters.search);
     if (filters?.role && filters.role !== 'ALL') params.append('role', filters.role);
-    if (filters?.accountStatus && filters.accountStatus !== 'ALL') {
-      params.append('accountStatus', filters.accountStatus);
-    }
     if (filters?.loginType && filters.loginType !== 'ALL') {
       params.append('loginType', filters.loginType);
     }
@@ -82,7 +79,7 @@ class UserService {
       totalAdmins: users.filter(u => u.role === UserRole.ADMIN).length,
       totalInstructors: users.filter(u => u.role === UserRole.INSTRUCTOR).length,
       totalStudents: users.filter(u => u.role === UserRole.STUDENT).length,
-      totalInactive: users.filter(u => u.accountStatus === UserStatus.INACTIVE).length,
+      totalInactive: 0, // Removed accountStatus filter
     };
   }
 }

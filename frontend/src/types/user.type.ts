@@ -11,6 +11,7 @@ export interface User {
   username: string;
   email: string;
   displayName: string;
+  studentId?: string;  // Student ID (only for students)
   avatar?: string;
   role: UserRole;
   accountStatus: UserStatus;
@@ -70,7 +71,6 @@ export interface BulkImportError {
 export interface UserFilters {
   search?: string;  // Search by username, email, displayName
   role?: UserRole | "ALL";
-  accountStatus?: UserStatus | "ALL";
   loginType?: LoginType | "ALL";
 }
 
