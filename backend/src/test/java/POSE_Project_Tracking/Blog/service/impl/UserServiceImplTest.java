@@ -60,7 +60,6 @@ class UserServiceImplTest {
         user.setUsername("testuser");
         user.setEmail("test@example.com");
         user.setRole(EUserRole.STUDENT);
-        user.setAccountStatus(EUserStatus.ACTIVE);
         
         // Mock mapper to set fields from request
         lenient().doAnswer(invocation -> {
@@ -166,18 +165,6 @@ class UserServiceImplTest {
         when(userRepository.findByUsername("existinguser")).thenReturn(Optional.of(otherUser));
 
         assertThrows(IllegalArgumentException.class, () -> service.updateUser(1L, req));
-    }
-
-    @Test
-    void updateUserStatus_validRequest_updatesStatus() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(userRepository.save(any(User.class))).thenReturn(user);
-
-        UserRes result = service.updateUserStatus(1L, EUserStatus.INACTIVE);
-
-        assertNotNull(result);
-        assertEquals(EUserStatus.INACTIVE, user.getAccountStatus());
-        verify(userRepository).save(user);
     }
 
     @Test

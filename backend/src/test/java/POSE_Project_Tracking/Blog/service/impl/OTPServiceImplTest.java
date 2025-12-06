@@ -43,7 +43,6 @@ class OTPServiceImplTest {
         user = new User();
         user.setId(1L);
         user.setEmail("test@example.com");
-        user.setAccountStatus(EUserStatus.VERIFYING);
 
         otp = new OTP();
         otp.setId(1L);
@@ -65,8 +64,6 @@ class OTPServiceImplTest {
 
     @Test
     void generateOTP_userNotVerifying_throwsException() {
-        user.setAccountStatus(EUserStatus.ACTIVE);
-
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
         assertThrows(IllegalArgumentException.class, () -> service.generateOTP(1L));

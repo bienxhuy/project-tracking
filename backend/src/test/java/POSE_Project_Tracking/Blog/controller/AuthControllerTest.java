@@ -96,7 +96,6 @@ class AuthControllerTest {
         activeUser.setEmail("active@example.com");
         activeUser.setPassword("encodedPassword");
         activeUser.setRole(EUserRole.STUDENT);
-        activeUser.setAccountStatus(EUserStatus.ACTIVE);
         activeUser.setDisplayName("Active User");
 
         // Setup Verifying User
@@ -106,7 +105,6 @@ class AuthControllerTest {
         verifyingUser.setEmail("verifying@example.com");
         verifyingUser.setPassword("encodedPassword");
         verifyingUser.setRole(EUserRole.STUDENT);
-        verifyingUser.setAccountStatus(EUserStatus.VERIFYING);
         verifyingUser.setDisplayName("Verifying User");
 
         // Setup Banned User
@@ -116,7 +114,6 @@ class AuthControllerTest {
         bannedUser.setEmail("banned@example.com");
         bannedUser.setPassword("encodedPassword");
         bannedUser.setRole(EUserRole.STUDENT);
-        bannedUser.setAccountStatus(EUserStatus.BANNED);
         bannedUser.setDisplayName("Banned User");
 
         // Setup Login Request
@@ -179,7 +176,6 @@ class AuthControllerTest {
         activatedUserRes.setUsername("verifyinguser");
         activatedUserRes.setEmail("verifying@example.com");
         activatedUserRes.setRole(EUserRole.STUDENT);
-        activatedUserRes.setAccountStatus(EUserStatus.ACTIVE);
         activatedUserRes.setDisplayName("Verifying User");
         
         // Mock user entity sau khi được activate (findByUsernameOrEmail trả về User)
@@ -189,11 +185,7 @@ class AuthControllerTest {
         activatedUser.setEmail("verifying@example.com");
         activatedUser.setPassword("encodedPassword");
         activatedUser.setRole(EUserRole.STUDENT);
-        activatedUser.setAccountStatus(EUserStatus.ACTIVE);
         activatedUser.setDisplayName("Verifying User");
-        
-        // updateUserStatus trả về UserRes
-        when(userService.updateUserStatus(2L, EUserStatus.ACTIVE)).thenReturn(activatedUserRes);
         
         // findByUsernameOrEmail trả về User - lần đầu VERIFYING, lần sau ACTIVE
         when(userService.findByUsernameOrEmail("verifyinguser"))
@@ -219,7 +211,6 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.data.accessToken").value("mock-access-token"));
 
         // Verify - user được activate và tạo token
-        verify(userService).updateUserStatus(2L, EUserStatus.ACTIVE);
         verify(securityUtil).createAccessToken(activatedUser);
         verify(securityUtil).createRefreshToken(activatedUser);
     }
