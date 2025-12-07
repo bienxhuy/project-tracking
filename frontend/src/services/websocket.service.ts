@@ -41,10 +41,10 @@ class WebSocketService {
       return;
     }
 
-    console.log('Connecting to WebSocket: https://project-tracker-backend-latest.onrender.com/ws');
+    console.log('Connecting to WebSocket:', import.meta.env.VITE_WS_URL);
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS("https://project-tracker-backend-latest.onrender.com/ws"),
+      webSocketFactory: () => new SockJS(import.meta.env.VITE_WS_URL),
       
       connectHeaders: token ? {
         Authorization: `Bearer ${token}`,
