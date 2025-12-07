@@ -335,231 +335,281 @@ export const ProjectGeneration = () => {
             <Separator />
 
             {/* Milestones */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Cột mốc ({generatedProject.milestones.length})</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Cột mốc & Nhiệm vụ</h3>
+                <Badge variant="secondary">{generatedProject.milestones.length} cột mốc</Badge>
+              </div>
 
               {generatedProject.milestones.map((milestone, mIdx) => (
-                <Card key={mIdx} className="border-l-4 border-l-primary">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-2">
-                        {editingMilestone === mIdx ? (
-                          <Input
-                            value={milestone.title}
-                            onChange={(e) => updateMilestone(mIdx, "title", e.target.value)}
-                            className="font-semibold text-lg"
-                            autoFocus
-                          />
-                        ) : (
-                          <CardTitle className="text-lg">{milestone.title}</CardTitle>
-                        )}
+                <Card key={mIdx} className="overflow-hidden">
+                  {/* Milestone Header */}
+                  <div className="bg-gray-50 border-l-4 border-l-primary">
+                    <CardHeader className="pb-4">
+                      <div className="space-y-3">
+                        {/* Title with action buttons */}
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            {editingMilestone === mIdx ? (
+                              <Input
+                                value={milestone.title}
+                                onChange={(e) => updateMilestone(mIdx, "title", e.target.value)}
+                                className="font-semibold"
+                                autoFocus
+                              />
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-muted-foreground">Cột mốc {mIdx + 1}:</span>
+                                <h4 className="font-semibold">{milestone.title}</h4>
+                              </div>
+                            )}
+                          </div>
 
+                          <div className="flex items-center gap-1">
+                            {editingMilestone === mIdx ? (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => setEditingMilestone(null)}
+                                className="h-8 w-8 cursor-pointer"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => setEditingMilestone(mIdx)}
+                                className="h-8 w-8 cursor-pointer"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => deleteMilestone(mIdx)}
+                              className="h-8 w-8 text-destructive hover:text-destructive cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => toggleMilestone(mIdx)}
+                              className="h-8 w-8 cursor-pointer"
+                            >
+                              {milestone.isExpanded ? (
+                                <ChevronUp className="w-4 h-4" />
+                              ) : (
+                                <ChevronDown className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Description */}
                         {editingMilestone === mIdx ? (
                           <Textarea
                             value={milestone.description}
                             onChange={(e) => updateMilestone(mIdx, "description", e.target.value)}
                             rows={2}
+                            className="text-sm"
                           />
                         ) : (
-                          <CardDescription>{milestone.description}</CardDescription>
+                          <p className="text-sm text-muted-foreground">{milestone.description}</p>
                         )}
 
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {editingMilestone === mIdx ? (
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="date"
-                                  value={milestone.startDate.toISOString().split("T")[0]}
-                                  onChange={(e) => updateMilestone(mIdx, "startDate", new Date(e.target.value))}
-                                  className="h-7 w-32"
-                                />
-                                <span>-</span>
-                                <Input
-                                  type="date"
-                                  value={milestone.endDate.toISOString().split("T")[0]}
-                                  onChange={(e) => updateMilestone(mIdx, "endDate", new Date(e.target.value))}
-                                  className="h-7 w-32"
-                                />
+                        {/* Date and metadata */}
+                        <div className="flex flex-wrap items-center gap-3">
+                          {editingMilestone === mIdx ? (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Calendar className="w-4 h-4 text-muted-foreground" />
+                              <Input
+                                type="date"
+                                value={milestone.startDate.toISOString().split("T")[0]}
+                                onChange={(e) => updateMilestone(mIdx, "startDate", new Date(e.target.value))}
+                                className="h-8 w-36"
+                              />
+                              <span>đến</span>
+                              <Input
+                                type="date"
+                                value={milestone.endDate.toISOString().split("T")[0]}
+                                onChange={(e) => updateMilestone(mIdx, "endDate", new Date(e.target.value))}
+                                className="h-8 w-36"
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-1.5 text-sm">
+                                <Calendar className="w-4 h-4 text-muted-foreground" />
+                                <span>{formatDate(milestone.startDate)} - {formatDate(milestone.endDate)}</span>
                               </div>
-                            ) : (
-                              <span>{formatDate(milestone.startDate)} - {formatDate(milestone.endDate)}</span>
-                            )}
-                          </div>
-                          <Badge variant="outline">{milestone.tasks.length} nhiệm vụ</Badge>
+                              <Badge variant="outline" className="gap-1">
+                                <span>{milestone.tasks.length}</span>
+                                <span>nhiệm vụ</span>
+                              </Badge>
+                            </>
+                          )}
                         </div>
                       </div>
+                    </CardHeader>
+                  </div>
 
-                      <div className="flex items-center gap-2">
-                        {editingMilestone === mIdx ? (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setEditingMilestone(null)}
+                  {/* Tasks List */}
+                  <CardContent 
+                    className={`border-l-4 border-l-blue-400 overflow-hidden transition-all duration-300 ease-in-out ${
+                      milestone.isExpanded ? 'max-h-[2000px] pt-4 opacity-100' : 'max-h-0 p-0 opacity-0'
+                    }`}
+                  >
+                    {milestone.tasks.length > 0 && (
+                      <div className="space-y-3">
+                        {milestone.tasks.map((task, tIdx) => (
+                          <div
+                            key={tIdx}
+                            className="p-4 rounded-lg border bg-card"
                           >
-                            <CheckCircle className="w-4 h-4" />
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setEditingMilestone(mIdx)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => deleteMilestone(mIdx)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => toggleMilestone(mIdx)}
-                        >
-                          {milestone.isExpanded ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  {milestone.isExpanded && (
-                    <CardContent className="space-y-3 pt-0">
-                      {milestone.tasks.map((task, tIdx) => (
-                        <Card key={tIdx} className="bg-muted/50">
-                          <CardContent className="p-4 space-y-3">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1 space-y-2">
-                                {editingTask?.milestoneIdx === mIdx && editingTask?.taskIdx === tIdx ? (
-                                  <Input
-                                    value={task.title}
-                                    onChange={(e) => updateTask(mIdx, tIdx, "title", e.target.value)}
-                                    className="font-medium"
-                                  />
-                                ) : (
-                                  <h4 className="font-medium">{task.title}</h4>
-                                )}
-
-                                {editingTask?.milestoneIdx === mIdx && editingTask?.taskIdx === tIdx ? (
-                                  <Textarea
-                                    value={task.description}
-                                    onChange={(e) => updateTask(mIdx, tIdx, "description", e.target.value)}
-                                    rows={2}
-                                  />
-                                ) : (
-                                  <p className="text-sm text-muted-foreground">{task.description}</p>
-                                )}
-
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <Calendar className="w-3 h-3" />
+                            <div className="space-y-3">
+                              {/* Task Title with action buttons */}
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
                                   {editingTask?.milestoneIdx === mIdx && editingTask?.taskIdx === tIdx ? (
-                                    <div className="flex items-center gap-2">
-                                      <Input
-                                        type="date"
-                                        value={task.startDate.toISOString().split("T")[0]}
-                                        onChange={(e) => updateTask(mIdx, tIdx, "startDate", new Date(e.target.value))}
-                                        className="h-6 w-28 text-xs"
-                                      />
-                                      <span>-</span>
-                                      <Input
-                                        type="date"
-                                        value={task.endDate.toISOString().split("T")[0]}
-                                        onChange={(e) => updateTask(mIdx, tIdx, "endDate", new Date(e.target.value))}
-                                        className="h-6 w-28 text-xs"
-                                      />
-                                    </div>
+                                    <Input
+                                      value={task.title}
+                                      onChange={(e) => updateTask(mIdx, tIdx, "title", e.target.value)}
+                                      className="font-medium"
+                                    />
                                   ) : (
-                                    <span>{formatDate(task.startDate)} - {formatDate(task.endDate)}</span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs font-medium text-muted-foreground">Nhiệm vụ {tIdx + 1}:</span>
+                                      <h5 className="font-medium">{task.title}</h5>
+                                    </div>
                                   )}
                                 </div>
 
-                                {/* Assignees */}
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <label className="text-xs font-medium text-muted-foreground">
-                                      Người thực hiện {task.assignees.length === 0 && <span className="text-destructive">*</span>}
-                                    </label>
-                                    <div className="flex items-center gap-1">
-                                      {mockProject.students.map((student) => (
-                                        <Button
-                                          key={student.id}
-                                          size="sm"
-                                          variant={task.assignees.find(a => a.id === student.id) ? "default" : "outline"}
-                                          onClick={() => {
-                                            if (task.assignees.find(a => a.id === student.id)) {
-                                              removeAssignee(mIdx, tIdx, student.id);
-                                            } else {
-                                              addAssignee(mIdx, tIdx, student);
-                                            }
-                                          }}
-                                          className="h-7 text-xs"
-                                        >
-                                          <UserPlus className="w-3 h-3 mr-1" />
-                                          {student.displayName}
-                                        </Button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-wrap gap-2">
-                                    {task.assignees.map((assignee) => (
-                                      <Badge key={assignee.id} variant="secondary" className="flex items-center gap-1">
-                                        <Avatar className="w-4 h-4">
-                                          <AvatarFallback className="text-[10px]">
-                                            {getInitials(assignee.displayName)}
-                                          </AvatarFallback>
-                                        </Avatar>
-                                        {assignee.displayName}
-                                      </Badge>
-                                    ))}
-                                    {task.assignees.length === 0 && (
-                                      <span className="text-xs text-destructive">Chưa chọn người thực hiện</span>
-                                    )}
-                                  </div>
+                                <div className="flex items-center gap-1">
+                                  {editingTask?.milestoneIdx === mIdx && editingTask?.taskIdx === tIdx ? (
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => setEditingTask(null)}
+                                      className="h-8 w-8 cursor-pointer"
+                                    >
+                                      <CheckCircle className="w-3.5 h-3.5" />
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => setEditingTask({ milestoneIdx: mIdx, taskIdx: tIdx })}
+                                      className="h-8 w-8 cursor-pointer"
+                                    >
+                                      <Edit className="w-3.5 h-3.5" />
+                                    </Button>
+                                  )}
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => deleteTask(mIdx, tIdx)}
+                                    className="h-8 w-8 text-destructive hover:text-destructive cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-1">
+                              {/* Task Description */}
+                              {editingTask?.milestoneIdx === mIdx && editingTask?.taskIdx === tIdx ? (
+                                <Textarea
+                                  value={task.description}
+                                  onChange={(e) => updateTask(mIdx, tIdx, "description", e.target.value)}
+                                  rows={2}
+                                  className="text-sm"
+                                />
+                              ) : (
+                                <p className="text-sm text-muted-foreground">{task.description}</p>
+                              )}
+
+                              {/* Task Date */}
+                              <div className="flex items-center gap-2">
+                                <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                                 {editingTask?.milestoneIdx === mIdx && editingTask?.taskIdx === tIdx ? (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => setEditingTask(null)}
-                                  >
-                                    <CheckCircle className="w-3 h-3" />
-                                  </Button>
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <Input
+                                      type="date"
+                                      value={task.startDate.toISOString().split("T")[0]}
+                                      onChange={(e) => updateTask(mIdx, tIdx, "startDate", new Date(e.target.value))}
+                                      className="h-8 w-36 text-xs"
+                                    />
+                                    <span>đến</span>
+                                    <Input
+                                      type="date"
+                                      value={task.endDate.toISOString().split("T")[0]}
+                                      onChange={(e) => updateTask(mIdx, tIdx, "endDate", new Date(e.target.value))}
+                                      className="h-8 w-36 text-xs"
+                                    />
+                                  </div>
                                 ) : (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => setEditingTask({ milestoneIdx: mIdx, taskIdx: tIdx })}
-                                  >
-                                    <Edit className="w-3 h-3" />
-                                  </Button>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatDate(task.startDate)} - {formatDate(task.endDate)}
+                                  </span>
                                 )}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => deleteTask(mIdx, tIdx)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </Button>
+                              </div>
+
+                              {/* Task Assignees */}
+                              <div className="space-y-2">
+                                <label className="text-xs font-medium text-muted-foreground">
+                                  Người thực hiện {task.assignees.length === 0 && <span className="text-destructive">*</span>}
+                                </label>
+                                {task.assignees.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 mt-1">
+                                    {task.assignees.map((assignee) => (
+                                      <Badge key={assignee.id} variant="secondary" className="flex items-center gap-1 px-2 py-0.5">
+                                        <Avatar className="w-3.5 h-3.5">
+                                          <AvatarFallback className="text-[9px]">
+                                            {getInitials(assignee.displayName)}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <span className="text-xs">{assignee.displayName}</span>
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                                {task.assignees.length === 0 && (
+                                  <p className="text-xs text-destructive">Chưa chọn người thực hiện</p>
+                                )}
+                                
+                                <div className="pt-1">
+                                  <label className="text-xs font-medium text-muted-foreground block mb-1.5">
+                                    Thành viên dự án
+                                  </label>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {mockProject.students.map((student) => (
+                                      <Button
+                                        key={student.id}
+                                        size="sm"
+                                        variant={task.assignees.find(a => a.id === student.id) ? "default" : "outline"}
+                                        onClick={() => {
+                                          if (task.assignees.find(a => a.id === student.id)) {
+                                            removeAssignee(mIdx, tIdx, student.id);
+                                          } else {
+                                            addAssignee(mIdx, tIdx, student);
+                                          }
+                                        }}
+                                        className="h-7 px-2 text-xs cursor-pointer"
+                                      >
+                                        {student.displayName}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </CardContent>
-                  )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
                 </Card>
               ))}
             </div>
