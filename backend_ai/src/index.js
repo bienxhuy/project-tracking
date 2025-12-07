@@ -7,7 +7,7 @@ import { generateProject } from "./services/gemini.service.js";
 dotenv.config();
 
 const app = express();
-const PORT = 3030;
+const PORT = process.env.PORT || 3030;
 
 // Enable CORS for frontend
 // app.use(cors({
