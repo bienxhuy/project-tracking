@@ -4,9 +4,6 @@ import POSE_Project_Tracking.Blog.enums.EReportStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.envers.Audited;
-import org.hibernate.envers.NotAudited;
-import org.hibernate.envers.RelationTargetAuditMode;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,7 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@Audited // Track report submissions and grade changes
 public class Report extends ProgressEntity {
 
     @Column(name = "title", nullable = false)
@@ -36,7 +32,6 @@ public class Report extends ProgressEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "submitted_by_id")
-    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private User submittedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -53,17 +48,14 @@ public class Report extends ProgressEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
-    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private User author;
 
     @Column(name = "report_date")
     private LocalDateTime reportDate;
 
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
-    @NotAudited
     private List<Comment> comments;
 
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
-    @NotAudited
     private List<Attachment> attachments;
 }

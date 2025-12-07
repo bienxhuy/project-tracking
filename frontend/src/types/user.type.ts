@@ -11,6 +11,7 @@ export interface User {
   username: string;
   email: string;
   displayName: string;
+  studentId?: string;  // Student ID (only for students)
   avatar?: string;
   role: UserRole;
   accountStatus: UserStatus;
@@ -29,6 +30,7 @@ export interface CreateUserDto {
   password: string;
   email: string;
   displayName: string;
+  studentId?: string;  // Student ID (only for students)
   role: UserRole;
   loginType?: LoginType;  // Default to LOCAL if not provided
   avatar?: string;
@@ -41,7 +43,7 @@ export interface UpdateUserDto {
   email?: string;
   displayName?: string;
   role?: UserRole;
-  accountStatus?: UserStatus;
+  studentId?: string;  // Student ID (only for students)
   level?: number;
   avatar?: string;
 }
@@ -70,7 +72,6 @@ export interface BulkImportError {
 export interface UserFilters {
   search?: string;  // Search by username, email, displayName
   role?: UserRole | "ALL";
-  accountStatus?: UserStatus | "ALL";
   loginType?: LoginType | "ALL";
 }
 

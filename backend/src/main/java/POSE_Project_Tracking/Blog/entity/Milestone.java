@@ -4,8 +4,6 @@ import POSE_Project_Tracking.Blog.enums.EMilestoneStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.envers.Audited;
-import org.hibernate.envers.NotAudited;
 
 import java.util.List;
 
@@ -16,7 +14,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@Audited // Track milestone status changes, completion progress
 public class Milestone extends ProgressEntity {
 
     @Column(name = "title", nullable = false)
@@ -40,18 +37,14 @@ public class Milestone extends ProgressEntity {
     private Project project;
 
     @OneToMany(mappedBy = "milestone", cascade = CascadeType.ALL, orphanRemoval = true)
-    @NotAudited
     private List<Task> tasks;
 
     @OneToMany(mappedBy = "milestone", cascade = CascadeType.ALL, orphanRemoval = true)
-    @NotAudited
     private List<Report> reports;
 
     @OneToMany(mappedBy = "milestone", cascade = CascadeType.ALL, orphanRemoval = true)
-    @NotAudited
     private List<Comment> comments;
 
     @OneToMany(mappedBy = "milestone", cascade = CascadeType.ALL, orphanRemoval = true)
-    @NotAudited
     private List<Attachment> attachments;
 }

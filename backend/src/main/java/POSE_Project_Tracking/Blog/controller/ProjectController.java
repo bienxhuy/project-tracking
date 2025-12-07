@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import POSE_Project_Tracking.Blog.dto.req.BulkProjectUpdateReq;
 import POSE_Project_Tracking.Blog.dto.req.ProjectReq;
 import POSE_Project_Tracking.Blog.dto.req.UpdateContentReq;
 import POSE_Project_Tracking.Blog.dto.res.ApiResponse;
@@ -123,6 +124,17 @@ public class ProjectController {
             @Valid @RequestBody ProjectReq projectReq) {
         ProjectRes project = projectService.updateProject(id, projectReq);
         return new ApiResponse<>(HttpStatus.OK, "Cập nhật dự án thành công", project, null);
+    }
+
+    // Cập nhật project với milestones và tasks (bulk update from AI)
+    @Operation(summary = "Bulk update project with milestones and tasks", 
+               description = "Update project content and objectives, and create milestones with tasks in a single request (Student/Instructor)")
+    @PutMapping("/{id}/bulk-update")
+    public ApiResponse<ProjectRes> updateProjectWithMilestonesAndTasks(
+            @PathVariable Long id,
+            @Valid @RequestBody BulkProjectUpdateReq bulkUpdateReq) {
+        ProjectRes project = projectService.updateProjectWithMilestonesAndTasks(id, bulkUpdateReq);
+        return new ApiResponse<>(HttpStatus.OK, "Cập nhật dự án với milestones và tasks thành công", project, null);
     }
 
     // Khóa project

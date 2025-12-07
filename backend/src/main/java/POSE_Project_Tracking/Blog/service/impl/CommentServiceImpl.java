@@ -22,6 +22,7 @@ import POSE_Project_Tracking.Blog.enums.ENotificationType;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -62,6 +63,7 @@ public class CommentServiceImpl implements ICommentService {
     private NotificationHelperService notificationHelperService;
 
     @Override
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT') and @projectSecurityService.isReportMember(#commentReq.reportId)")
     public CommentRes createComment(CommentReq commentReq) {
         // Lấy author (current user)
         User author = securityUtil.getCurrentUser();
@@ -138,6 +140,7 @@ public class CommentServiceImpl implements ICommentService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT') and @taskSecurityService.isCommentAuthor(#id)")
     public CommentRes updateComment(Long id, CommentReq commentReq) {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new CustomException(COMMENT_NOT_FOUND));
@@ -236,6 +239,7 @@ public class CommentServiceImpl implements ICommentService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT') and @projectSecurityService.isReportMember(#reportId)")
     public List<CommentRes> getCommentsByReport(Long reportId) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new CustomException(REPORT_NOT_FOUND));

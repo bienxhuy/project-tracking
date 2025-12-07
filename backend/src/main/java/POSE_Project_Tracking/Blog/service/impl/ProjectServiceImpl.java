@@ -9,21 +9,23 @@ import java.util.stream.Collectors;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
-import POSE_Project_Tracking.Blog.config.CacheConfig;
+import POSE_Project_Tracking.Blog.dto.req.BulkProjectUpdateReq;
 import POSE_Project_Tracking.Blog.dto.req.ProjectReq;
 import POSE_Project_Tracking.Blog.dto.res.ProjectRes;
 import POSE_Project_Tracking.Blog.entity.Project;
 import POSE_Project_Tracking.Blog.entity.ProjectMember;
 import POSE_Project_Tracking.Blog.entity.User;
+import POSE_Project_Tracking.Blog.entity.Milestone;
+import POSE_Project_Tracking.Blog.entity.Task;
 import POSE_Project_Tracking.Blog.enums.EProjectStatus;
 import POSE_Project_Tracking.Blog.enums.EUserRole;
+import POSE_Project_Tracking.Blog.enums.EMilestoneStatus;
+import POSE_Project_Tracking.Blog.enums.ETaskStatus;
 import static POSE_Project_Tracking.Blog.enums.ErrorCode.INSTRUCTOR_CANNOT_BE_ASSIGNED_TASK;
 import static POSE_Project_Tracking.Blog.enums.ErrorCode.PROJECT_LOCKED;
 import static POSE_Project_Tracking.Blog.enums.ErrorCode.PROJECT_NOT_FOUND;
@@ -33,6 +35,7 @@ import POSE_Project_Tracking.Blog.mapper.ProjectMapper;
 import POSE_Project_Tracking.Blog.repository.ProjectMemberRepository;
 import POSE_Project_Tracking.Blog.repository.ProjectRepository;
 import POSE_Project_Tracking.Blog.repository.TaskRepository;
+import POSE_Project_Tracking.Blog.repository.MilestoneRepository;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.IMilestoneService;
 import POSE_Project_Tracking.Blog.service.IProjectService;
@@ -46,18 +49,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 import static POSE_Project_Tracking.Blog.enums.ErrorCode.*;
@@ -75,6 +77,9 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+    private MilestoneRepository milestoneRepository;
 
     @Autowired
     private ProjectMemberRepository projectMemberRepository;
@@ -169,10 +174,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ProjectRes createProject(ProjectReq projectReq) {
         // Lấy current user làm instructor
         User currentUser = securityUtil.getCurrentUser();
@@ -243,11 +245,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isProjectInstructor(#id)")
     public ProjectRes updateProject(Long id, ProjectReq projectReq) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -301,7 +299,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT') and @projectSecurityService.isProjectMember(#id)")
     public ProjectRes getProjectById(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -310,7 +308,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "'detailed_' + #id")
     public ProjectRes getProjectWithDetails(Long id) {
         Project project = projectRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -334,7 +331,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all'")
     public List<ProjectRes> getAllProjects() {
         return projectRepository.findAll().stream()
                 .map(projectMapper::toResponse)
@@ -370,6 +366,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT')")
     public List<ProjectRes> searchProjects(String keyword) {
         return projectRepository.searchByKeyword(keyword).stream()
                 .map(projectMapper::toResponse)
@@ -377,11 +374,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isProjectInstructor(#id)")
     public void deleteProject(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -394,10 +387,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isProjectInstructor(#id)")
     public void lockProject(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -448,10 +438,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isProjectInstructor(#id)")
     public void unlockProject(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -464,10 +451,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isProjectInstructor(#id)")
     public void lockProjectContent(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -501,10 +485,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isProjectInstructor(#id)")
     public void unlockProjectContent(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -515,10 +496,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, key = "#id"),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('STUDENT') and @projectSecurityService.isProjectMember(#id) and !@lockValidationService.isLocked('PROJECT', #id)")
     public ProjectRes updateProjectContent(Long id, String objective, String content) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
@@ -613,8 +591,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, 
-               key = "'my_projects_' + #root.target.securityUtil.getCurrentUser().id + '_' + #year + '_' + #semester + '_' + #batch")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT')")
     public List<ProjectRes> getMyProjects(Integer year, Integer semester, String batch) {
         User currentUser = securityUtil.getCurrentUser();
         
@@ -631,8 +608,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, 
-               key = "'my_projects_' + #root.target.securityUtil.getCurrentUser().id + '_' + #status + '_' + #year + '_' + #semester + '_' + #batch")
     public List<ProjectRes> getMyProjectsByStatus(EProjectStatus status, Integer year, Integer semester, String batch) {
         User currentUser = securityUtil.getCurrentUser();
         
@@ -649,8 +624,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, 
-               key = "'all_projects_' + #year + '_' + #semester + '_' + #batch")
     public List<ProjectRes> getAllProjectsWithFilters(Integer year, Integer semester, String batch) {
         // Use current academic year/semester/batch as defaults if not provided
         Integer effectiveYear = year != null ? year : AcademicYearUtil.getCurrentYear();
@@ -665,7 +638,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all_projects_student_' + #studentId")
     public List<ProjectRes> getAllProjectsByStudent(Long studentId) {
         return projectRepository.findProjectsByMemberUserId(studentId).stream()
                 .map(projectMapper::toResponse)
@@ -673,7 +645,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all_projects_student_' + #studentId + '_' + #status")
     public List<ProjectRes> getAllProjectsByStudentAndStatus(Long studentId, EProjectStatus status) {
         return projectRepository.findProjectsByMemberUserIdAndStatus(studentId, status).stream()
                 .map(projectMapper::toResponse)
@@ -681,7 +652,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all_my_projects_' + #root.target.securityUtil.getCurrentUser().id")
     public List<ProjectRes> getAllMyProjects() {
         User currentUser = securityUtil.getCurrentUser();
         return projectRepository.findProjectsByMemberUserId(currentUser.getId()).stream()
@@ -690,7 +660,6 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PROJECT_LIST_CACHE, key = "'all_my_projects_' + #root.target.securityUtil.getCurrentUser().id + '_' + #status")
     public List<ProjectRes> getAllMyProjectsByStatus(EProjectStatus status) {
         User currentUser = securityUtil.getCurrentUser();
         return projectRepository.findProjectsByMemberUserIdAndStatus(currentUser.getId(), status).stream()
@@ -732,5 +701,98 @@ public class ProjectServiceImpl implements IProjectService {
 
             projectMemberRepository.save(member);
         }
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('STUDENT', 'INSTRUCTOR')")
+    public ProjectRes updateProjectWithMilestonesAndTasks(Long id, BulkProjectUpdateReq bulkUpdateReq) {
+        log.info("Starting bulk update for project ID: {}", id);
+        
+        // Get existing project
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND));
+        
+        // Check if project is locked
+        if (project.getLocked()) {
+            throw new CustomException(PROJECT_LOCKED);
+        }
+
+        // Update project content and objectives
+        project.setContent(bulkUpdateReq.getContent());
+        project.setObjectives(bulkUpdateReq.getObjectives());
+        project.setUpdatedAt(LocalDateTime.now());
+        
+        Project savedProject = projectRepository.save(project);
+        log.info("Updated project content and objectives for project ID: {}", id);
+
+        // Process milestones and tasks
+        int milestoneOrder = 1;
+        for (BulkProjectUpdateReq.BulkMilestoneReq milestoneReq : bulkUpdateReq.getMilestones()) {
+            // Create milestone
+            Milestone milestone = Milestone.builder()
+                    .title(milestoneReq.getTitle())
+                    .description(milestoneReq.getDescription())
+                    .project(savedProject)
+                    .startDate(milestoneReq.getStartDate().toLocalDate())
+                    .endDate(milestoneReq.getEndDate().toLocalDate())
+                    .status(EMilestoneStatus.IN_PROGRESS)
+                    .orderNumber(milestoneOrder++)
+                    .locked(false)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            
+            Milestone savedMilestone = milestoneRepository.save(milestone);
+            log.info("Created milestone: {} for project ID: {}", savedMilestone.getTitle(), id);
+
+            // Process tasks for this milestone
+            if (milestoneReq.getTasks() != null && !milestoneReq.getTasks().isEmpty()) {
+                for (BulkProjectUpdateReq.BulkTaskReq taskReq : milestoneReq.getTasks()) {
+                    // Create task
+                    Task task = Task.builder()
+                            .title(taskReq.getTitle())
+                            .description(taskReq.getDescription())
+                            .project(savedProject)
+                            .milestone(savedMilestone)
+                            .startDate(taskReq.getStartDate().toLocalDate())
+                            .endDate(taskReq.getEndDate().toLocalDate())
+                            .status(ETaskStatus.IN_PROGRESS)
+                            .locked(false)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build();
+                    
+                    Task savedTask = taskRepository.save(task);
+                    log.info("Created task: {} for milestone: {}", savedTask.getTitle(), savedMilestone.getTitle());
+
+                    // Assign users to task
+                    if (taskReq.getAssignees() != null && !taskReq.getAssignees().isEmpty()) {
+                        for (BulkProjectUpdateReq.AssigneeReq assigneeReq : taskReq.getAssignees()) {
+                            User assignee = userRepository.findById(assigneeReq.getId())
+                                    .orElseThrow(() -> new CustomException(USER_NON_EXISTENT));
+                            
+                            // Check if user is instructor (instructors cannot be assigned to tasks)
+                            if (assignee.getRole() == EUserRole.INSTRUCTOR) {
+                                log.warn("Skipping instructor {} for task assignment", assignee.getDisplayName());
+                                continue;
+                            }
+
+                            // Add assignee to task
+                            if (savedTask.getAssignedUsers() == null) {
+                                savedTask.setAssignedUsers(new ArrayList<>());
+                            }
+                            savedTask.getAssignedUsers().add(assignee);
+                            log.info("Assigned user: {} to task: {}", assignee.getDisplayName(), savedTask.getTitle());
+                        }
+                        taskRepository.save(savedTask);
+                    }
+                }
+            }
+        }
+
+        log.info("Bulk update completed for project ID: {}", id);
+        
+        // Return updated project with details
+        return getProjectWithDetails(id);
     }
 }

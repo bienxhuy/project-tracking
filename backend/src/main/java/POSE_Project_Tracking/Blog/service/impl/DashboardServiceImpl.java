@@ -1,6 +1,5 @@
 package POSE_Project_Tracking.Blog.service.impl;
 
-import POSE_Project_Tracking.Blog.config.CacheConfig;
 import POSE_Project_Tracking.Blog.dto.DashboardStatsDTO;
 import POSE_Project_Tracking.Blog.entity.Milestone;
 import POSE_Project_Tracking.Blog.entity.Project;
@@ -15,8 +14,6 @@ import POSE_Project_Tracking.Blog.repository.UserRepository;
 import POSE_Project_Tracking.Blog.service.IDashboardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +41,6 @@ public class DashboardServiceImpl implements IDashboardService {
      * Cache is automatically managed by Spring Cache
      */
     @Override
-    @Cacheable(value = CacheConfig.DASHBOARD_STATS_CACHE, key = "'global'")
     public DashboardStatsDTO getDashboardStats() {
         log.info("Calculating dashboard statistics (not from cache)");
         
@@ -60,7 +56,7 @@ public class DashboardServiceImpl implements IDashboardService {
                 .filter(p -> p.getStatus() == EProjectStatus.COMPLETED)
                 .count();
         long lockedProjects = allProjects.stream()
-                .filter(p -> p.getStatus() == EProjectStatus.LOCKED)
+                .filter(p -> Boolean.TRUE.equals(p.getLocked()))
                 .count();
 
         // Get all tasks
@@ -137,7 +133,6 @@ public class DashboardServiceImpl implements IDashboardService {
      * Get dashboard statistics for a specific user
      */
     @Override
-    @Cacheable(value = CacheConfig.DASHBOARD_STATS_CACHE, key = "'user_' + #userId")
     public DashboardStatsDTO getDashboardStatsByUser(Long userId) {
         log.info("Calculating dashboard statistics for user {} (not from cache)", userId);
         
@@ -152,7 +147,6 @@ public class DashboardServiceImpl implements IDashboardService {
      * Called when data changes that affect dashboard
      */
     @Override
-    @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, key = "'global'")
     public void refreshDashboardCache() {
         log.info("Dashboard cache cleared");
     }
@@ -161,7 +155,6 @@ public class DashboardServiceImpl implements IDashboardService {
      * Clear dashboard cache for specific user
      */
     @Override
-    @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, key = "'user_' + #userId")
     public void refreshDashboardCacheByUser(Long userId) {
         log.info("Dashboard cache cleared for user {}", userId);
     }

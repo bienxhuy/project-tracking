@@ -69,8 +69,9 @@ export const ProjectProgressBar = ({ milestones, projectTotalTasks, projectId, c
               </TooltipTrigger>
               <TooltipContent side="top" className="bg-popover text-popover-foreground border border-border">
                 <div className="text-sm">
-                  <p className="font-semibold">{milestone.title}</p>
+                  <p className="font-semibold mb-1">{milestone.title}</p>
                   <p className="text-muted-foreground">Tiến độ: {milestone.completionPercentage}%</p>
+                  <p className="text-muted-foreground">Hoàn thành: {milestone.tasksCompleted} / {milestone.tasksTotal}</p>
                 </div>
               </TooltipContent>
             </Tooltip>

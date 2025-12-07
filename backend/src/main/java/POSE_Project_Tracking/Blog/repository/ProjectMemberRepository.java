@@ -45,4 +45,12 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
 
     @Query("SELECT pm FROM ProjectMember pm JOIN FETCH pm.user WHERE pm.project.id = :projectId")
     List<ProjectMember> findByProjectIdWithUser(@Param("projectId") Long projectId);
+
+    @Query("SELECT CASE WHEN COUNT(pm) > 0 THEN true ELSE false END FROM ProjectMember pm WHERE pm.project.id = :projectId AND pm.user.id = :userId")
+    boolean existsByProjectIdAndUserId(@Param("projectId") Long projectId, @Param("userId") Long userId);
+
+    @Query("SELECT CASE WHEN COUNT(pm1) > 0 THEN true ELSE false END FROM ProjectMember pm1 " +
+           "WHERE pm1.user.id = :userId1 AND EXISTS (" +
+           "SELECT pm2 FROM ProjectMember pm2 WHERE pm2.user.id = :userId2 AND pm2.project.id = pm1.project.id)")
+    boolean existsCommonProject(@Param("userId1") Long userId1, @Param("userId2") Long userId2);
 }

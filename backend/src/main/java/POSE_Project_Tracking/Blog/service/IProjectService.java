@@ -1,5 +1,6 @@
 package POSE_Project_Tracking.Blog.service;
 
+import POSE_Project_Tracking.Blog.dto.req.BulkProjectUpdateReq;
 import POSE_Project_Tracking.Blog.dto.req.ProjectReq;
 import POSE_Project_Tracking.Blog.dto.res.ProjectRes;
 import POSE_Project_Tracking.Blog.enums.EProjectStatus;
@@ -59,4 +60,7 @@ public interface IProjectService {
     List<ProjectRes> getAllMyProjects();
 
     List<ProjectRes> getAllMyProjectsByStatus(EProjectStatus status);
+
+    // Bulk update project with milestones and tasks
+    ProjectRes updateProjectWithMilestonesAndTasks(Long id, BulkProjectUpdateReq bulkUpdateReq);
 }

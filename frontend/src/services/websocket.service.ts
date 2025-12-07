@@ -10,7 +10,7 @@ export interface WebSocketNotification {
   referenceType?: string;
   triggeredById?: number;
   triggeredByName?: string;
-  timestamp: string;
+  createdAt: string;  // Changed from timestamp to createdAt to match backend
   isRead: boolean;
   action: string; // 'NEW_NOTIFICATION', 'NOTIFICATION_READ', 'NOTIFICATION_DELETED'
 }
@@ -117,13 +117,6 @@ class WebSocketService {
     this.client.subscribe(`/user/queue/notification-updates`, (message: IMessage) => {
       const notification: WebSocketNotification = JSON.parse(message.body);
       console.log('Received notification update:', notification);
-      this.notifyNotificationCallbacks(notification);
-    });
-
-    // Subscribe to broadcast notifications (optional)
-    this.client.subscribe(`/topic/notifications`, (message: IMessage) => {
-      const notification: WebSocketNotification = JSON.parse(message.body);
-      console.log('Received broadcast notification:', notification);
       this.notifyNotificationCallbacks(notification);
     });
 

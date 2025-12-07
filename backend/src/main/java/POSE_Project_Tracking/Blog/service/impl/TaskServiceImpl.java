@@ -1,6 +1,5 @@
 package POSE_Project_Tracking.Blog.service.impl;
 
-import POSE_Project_Tracking.Blog.config.CacheConfig;
 import POSE_Project_Tracking.Blog.dto.req.TaskReq;
 import POSE_Project_Tracking.Blog.dto.res.TaskRes;
 import POSE_Project_Tracking.Blog.entity.Milestone;
@@ -23,9 +22,8 @@ import POSE_Project_Tracking.Blog.enums.ENotificationType;
 import POSE_Project_Tracking.Blog.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.cache.annotation.Caching;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -72,6 +70,7 @@ public class TaskServiceImpl implements ITaskService {
     private NotificationHelperService notificationHelperService;
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @projectSecurityService.isProjectMember(#taskReq.projectId) and !@lockValidationService.isLocked('PROJECT', #taskReq.projectId)")
     public TaskRes createTask(TaskReq taskReq) {
         // Lấy project
         Project project = projectRepository.findById(taskReq.getProjectId())
@@ -132,6 +131,7 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @projectSecurityService.isTaskMember(#id) and !@lockValidationService.isLocked('TASK', #id)")
     public TaskRes updateTask(Long id, TaskReq taskReq) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
@@ -195,6 +195,7 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT') and @projectSecurityService.isTaskMember(#id)")
     public TaskRes getTaskById(Long id, String include) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
@@ -285,13 +286,7 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.MILESTONE_LIST_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.TASK_LIST_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, allEntries = true)
-    })
+    @PreAuthorize("hasRole('STUDENT') and @projectSecurityService.isTaskMember(#id) and !@lockValidationService.isLocked('TASK', #id)")
     public void deleteTask(Long id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
@@ -342,6 +337,7 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isTaskInstructor(#id)")
     public void unlockTask(Long id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
@@ -465,13 +461,7 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = CacheConfig.PROJECT_DETAIL_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.PROJECT_LIST_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.MILESTONE_LIST_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.TASK_LIST_CACHE, allEntries = true),
-            @CacheEvict(value = CacheConfig.DASHBOARD_STATS_CACHE, allEntries = true)
-    })
+
     public void markTaskAsCompleted(Long id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
@@ -513,6 +503,7 @@ public class TaskServiceImpl implements ITaskService {
     }
 
     @Override
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isTaskInstructor(#id)")
     public void lockTaskWithChildren(Long id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new CustomException(TASK_NOT_FOUND));
