@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isAuthenticated = !!user && user.accountStatus === UserStatus.ACTIVE;
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     const cachedUser = readCachedUser();

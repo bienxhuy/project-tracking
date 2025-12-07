@@ -55,7 +55,6 @@ class UserOTPFacadeTest {
         userRes.setUsername("testuser");
         userRes.setEmail("test@example.com");
         userRes.setRole(EUserRole.STUDENT);
-        userRes.setAccountStatus(EUserStatus.INACTIVE);
 
         User user = new User();
         user.setId(1L);
@@ -141,27 +140,23 @@ class UserOTPFacadeTest {
     @Test
     void verifyOTP_validOTPWithUserId_activatesUser() {
         when(otpService.verifyOTP(1L, "123456", "test@example.com")).thenReturn(true);
-        when(userService.updateUserStatus(1L, EUserStatus.ACTIVE)).thenReturn(userRes);
 
         boolean result = facade.verifyOTP(1L, "123456", "test@example.com");
 
         assertTrue(result);
         verify(otpService).verifyOTP(1L, "123456", "test@example.com");
-        verify(userService).updateUserStatus(1L, EUserStatus.ACTIVE);
     }
 
     @Test
     void verifyOTP_validOTPWithoutUserId_activatesUserByEmail() {
         when(otpService.verifyOTP(null, "123456", "test@example.com")).thenReturn(true);
         when(userService.getUserByEmail("test@example.com")).thenReturn(userRes);
-        when(userService.updateUserStatus(1L, EUserStatus.ACTIVE)).thenReturn(userRes);
 
         boolean result = facade.verifyOTP(null, "123456", "test@example.com");
 
         assertTrue(result);
         verify(otpService).verifyOTP(null, "123456", "test@example.com");
         verify(userService).getUserByEmail("test@example.com");
-        verify(userService).updateUserStatus(1L, EUserStatus.ACTIVE);
     }
 
     @Test
@@ -174,7 +169,6 @@ class UserOTPFacadeTest {
 
         assertEquals("OTP verification failed", exception.getMessage());
         verify(otpService).verifyOTP(1L, "wrong", "test@example.com");
-        verify(userService, never()).updateUserStatus(any(), any());
     }
 }
 

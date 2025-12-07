@@ -8,6 +8,7 @@ import {
   CreateProjectRequest,
   UpdateProjectRequest,
   UpdateProjectContentRequest,
+  BulkProjectUpdateRequest,
 } from "@/types/project.type";
 import { BaseUser, ProjectMemberResponse } from "@/types/user.type";
 
@@ -66,6 +67,24 @@ class ProjectService {
     );
     if (response.data.status === "success" && response.data.data) {
       response.data.data = parseProjectDates<Project>(response.data.data);
+    }
+    return response.data;
+  }
+
+  /**
+   * Bulk update project with milestones and tasks
+   * Used for AI-generated project structures
+   */
+  async bulkUpdateProjectWithMilestonesAndTasks(
+    projectId: number,
+    data: BulkProjectUpdateRequest
+  ): Promise<ApiResponse<ProjectDetail>> {
+    const response = await apiClient.put<ApiResponse<ProjectDetail>>(
+      `/api/v1/projects/${projectId}/bulk-update`,
+      data
+    );
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = parseProjectDates<ProjectDetail>(response.data.data);
     }
     return response.data;
   }
@@ -246,6 +265,50 @@ class ProjectService {
       email: member.userEmail,
       role: member.role,
     }));
+  }
+
+  /**
+   * Helper function to convert Date to ISO string for API
+   */
+  static convertToBulkUpdateRequest(
+    content: string,
+    objectives: string,
+    milestones: Array<{
+      title: string;
+      description: string;
+      startDate: Date;
+      endDate: Date;
+      tasks: Array<{
+        title: string;
+        description: string;
+        startDate: Date;
+        endDate: Date;
+        assignees: BaseUser[];
+      }>;
+    }>
+  ): BulkProjectUpdateRequest {
+    return {
+      content,
+      objectives,
+      milestones: milestones.map(milestone => ({
+        title: milestone.title,
+        description: milestone.description,
+        startDate: milestone.startDate.toISOString(),
+        endDate: milestone.endDate.toISOString(),
+        tasks: milestone.tasks.map(task => ({
+          title: task.title,
+          description: task.description,
+          startDate: task.startDate.toISOString(),
+          endDate: task.endDate.toISOString(),
+          assignees: task.assignees.map(assignee => ({
+            id: assignee.id,
+            displayName: assignee.displayName,
+            email: assignee.email,
+            role: assignee.role,
+          })),
+        })),
+      })),
+    };
   }
 }
 
