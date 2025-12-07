@@ -1,8 +1,8 @@
 package POSE_Project_Tracking.Blog.config;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -17,39 +17,41 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Firebase Configuration
  * Khởi tạo Firebase Admin SDK để gửi push notifications
+ * Reads Firebase credentials from FIREBASE_SERVICE_ACCOUNT_JSON environment variable (JSON format)
  */
 @Slf4j
 @Configuration
 public class FirebaseConfig {
 
-    @Value("${firebase.service-account-file}")
-    private String serviceAccountPath;
+    @Value("${firebase.service-account-json:}")
+    private String serviceAccountJson;
 
     @Bean
     public FirebaseApp initializeFirebase() throws IOException {
-        // Skip Firebase initialization if path is empty or file doesn't exist (e.g., in test environment)
-        if (serviceAccountPath == null || serviceAccountPath.trim().isEmpty()) {
-            log.warn("Firebase service account file path is empty. Skipping Firebase initialization.");
-            return null;
-        }
-
-        File serviceAccountFile = new File(serviceAccountPath);
-        if (!serviceAccountFile.exists()) {
-            log.warn("Firebase service account file not found: {}. Skipping Firebase initialization.", serviceAccountPath);
-            return null;
-        }
-
         if (FirebaseApp.getApps().isEmpty()) {
-            try (FileInputStream serviceAccount = new FileInputStream(serviceAccountPath)) {
+            try {
+                // Check if Firebase credentials are provided via environment variable
+                if (serviceAccountJson == null || serviceAccountJson.trim().isEmpty()) {
+                    log.warn("Firebase credentials not provided via FIREBASE_SERVICE_ACCOUNT_JSON environment variable. Skipping Firebase initialization.");
+                    return null;
+                }
+
+                log.info("Initializing Firebase from environment variable (FIREBASE_SERVICE_ACCOUNT_JSON)");
+                
+                // Parse JSON from environment variable
+                ByteArrayInputStream stream = new ByteArrayInputStream(
+                    serviceAccountJson.getBytes(StandardCharsets.UTF_8)
+                );
+                
                 FirebaseOptions options = FirebaseOptions.builder()
-                        .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                        .setCredentials(GoogleCredentials.fromStream(stream))
                         .build();
 
                 FirebaseApp app = FirebaseApp.initializeApp(options);
-                log.info("Firebase Admin SDK initialized successfully");
+                log.info("✅ Firebase Admin SDK initialized successfully");
                 return app;
             } catch (IOException e) {
-                log.error("Failed to initialize Firebase Admin SDK", e);
+                log.error("❌ Failed to initialize Firebase Admin SDK", e);
                 throw e;
             }
         }

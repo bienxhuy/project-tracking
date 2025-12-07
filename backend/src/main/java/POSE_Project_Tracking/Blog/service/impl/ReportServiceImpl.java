@@ -21,6 +21,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -170,6 +171,7 @@ public class ReportServiceImpl implements IReportService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @taskSecurityService.isTaskAssignee(#reportReq.taskId) and !@lockValidationService.isLocked('TASK', #reportReq.taskId)")
     public ReportRes createReport(ReportReq reportReq, MultipartFile[] attachments) {
         // Lấy author (current user)
         User author = securityUtil.getCurrentUser();
@@ -237,6 +239,7 @@ public class ReportServiceImpl implements IReportService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @taskSecurityService.isReportAuthor(#id) and !@lockValidationService.isLocked('REPORT', #id)")
     public ReportRes updateReport(Long id, ReportReq reportReq) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new CustomException(REPORT_NOT_FOUND));
@@ -302,6 +305,7 @@ public class ReportServiceImpl implements IReportService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT') and @projectSecurityService.isReportMember(#id)")
     public ReportRes getReportById(Long id, String include) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new CustomException(REPORT_NOT_FOUND));
@@ -379,6 +383,7 @@ public class ReportServiceImpl implements IReportService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @taskSecurityService.isReportAuthor(#id) and !@lockValidationService.isLocked('REPORT', #id)")
     public void deleteReport(Long id) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new CustomException(REPORT_NOT_FOUND));
@@ -419,6 +424,7 @@ public class ReportServiceImpl implements IReportService {
     }
 
     @Override
+    @PreAuthorize("hasRole('INSTRUCTOR') and @projectSecurityService.isReportInstructor(#id)")
     public void lockReportWithChildren(Long id) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new CustomException(REPORT_NOT_FOUND));
@@ -430,7 +436,7 @@ public class ReportServiceImpl implements IReportService {
         report.setLocked(true);
         report.setLockedBy(currentUser);
         report.setLockedAt(now);
-        report.setStatus(EReportStatus.LOCKED);
+        // Note: Keep original status, don't change it to LOCKED
         reportRepository.save(report);
 
         // ✅ NOTIFICATION: Report bị khóa

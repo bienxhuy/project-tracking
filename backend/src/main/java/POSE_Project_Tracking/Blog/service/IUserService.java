@@ -5,7 +5,6 @@ import POSE_Project_Tracking.Blog.dto.req.UserReq;
 import POSE_Project_Tracking.Blog.dto.req.UserUpdateReq;
 import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
 import POSE_Project_Tracking.Blog.entity.User;
-import POSE_Project_Tracking.Blog.enums.EUserStatus;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -17,7 +16,7 @@ public interface IUserService {
 
     List<UserRes> getAllUsers();
 
-    List<UserRes> getAllUsers(String search, String role, String accountStatus, String loginType);
+    List<UserRes> getAllUsers(String search, String role);
 
     UserRes getUserById(Long id);
 
@@ -28,8 +27,6 @@ public interface IUserService {
     UserRes updateUser(Long id, UserUpdateReq userDetails);
 
     void deleteUser(Long id);
-
-    UserRes updateUserStatus(Long id, EUserStatus status);
 
     User findByUsernameOrEmail(String id);
 

@@ -22,8 +22,13 @@ export const useWebSocketNotifications = () => {
   const handleNotification = useCallback((notification: WebSocketNotification) => {
     console.log('Received WebSocket notification:', notification);
 
-    // Add to notifications list
-    setNotifications((prev) => [notification, ...prev]);
+    // Add to notifications list and sort by createdAt (newest first)
+    setNotifications((prev) => {
+      const updated = [notification, ...prev];
+      return updated.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    });
 
     // Show toast for new notifications
     if (notification.action === 'NEW_NOTIFICATION') {
@@ -33,10 +38,10 @@ export const useWebSocketNotifications = () => {
         variant: 'default',
       });
 
-      // Play notification sound (optional)
+      // Play notification sound from online URL
       try {
-        const audio = new Audio('/notification-sound.mp3');
-        audio.volume = 0.5;
+        const audio = new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_0625c1539c.mp3');
+        audio.volume = 0.3;
         audio.play().catch((e) => console.log('Could not play sound:', e));
       } catch (e) {
         console.log('Audio not supported or error:', e);
@@ -65,7 +70,11 @@ export const useWebSocketNotifications = () => {
           // Fetch notifications from backend
           const response = await getMyNotifications(user.id);
           if (response.data) {
-            setNotifications(response.data);
+            // Sort notifications by createdAt (newest first)
+            const sortedNotifications = response.data.sort((a: WebSocketNotification, b: WebSocketNotification) => 
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+            setNotifications(sortedNotifications);
           }
 
           // Fetch unread count
@@ -86,45 +95,54 @@ export const useWebSocketNotifications = () => {
 
   // Connect to WebSocket when user is authenticated
   useEffect(() => {
-    if (user && user.id) {
-      const connectWebSocket = async () => {
-        let token = localStorage.getItem('accessToken');
+    if (!user?.id) return;
+
+    let unsubNotification: (() => void) | undefined;
+    let unsubCount: (() => void) | undefined;
+    let unsubConnection: (() => void) | undefined;
+
+    const connectWebSocket = async () => {
+      let token = localStorage.getItem('accessToken');
+      
+      // Check if token is expired or about to expire
+      if (token && isTokenExpired(token)) {
+        console.log('🔄 Access token expired, refreshing before WebSocket connection...');
         
-        // Check if token is expired or about to expire
-        if (token && isTokenExpired(token)) {
-          console.log('🔄 Access token expired, refreshing before WebSocket connection...');
-          
-          try {
-            // Refresh token before connecting
-            const response = await authService.refreshToken();
-            if (response.data?.accessToken) {
-              token = response.data.accessToken;
-              localStorage.setItem('accessToken', token);
-              console.log('✅ Token refreshed successfully for WebSocket connection');
-            }
-          } catch (error) {
-            console.error('❌ Failed to refresh token for WebSocket:', error);
-            // Continue with old token, backend will handle gracefully
+        try {
+          // Refresh token before connecting
+          const response = await authService.refreshToken();
+          if (response.data?.accessToken) {
+            token = response.data.accessToken;
+            localStorage.setItem('accessToken', token);
+            console.log('✅ Token refreshed successfully for WebSocket connection');
           }
+        } catch (error) {
+          console.error('❌ Failed to refresh token for WebSocket:', error);
+          // Continue with old token, backend will handle gracefully
         }
-        
-        // Subscribe to callbacks
-        webSocketService.onNotification(handleNotification);
-        webSocketService.onNotificationCount(handleNotificationCount);
-        webSocketService.onConnectionChange(handleConnectionChange);
+      }
+      
+      // Subscribe to callbacks BEFORE connecting
+      unsubNotification = webSocketService.onNotification(handleNotification);
+      unsubCount = webSocketService.onNotificationCount(handleNotificationCount);
+      unsubConnection = webSocketService.onConnectionChange(handleConnectionChange);
 
-        // Connect with fresh token
-        webSocketService.connect(user.id, token || undefined);
-      };
+      // Connect with fresh token
+      webSocketService.connect(user.id, token || undefined);
+    };
 
-      connectWebSocket();
-
-      // Cleanup on unmount
-      return () => {
-        webSocketService.disconnect();
-      };
-    }
-  }, [user, handleNotification, handleNotificationCount, handleConnectionChange]);
+    connectWebSocket();
+    
+    // Cleanup function
+    return () => {
+      console.log('🧹 Cleaning up WebSocket connection...');
+      unsubNotification?.();
+      unsubCount?.();
+      unsubConnection?.();
+      webSocketService.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only re-run when user ID changes
 
   // Mark notification as read
   const markAsRead = useCallback(async (notificationId: number) => {
@@ -132,12 +150,16 @@ export const useWebSocketNotifications = () => {
       // Call API to mark as read in backend
       await markNotificationAsRead(notificationId);
       
-      // Update local state
-      setNotifications((prev) =>
-        prev.map((n) =>
+      // Update local state and maintain sort order
+      setNotifications((prev) => {
+        const updated = prev.map((n) =>
           n.id === notificationId ? { ...n, isRead: true } : n
-        )
-      );
+        );
+        // Keep sorted by createdAt (newest first)
+        return updated.sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
       
       // Update unread count
       setUnreadCount((prev) => Math.max(0, prev - 1));

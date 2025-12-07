@@ -1,9 +1,7 @@
 package POSE_Project_Tracking.Blog.config;
 
 import POSE_Project_Tracking.Blog.entity.User;
-import POSE_Project_Tracking.Blog.enums.ELoginType;
 import POSE_Project_Tracking.Blog.enums.EUserRole;
-import POSE_Project_Tracking.Blog.enums.EUserStatus;
 import POSE_Project_Tracking.Blog.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,8 +33,6 @@ public class AdminAccountInitializer implements CommandLineRunner {
             admin.setPassword(passwordEncoder.encode("admin123")); // Mật khẩu nên mạnh hơn
             admin.setRole(EUserRole.ADMIN); // enum hoặc String, tùy bạn
             admin.setDisplayName("Admin");
-            admin.setAccountStatus(EUserStatus.ACTIVE);
-            admin.setLoginType(ELoginType.LOCAL);
             userRepository.save(admin);
             System.out.println("✅ Admin account created.");
         } else {

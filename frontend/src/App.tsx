@@ -20,6 +20,7 @@ import { ProjectDetailPage } from "./pages/ProjectDetail"
 import { MilestoneDetailPage } from "./pages/MilestoneDetail"
 import { ScrollToTop } from "./components/ScropToTop"
 import { TaskDetailPage } from "./pages/TaskDetail"
+import { ProjectGeneration } from "./pages/student/ProjectGeneration"
 import { Toaster } from "@/components/ui/sonner"
 
 function App() {
@@ -91,6 +92,14 @@ function App() {
               element={
                 <RoleBasedRoute allowedRoles={[UserRole.STUDENT, UserRole.INSTRUCTOR]}>
                   <ProjectDetailPage />
+                </RoleBasedRoute>
+              } 
+            />
+            <Route 
+              path="project/:projectId/generate" 
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.STUDENT]}>
+                  <ProjectGeneration />
                 </RoleBasedRoute>
               } 
             />

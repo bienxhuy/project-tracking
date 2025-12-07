@@ -14,7 +14,6 @@ import {
   ChangePasswordRequest,
 } from "../types/auth.type.ts";
 import { authService } from "../services/auth.service.ts";
-import { UserStatus } from "../types/util.type.ts";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const ACCESS_TOKEN_KEY = 'accessToken';
@@ -51,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isAuthenticated = !!user && user.accountStatus === UserStatus.ACTIVE;
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     const cachedUser = readCachedUser();
@@ -99,8 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (response.errorCode === 'VERIFYING_EMAIL') {
           throw new Error('Please verify your email before logging in');
         }
-        if (response.errorCode === 'UNAUTHORIZED' || response.errorCode === 'ACCOUNT_INACTIVE') {
-          throw new Error('Your account has been banned');
+        if (response.errorCode === 'UNAUTHORIZED') {
+          throw new Error('Unauthorized access');
         }
         // Any other errorCode
         throw new Error(response.message || 'Login failed');

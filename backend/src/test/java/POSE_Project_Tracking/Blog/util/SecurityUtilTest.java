@@ -46,7 +46,6 @@ class SecurityUtilTest {
         user.setUsername("testuser");
         user.setEmail("test@example.com");
         user.setRole(EUserRole.STUDENT);
-        user.setAccountStatus(EUserStatus.ACTIVE);
 
         // Set private fields using ReflectionTestUtils
         ReflectionTestUtils.setField(securityUtil, "accessTokenExpiration", 3600L);

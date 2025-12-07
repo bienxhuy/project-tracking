@@ -17,9 +17,6 @@ class UserService {
     
     if (filters?.search) params.append('search', filters.search);
     if (filters?.role && filters.role !== 'ALL') params.append('role', filters.role);
-    if (filters?.accountStatus && filters.accountStatus !== 'ALL') {
-      params.append('accountStatus', filters.accountStatus);
-    }
     if (filters?.loginType && filters.loginType !== 'ALL') {
       params.append('loginType', filters.loginType);
     }
@@ -36,7 +33,7 @@ class UserService {
   }
 
   async createUser(data: CreateUserDto): Promise<User> {
-    const response = await apiClient.post<ApiResponse<User>>('/api/v1/auth/register', data);
+    const response = await apiClient.post<ApiResponse<User>>('/api/v1/users', data);
     return response.data.data;
   }
 
@@ -65,14 +62,14 @@ class UserService {
 
   async bulkCreateUsers(data: BulkCreateUserDto): Promise<BulkImportResult> {
     const response = await apiClientLongRunning.post<ApiResponse<BulkImportResult>>(
-      '/api/v1/auth/bulk-register',
+      '/api/v1/users/bulk-import',
       data
     );
     return response.data.data;
   }
   
   async cancelBulkEmailSending(taskId: string): Promise<void> {
-    await apiClient.post(`/api/v1/auth/bulk-register/cancel/${taskId}`);
+    await apiClient.post(`/api/v1/users/bulk-import/cancel/${taskId}`);
   }
 
   // Calculate stats locally from users array
@@ -82,7 +79,7 @@ class UserService {
       totalAdmins: users.filter(u => u.role === UserRole.ADMIN).length,
       totalInstructors: users.filter(u => u.role === UserRole.INSTRUCTOR).length,
       totalStudents: users.filter(u => u.role === UserRole.STUDENT).length,
-      totalInactive: users.filter(u => u.accountStatus === UserStatus.INACTIVE).length,
+      totalInactive: 0, // Removed accountStatus filter
     };
   }
 }

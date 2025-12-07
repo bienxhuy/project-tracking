@@ -98,6 +98,7 @@ public interface ProjectMapper {
                 .id(member.getUser().getId())
                 .displayName(member.getUser().getDisplayName())
                 .email(member.getUser().getEmail())
+                .studentId(member.getUser().getStudentId())
                 .role(member.getUser().getRole() != null ? member.getUser().getRole() : null)
                 .build();
     }

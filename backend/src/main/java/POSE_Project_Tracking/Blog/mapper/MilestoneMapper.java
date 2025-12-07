@@ -92,5 +92,6 @@ public interface MilestoneMapper {
     @Mapping(target = "id", source = "id")
     @Mapping(target = "displayName", source = "displayName")
     @Mapping(target = "email", source = "email")
+    @Mapping(target = "studentId", source = "studentId")
     AssignedUserRes mapUserToAssignedUserRes(POSE_Project_Tracking.Blog.entity.User user);
 }
