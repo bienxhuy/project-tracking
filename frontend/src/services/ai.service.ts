@@ -1,6 +1,6 @@
 import { GenProjectTree } from "@/types/project.type";
 
-const AI_SERVICE_URL = "http://localhost:3030";
+const AI_SERVICE_URL = import.meta.env.VITE_AI_API_URL;
 
 interface GenerateProjectRequest {
   projectTitle: string;
