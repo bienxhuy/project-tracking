@@ -191,7 +191,7 @@ export const ProjectGeneration = () => {
 
   // Confirm and create project with generated data
   const handleConfirm = async () => {
-    if (!generatedProject) return;
+    if (!generatedProject || !projectId) return;
 
     // Validate that all tasks have at least one assignee
     for (let i = 0; i < generatedProject.milestones.length; i++) {
@@ -203,12 +203,60 @@ export const ProjectGeneration = () => {
       }
     }
 
-    // Mock API call
-    toast.success("Đang tạo dự án...");
-    setTimeout(() => {
-      toast.success("Đã tạo dự án thành công!");
-      navigate(`/student/projects/${projectId}`);
-    }, 1500);
+    try {
+      toast.loading("Đang áp dụng cấu trúc dự án...");
+
+      // Convert to API format
+      const bulkUpdateRequest = {
+        content: generatedProject.content,
+        objectives: generatedProject.objectives,
+        milestones: generatedProject.milestones.map(milestone => ({
+          title: milestone.title,
+          description: milestone.description,
+          startDate: milestone.startDate.toISOString(),
+          endDate: milestone.endDate.toISOString(),
+          tasks: milestone.tasks.map(task => ({
+            title: task.title,
+            description: task.description,
+            startDate: task.startDate.toISOString(),
+            endDate: task.endDate.toISOString(),
+            assignees: task.assignees.map(assignee => ({
+              id: assignee.id,
+              displayName: assignee.displayName,
+              email: assignee.email,
+              role: assignee.role,
+            })),
+          })),
+        })),
+      };
+
+      const response = await projectService.bulkUpdateProjectWithMilestonesAndTasks(
+        Number(projectId),
+        bulkUpdateRequest
+      );
+
+      if (response.status === "success") {
+        toast.dismiss();
+        toast.success("Đã tạo dự án thành công!");
+        navigate(`/project/${projectId}`);
+      } else {
+        toast.dismiss();
+        toast.error(response.message || "Không thể tạo dự án");
+      }
+    } catch (error: any) {
+      toast.dismiss();
+      console.error("Error creating project:", error);
+      
+      if (error.response?.data?.error === "PROJECT_LOCKED") {
+        toast.error("Dự án đã bị khóa, không thể cập nhật");
+      } else if (error.response?.data?.error === "USER_NON_EXISTENT") {
+        toast.error("Một số người dùng được gán không tồn tại");
+      } else if (error.response?.data?.error === "PROJECT_NOT_FOUND") {
+        toast.error("Dự án không tồn tại");
+      } else {
+        toast.error("Đã xảy ra lỗi khi tạo dự án");
+      }
+    }
   };
 
   // Helper to format date

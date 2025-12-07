@@ -87,6 +87,29 @@ export interface UpdateProjectContentRequest {
   content: string;
 }
 
+export interface BulkProjectUpdateRequest {
+  content: string;
+  objectives: string;
+  milestones: {
+    title: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+    tasks: {
+      title: string;
+      description: string;
+      startDate: string;
+      endDate: string;
+      assignees: {
+        id: number;
+        displayName?: string;
+        email?: string;
+        role?: string;
+      }[];
+    }[];
+  }[];
+}
+
 // Generated Project Tree from AI
 export interface GenProjectTree {
   content: string;
