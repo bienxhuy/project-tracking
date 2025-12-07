@@ -8,8 +8,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { User } from "@/types/user.type";
-import { UserRole, UserStatus } from "@/types/util.type";
-import { Calendar, Mail, Shield, Hash, Activity, Star } from "lucide-react";
+import { UserRole } from "@/types/util.type";
+import { Calendar, Mail, Shield, Hash, Star } from "lucide-react";
 
 interface ViewUserDialogProps {
   open: boolean;
@@ -45,18 +45,6 @@ export function ViewUserDialog({
     }
   };
 
-  const getStatusBadgeColor = (status: UserStatus) => {
-    switch (status) {
-      case UserStatus.ACTIVE:
-        return "bg-green-100 text-green-800";
-      case UserStatus.INACTIVE:
-        return "bg-gray-100 text-gray-800";
-      case UserStatus.VERIFYING:
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -96,9 +84,6 @@ export function ViewUserDialog({
                 <Badge className={getRoleBadgeColor(user.role)}>
                   {user.role}
                 </Badge>
-                <Badge className={getStatusBadgeColor(user.accountStatus)}>
-                  {user.accountStatus}
-                </Badge>
               </div>
             </div>
           </div>
@@ -130,20 +115,18 @@ export function ViewUserDialog({
                 <Shield className="h-4 w-4 text-muted-foreground" />
                 <span>Role: {user.role}</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Activity className="h-4 w-4 text-muted-foreground" />
-                <span>Status: {user.accountStatus}</span>
-              </div>
+              {user.role === UserRole.STUDENT && user.studentId && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Hash className="h-4 w-4 text-muted-foreground" />
+                  <span>Student ID: {user.studentId}</span>
+                </div>
+              )}
               {user.level !== undefined && user.level !== null && (
                 <div className="flex items-center gap-3 text-sm">
                   <Star className="h-4 w-4 text-muted-foreground" />
                   <span>Level: {user.level.toFixed(1)}</span>
                 </div>
               )}
-              <div className="flex items-center gap-3 text-sm">
-                <Activity className="h-4 w-4 text-muted-foreground" />
-                <span>Login Type: {user.loginType}</span>
-              </div>
               <div className="flex items-center gap-3 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span>Created: {formatDate(user.createdAt)}</span>

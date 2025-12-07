@@ -120,10 +120,13 @@ export function BulkImportDialog({
           }
 
           // Transform to CreateUserDto
-          const users: CreateUserDto[] = jsonData.map((row) => {
+          const users: CreateUserDto[] = jsonData.map((row, index) => {
             const displayName = row.displayName || row.name || row.DisplayName || row.Name || "";
             const email = row.email || row.Email || "";
             const role = (row.role || row.Role || "STUDENT").toUpperCase();
+            // Convert studentId to string (handles numbers from Excel) and handle null/undefined
+            const rawStudentId = row.studentId || row.student_id || row.StudentId || row.Student_ID;
+            const studentId = rawStudentId != null ? String(rawStudentId).trim() : "";
             
             // Generate username from email
             const username = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "") || 
@@ -131,7 +134,12 @@ export function BulkImportDialog({
             
             // Validate required fields
             if (!displayName || !email) {
-              throw new Error(`Missing required fields: displayName or email in row`);
+              throw new Error(`Row ${index + 2}: Missing required fields: displayName or email`);
+            }
+            
+            // Validate studentId for STUDENT role
+            if (role === "STUDENT" && !studentId) {
+              throw new Error(`Row ${index + 2}: Student ID is required for STUDENT role`);
             }
 
             return {
@@ -139,8 +147,8 @@ export function BulkImportDialog({
               password: generatePassword(),
               email: email,
               displayName: displayName,
-              role: role as any,
-              loginType: "LOCAL" as any
+              studentId: role === "STUDENT" && studentId ? studentId : undefined,
+              role: role as any
             };
           });
 
@@ -315,9 +323,10 @@ export function BulkImportDialog({
 
   const downloadTemplate = (format: "csv" | "xlsx" = "csv") => {
     const sampleData = [
-      { displayName: "Nguyễn Văn An", email: "nguyen.van.an@ute.edu.vn", role: "STUDENT" },
-      { displayName: "Trần Thị Bích", email: "tran.thi.bich@ute.edu.vn", role: "STUDENT" },
-      { displayName: "Lê Văn Cường", email: "le.van.cuong@ute.edu.vn", role: "STUDENT" }
+      { displayName: "Nguyễn Văn An", email: "nguyen.van.an@ute.edu.vn", role: "STUDENT", studentId: "22000001" },
+      { displayName: "Trần Thị Bích", email: "tran.thi.bich@ute.edu.vn", role: "STUDENT", studentId: "22000002" },
+      { displayName: "Lê Văn Cường", email: "le.van.cuong@ute.edu.vn", role: "STUDENT", studentId: "22000003" },
+      { displayName: "Phạm Văn Đức", email: "pham.van.duc@ute.edu.vn", role: "INSTRUCTOR" }
     ];
     
     if (format === "xlsx") {
@@ -369,7 +378,10 @@ export function BulkImportDialog({
             <div>
               <DialogTitle>Bulk Import Users</DialogTitle>
               <DialogDescription className="text-xs mt-1">
-                Upload a CSV, XLS, or XLSX file to create multiple user accounts at once.
+                Upload a CSV, XLS, or XLSX file to create multiple user accounts at once. 
+                <span className="block mt-1 text-blue-600 font-medium">
+                  ⚠️ Note: Student ID (8 digits, format: 22xxxxxx) is required for STUDENT role.
+                </span>
               </DialogDescription>
             </div>
             {loading && (
@@ -465,6 +477,9 @@ export function BulkImportDialog({
                   <Download className="h-4 w-4" />
                   Download Templates
                 </h4>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Templates include sample data with <span className="font-medium text-blue-600">studentId</span> column for STUDENT role.
+                </p>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -472,7 +487,7 @@ export function BulkImportDialog({
                     onClick={() => downloadTemplate("csv")}
                     className="flex-1"
                   >
-                    Student CSV
+                    Download CSV Template
                   </Button>
                   <Button
                     variant="outline"
@@ -480,22 +495,41 @@ export function BulkImportDialog({
                     onClick={() => downloadTemplate("xlsx")}
                     className="flex-1"
                   >
-                    Student XLSX
+                    Download XLSX Template
                   </Button>
                 </div>
               </div>
 
               {/* Required Fields Info */}
-              <div className="text-xs text-muted-foreground">
-                <p className="font-medium mb-1">Required fields:</p>
-                <ul className="list-disc list-inside space-y-0.5">
-                  <li>displayName (full name)</li>
-                  <li>email (must be unique)</li>
-                  <li>role (STUDENT or INSTRUCTOR)</li>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="font-semibold text-xs mb-2 text-amber-900">📋 Required Fields:</p>
+                <ul className="text-xs space-y-1.5 text-amber-800">
+                  <li className="flex items-start gap-2">
+                    <span className="font-medium">• displayName:</span>
+                    <span>Full name of the user</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-medium">• email:</span>
+                    <span>Must be unique, will be used for login</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-medium">• role:</span>
+                    <span>STUDENT or INSTRUCTOR</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-medium text-red-600">• studentId:</span>
+                    <span>
+                      <span className="font-semibold text-red-600">REQUIRED for STUDENT role only</span>
+                      <span className="block mt-0.5">Format: 8 digits (e.g., 22000001, 22000002)</span>
+                      <span className="block mt-0.5 text-amber-700">Leave empty for INSTRUCTOR role</span>
+                    </span>
+                  </li>
                 </ul>
-                <p className="text-xs mt-2 text-blue-600">
-                  Note: Username and password will be auto-generated for each user.
-                </p>
+                <div className="mt-2 pt-2 border-t border-amber-300">
+                  <p className="text-xs text-amber-700">
+                    💡 <span className="font-medium">Auto-generated:</span> Username and password will be created automatically for each user.
+                  </p>
+                </div>
               </div>
             </>
           ) : (

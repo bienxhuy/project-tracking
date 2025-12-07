@@ -121,8 +121,8 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new user", description = "Admin only - Create a single user account")
     public ApiResponse<UserRes> createUser(@Valid @RequestBody UserReq userReq) {
-        UserRes createdUser = userService.createUser(userReq);
-        return new ApiResponse<>(HttpStatus.CREATED, "User created successfully", createdUser, null);
+        UserRes createdUser = userOTPFacade.createUser(userReq);
+        return new ApiResponse<>(HttpStatus.CREATED, "User created successfully. Verification email sent.", createdUser, null);
     }
 
     // Bulk import users (Admin only)

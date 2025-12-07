@@ -1,18 +1,5 @@
 package POSE_Project_Tracking.Blog.controller;
 
-import POSE_Project_Tracking.Blog.dto.req.LoginReq;
-import POSE_Project_Tracking.Blog.dto.req.UserReq;
-import POSE_Project_Tracking.Blog.dto.res.ApiResponse;
-import POSE_Project_Tracking.Blog.dto.res.LoginRes;
-import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
-import POSE_Project_Tracking.Blog.entity.RefreshToken;
-import POSE_Project_Tracking.Blog.entity.User;
-import POSE_Project_Tracking.Blog.enums.ErrorCode;
-import POSE_Project_Tracking.Blog.facade.UserOTPFacade;
-import POSE_Project_Tracking.Blog.repository.RefreshTokenRepository;
-import POSE_Project_Tracking.Blog.service.IUserService;
-import POSE_Project_Tracking.Blog.util.SecurityUtil;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -23,7 +10,24 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import POSE_Project_Tracking.Blog.dto.req.LoginReq;
+import POSE_Project_Tracking.Blog.dto.res.ApiResponse;
+import POSE_Project_Tracking.Blog.dto.res.LoginRes;
+import POSE_Project_Tracking.Blog.dto.res.user.UserRes;
+import POSE_Project_Tracking.Blog.entity.RefreshToken;
+import POSE_Project_Tracking.Blog.entity.User;
+import POSE_Project_Tracking.Blog.facade.UserOTPFacade;
+import POSE_Project_Tracking.Blog.repository.RefreshTokenRepository;
+import POSE_Project_Tracking.Blog.service.IUserService;
+import POSE_Project_Tracking.Blog.util.SecurityUtil;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/auth")

@@ -96,10 +96,9 @@ export function UserTable({
           <TableHeader>
             <TableRow>
               <TableHead>User</TableHead>
+              <TableHead>ID</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -115,10 +114,9 @@ export function UserTable({
                     </div>
                   </div>
                 </TableCell>
+                <TableCell><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
                 <TableCell><div className="h-4 w-48 bg-gray-200 rounded animate-pulse" /></TableCell>
                 <TableCell><div className="h-6 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-                <TableCell><div className="h-6 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
-                <TableCell><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
                 <TableCell><div className="h-8 w-8 bg-gray-200 rounded animate-pulse ml-auto" /></TableCell>
               </TableRow>
             ))}
@@ -143,9 +141,9 @@ export function UserTable({
           <TableHeader>
             <TableRow>
               <TableHead>User</TableHead>
+              <TableHead>ID</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -170,15 +168,13 @@ export function UserTable({
                     </div>
                   </div>
                 </TableCell>
+                <TableCell className="text-sm">
+                  {user.studentId || ""}
+                </TableCell>
                 <TableCell className="text-sm">{user.email}</TableCell>
                 <TableCell>
                   <Badge className={getRoleBadgeColor(user.role)}>
                     {user.role}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className={getStatusBadgeColor(user.accountStatus)}>
-                    {user.accountStatus}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
