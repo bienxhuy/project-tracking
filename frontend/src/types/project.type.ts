@@ -86,3 +86,25 @@ export interface UpdateProjectContentRequest {
   objectives: string;
   content: string;
 }
+
+// Generated Project Tree from AI
+export interface GenProjectTree {
+  content: string;
+  objectives: string;
+  milestones: {
+    id: number;
+    title: string;
+    description: string;
+    startDate: Date;
+    endDate: Date;
+    tasks: {
+      id: number;
+      title: string;
+      description: string;
+      startDate: Date;
+      endDate: Date;
+      assignees: BaseUser[];
+    }[];
+    isExpanded?: boolean;
+  }[];
+}
