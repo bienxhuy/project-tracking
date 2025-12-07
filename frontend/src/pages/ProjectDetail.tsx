@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { CheckCircle2, Clock, Lock, Unlock, Plus, Edit, FileDown, MoreVertical, Sparkles } from "lucide-react";
+import { CheckCircle2, Clock, Lock, Unlock, Plus, Edit, FileDown, MoreVertical, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { projectService } from "@/services/project.service";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -20,6 +20,8 @@ import { statusConfig } from "@/types/project.type";
 import { MilestoneCard } from "@/components/MilestoneCard";
 import { ProjectProgressBar } from "@/components/ProjectProgressBar";
 import { toast } from "sonner";
+import { BaseUser } from "@/types/user.type";
+import { Badge } from "@/components/ui/badge";
 
 
 export const ProjectDetailPage = () => {
@@ -32,6 +34,10 @@ export const ProjectDetailPage = () => {
   // Project content state
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Project members state
+  const [projectMembers, setProjectMembers] = useState<BaseUser[]>([]);
+  const [isMembersExpanded, setIsMembersExpanded] = useState<boolean>(false);
 
   // Editing state - only store temporary edits
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -54,6 +60,10 @@ export const ProjectDetailPage = () => {
 
         if (response.status === "success" && response.data) {
           setProject(response.data);
+          
+          // Fetch project members
+          const members = await projectService.getProjectMembers(Number(id));
+          setProjectMembers(members);
         } else {
           toast.error(response.message || "Không thể tải thông tin dự án");
         }
@@ -398,6 +408,46 @@ export const ProjectDetailPage = () => {
               </div>
             </div>
           </CardContent>
+        </Card>
+
+        {/* Project Members */}
+        <Card className="mb-8">
+          <CardHeader 
+            className="cursor-pointer"
+            onClick={() => setIsMembersExpanded(!isMembersExpanded)}
+          >
+            <CardTitle className="flex items-center justify-between font-bold">
+              <span>Thành viên ({projectMembers.length})</span>
+              {isMembersExpanded ? (
+                <ChevronUp className="w-5 h-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+              )}
+            </CardTitle>
+          </CardHeader>
+          {isMembersExpanded && (
+            <CardContent>
+              <div className="space-y-3">
+                {projectMembers.map((member) => (
+                  <div 
+                    key={member.id} 
+                    className="flex items-center justify-between py-1 px-1 border-b transition-colors"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground">{member.displayName}</span>
+                      <span className="text-sm text-muted-foreground">{member.email}</span>
+                    </div>
+                    {member.role === "INSTRUCTOR" && (
+                      <Badge variant="default">Giảng viên</Badge>
+                    )}
+                  </div>
+                ))}
+                {projectMembers.length === 0 && (
+                  <p className="text-center text-muted-foreground py-4">Chưa có thành viên nào</p>
+                )}
+              </div>
+            </CardContent>
+          )}
         </Card>
 
         {/* Milestones */}
