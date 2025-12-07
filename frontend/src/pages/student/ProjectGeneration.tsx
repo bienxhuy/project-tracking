@@ -27,6 +27,7 @@ import { BaseUser } from "@/types/user.type";
 import { GenProjectTree } from "@/types/project.type";
 import { projectService } from "@/services/project.service";
 import { ProjectDetail } from "@/types/project.type";
+import { aiService } from "@/services/ai.service";
 
 export const ProjectGeneration = () => {
   const { projectId } = useParams();
@@ -100,6 +101,7 @@ export const ProjectGeneration = () => {
     );
   }
 
+  // Handle AI project generation
   const handleGenerate = async () => {
     if (!description.trim()) {
       toast.error("Vui lòng nhập mô tả dự án");
@@ -108,38 +110,12 @@ export const ProjectGeneration = () => {
 
     setIsGenerating(true);
     try {
-      // Call AI service
-      const response = await fetch("http://localhost:3030/api/generate-project", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectTitle: project?.title,
-          projectDescription: description,
-          startDate: project?.startDate.toISOString(),
-          endDate: project?.endDate.toISOString(),
-        }),
+      const transformedData = await aiService.generateProject({
+        projectTitle: project?.title || "",
+        projectDescription: description,
+        startDate: project?.startDate.toISOString() || "",
+        endDate: project?.endDate.toISOString() || "",
       });
-
-      if (!response.ok) throw new Error("Failed to generate project");
-
-      const data = await response.json();
-
-      // Transform dates from strings to Date objects and add expanded state
-      const transformedData: GenProjectTree = {
-        ...data,
-        milestones: data.milestones.map((milestone: any) => ({
-          ...milestone,
-          startDate: new Date(milestone.startDate),
-          endDate: new Date(milestone.endDate),
-          isExpanded: false,
-          tasks: milestone.tasks.map((task: any) => ({
-            ...task,
-            startDate: new Date(task.startDate),
-            endDate: new Date(task.endDate),
-            assignees: [],
-          })),
-        })),
-      };
 
       setGeneratedProject(transformedData);
       toast.success("Đã tạo kế hoạch dự án thành công!");
