@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { CheckCircle2, Clock, Lock, Unlock, Plus, Edit, FileDown, MoreVertical } from "lucide-react";
+import { CheckCircle2, Clock, Lock, Unlock, Plus, Edit, FileDown, MoreVertical, Sparkles } from "lucide-react";
 import { projectService } from "@/services/project.service";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -405,10 +405,21 @@ export const ProjectDetailPage = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-foreground">Cột mốc</h2>
             {userRole === "student" && !project.isLocked && (
-              <Button onClick={() => setCreatingMilestone(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Tạo cột mốc
-              </Button>
+              <div className="flex gap-2">
+                {project.milestones.length === 0 && (
+                  <Button 
+                    onClick={() => navigate(`/project/${id}/generate`)}
+                    variant="default"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Tạo với AI
+                  </Button>
+                )}
+                <Button onClick={() => setCreatingMilestone(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Tạo cột mốc
+                </Button>
+              </div>
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
