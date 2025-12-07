@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Calendar, Users, Sparkles, Loader2, ChevronDown, ChevronUp, Edit, Trash2, UserPlus, Send, CheckCircle, ArrowLeft
+  Calendar, Users, Sparkles, Loader2, ChevronDown, ChevronUp, Edit, Trash2, Send, CheckCircle, ArrowLeft
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -25,32 +25,80 @@ import { Separator } from "@/components/ui/separator";
 import { getInitials } from "@/utils/user.utils";
 import { BaseUser } from "@/types/user.type";
 import { GenProjectTree } from "@/types/project.type";
-
-// Mock project data - replace with actual API call
-const mockProject = {
-  id: 1,
-  title: "Phát triển hệ thống quản lý dự án",
-  content: "Xây dựng hệ thống quản lý dự án cho sinh viên và giảng viên",
-  objectives: "Tạo nền tảng theo dõi tiến độ dự án hiệu quả",
-  startDate: new Date("2024-01-15"),
-  endDate: new Date("2024-06-30"),
-  students: [
-    { id: 1, username: "student1", email: "student1@example.com", displayName: "Nguyễn Văn A", role: "STUDENT" as const },
-    { id: 2, username: "student2", email: "student2@example.com", displayName: "Trần Thị B", role: "STUDENT" as const },
-  ],
-};
-
+import { projectService } from "@/services/project.service";
+import { ProjectDetail } from "@/types/project.type";
 
 export const ProjectGeneration = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
 
   // State variables
+  const [project, setProject] = useState<ProjectDetail | null>(null);
+  const [projectMembers, setProjectMembers] = useState<BaseUser[]>([]);
+  const [isLoadingProject, setIsLoadingProject] = useState(true);
   const [description, setDescription] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedProject, setGeneratedProject] = useState<GenProjectTree | null>(null);
   const [editingMilestone, setEditingMilestone] = useState<number | null>(null);
   const [editingTask, setEditingTask] = useState<{ milestoneIdx: number; taskIdx: number } | null>(null);
+
+  // Fetch project data and members
+  useEffect(() => {
+    const fetchProjectData = async () => {
+      if (!projectId) return;
+
+      try {
+        setIsLoadingProject(true);
+        const [projectResponse, membersData] = await Promise.all([
+          projectService.getProjectById(Number(projectId)),
+          projectService.getProjectMembers(Number(projectId)),
+        ]);
+
+        if (projectResponse.status === "success" && projectResponse.data) {
+          setProject(projectResponse.data);
+          setProjectMembers(membersData.filter(member => member.role === "STUDENT"));
+        } else {
+          toast.error("Không thể tải thông tin dự án");
+          navigate(-1);
+        }
+      } catch (error) {
+        console.error("Error fetching project:", error);
+        toast.error("Có lỗi xảy ra khi tải dự án");
+        navigate(-1);
+      } finally {
+        setIsLoadingProject(false);
+      }
+    };
+
+    fetchProjectData();
+  }, [projectId, navigate]);
+
+  // Show loading state
+  if (isLoadingProject) {
+    return (
+      <div className="container mx-auto py-6 space-y-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center space-y-3">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+            <p className="text-sm text-muted-foreground">Đang tải thông tin dự án...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if no project data
+  if (!project) {
+    return (
+      <div className="container mx-auto py-6">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground">Không tìm thấy dự án</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleGenerate = async () => {
     if (!description.trim()) {
@@ -65,10 +113,10 @@ export const ProjectGeneration = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          projectTitle: mockProject.title,
+          projectTitle: project?.title,
           projectDescription: description,
-          startDate: mockProject.startDate.toISOString(),
-          endDate: mockProject.endDate.toISOString(),
+          startDate: project?.startDate.toISOString(),
+          endDate: project?.endDate.toISOString(),
         }),
       });
 
@@ -209,18 +257,18 @@ export const ProjectGeneration = () => {
         <CardContent className="pt-6 space-y-6">
           {/* Project Title */}
           <div className="text-center">
-            <h1 className="text-2xl font-extrabold">{mockProject.title}</h1>
+            <h1 className="text-2xl font-extrabold">{project.title}</h1>
           </div>
 
           {/* Content and Objectives */}
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Nội dung</label>
-              <p className="text-sm leading-relaxed">{mockProject.content}</p>
+              <p className="text-sm leading-relaxed">{project.content || "Chưa có nội dung"}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Mục tiêu</label>
-              <p className="text-sm leading-relaxed">{mockProject.objectives}</p>
+              <p className="text-sm leading-relaxed">{project.objectives || "Chưa có mục tiêu"}</p>
             </div>
           </div>
 
@@ -233,20 +281,20 @@ export const ProjectGeneration = () => {
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm">
                   <span className="font-medium">Thời gian: </span>
-                  {formatDate(mockProject.startDate)} - {formatDate(mockProject.endDate)}
+                  {formatDate(project.startDate)} - {formatDate(project.endDate)}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm">
                   <span className="font-medium">Thành viên: </span>
-                  {mockProject.students.length}
+                  {projectMembers.length}
                 </span>
               </div>
             </div>
             
             <div className="flex flex-wrap gap-2">
-              {mockProject.students.map((student) => (
+              {projectMembers.map((student) => (
                 <Badge key={student.id} variant="secondary" className="flex items-center gap-1.5">
                   <Avatar className="w-4 h-4">
                     <AvatarFallback className="text-[10px]">
@@ -371,7 +419,7 @@ export const ProjectGeneration = () => {
                                 size="icon"
                                 variant="ghost"
                                 onClick={() => setEditingMilestone(null)}
-                                className="h-8 w-8 cursor-pointer"
+                                className="h-8 w-8 cursor-pointer hover:text-green-500 hover:bg-muted"
                               >
                                 <CheckCircle className="w-4 h-4" />
                               </Button>
@@ -380,7 +428,7 @@ export const ProjectGeneration = () => {
                                 size="icon"
                                 variant="ghost"
                                 onClick={() => setEditingMilestone(mIdx)}
-                                className="h-8 w-8 cursor-pointer"
+                                className="h-8 w-8 cursor-pointer hover:text-black hover:bg-muted"
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
@@ -389,7 +437,7 @@ export const ProjectGeneration = () => {
                               size="icon"
                               variant="ghost"
                               onClick={() => deleteMilestone(mIdx)}
-                              className="h-8 w-8 text-destructive hover:text-destructive cursor-pointer"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-muted cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -397,7 +445,7 @@ export const ProjectGeneration = () => {
                               size="icon"
                               variant="ghost"
                               onClick={() => toggleMilestone(mIdx)}
-                              className="h-8 w-8 cursor-pointer"
+                              className="h-8 w-8 cursor-pointer hover:text-black hover:bg-muted"
                             >
                               {milestone.isExpanded ? (
                                 <ChevronUp className="w-4 h-4" />
@@ -493,7 +541,7 @@ export const ProjectGeneration = () => {
                                       size="icon"
                                       variant="ghost"
                                       onClick={() => setEditingTask(null)}
-                                      className="h-8 w-8 cursor-pointer"
+                                      className="h-8 w-8 cursor-pointer hover:text-green-500 hover:bg-muted"
                                     >
                                       <CheckCircle className="w-3.5 h-3.5" />
                                     </Button>
@@ -502,7 +550,7 @@ export const ProjectGeneration = () => {
                                       size="icon"
                                       variant="ghost"
                                       onClick={() => setEditingTask({ milestoneIdx: mIdx, taskIdx: tIdx })}
-                                      className="h-8 w-8 cursor-pointer"
+                                      className="h-8 w-8 cursor-pointer hover:text-black hover:bg-muted"
                                     >
                                       <Edit className="w-3.5 h-3.5" />
                                     </Button>
@@ -511,7 +559,7 @@ export const ProjectGeneration = () => {
                                     size="icon"
                                     variant="ghost"
                                     onClick={() => deleteTask(mIdx, tIdx)}
-                                    className="h-8 w-8 text-destructive hover:text-destructive cursor-pointer"
+                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-muted cursor-pointer"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </Button>
@@ -584,7 +632,7 @@ export const ProjectGeneration = () => {
                                     Thành viên dự án
                                   </label>
                                   <div className="flex flex-wrap gap-1.5">
-                                    {mockProject.students.map((student) => (
+                                    {projectMembers.map((student) => (
                                       <Button
                                         key={student.id}
                                         size="sm"
