@@ -151,6 +151,28 @@ class ProjectService {
   }
 
   /**
+   * Get all projects with filters (Fallback method)
+   * This endpoint may work better as it filters data before mapping
+   */
+  async getProjectsWithFilters(params?: {
+    year?: number;
+    semester?: number;
+    batch?: string;
+  }): Promise<ApiResponse<Project[]>> {
+    const queryParams = new URLSearchParams();
+    if (params?.year) queryParams.append('year', params.year.toString());
+    if (params?.semester) queryParams.append('semester', params.semester.toString());
+    if (params?.batch) queryParams.append('batch', params.batch);
+
+    const url = `/api/v1/projects/filter${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const response = await apiClient.get<ApiResponse<Project[]>>(url);
+    if (response.data.status === "success" && response.data.data) {
+      response.data.data = response.data.data.map(project => parseProjectDates<Project>(project));
+    }
+    return response.data;
+  }
+
+  /**
    * Get student's projects
    */
   async getStudentProjects(

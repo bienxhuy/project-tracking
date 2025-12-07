@@ -43,7 +43,7 @@ export interface UpdateUserDto {
   email?: string;
   displayName?: string;
   role?: UserRole;
-  accountStatus?: UserStatus;
+  studentId?: string;  // Student ID (only for students)
   level?: number;
   avatar?: string;
 }

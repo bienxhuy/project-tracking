@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { User, UpdateUserDto } from "@/types/user.type";
-import { UserRole, UserStatus } from "@/types/util.type";
+import { UserRole } from "@/types/util.type";
 
 interface EditUserDialogProps {
   open: boolean;
@@ -43,7 +43,7 @@ export function EditUserDialog({
         displayName: user.displayName,
         email: user.email,
         role: user.role,
-        accountStatus: user.accountStatus,
+        studentId: user.studentId,
         ...(user.level !== undefined && user.level !== null && { level: user.level })
       });
     }
@@ -62,6 +62,9 @@ export function EditUserDialog({
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Invalid email format";
+    }
+    if (formData.role === UserRole.STUDENT && !formData.studentId?.trim()) {
+      newErrors.studentId = "Student ID is required";
     }
 
     setErrors(newErrors);
@@ -142,45 +145,41 @@ export function EditUserDialog({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="role" className="text-sm font-medium">
-                Role
-              </label>
-              <Select
-                value={formData.role}
-                onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={UserRole.STUDENT}>Student</SelectItem>
-                  <SelectItem value={UserRole.INSTRUCTOR}>Instructor</SelectItem>
-                  <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="status" className="text-sm font-medium">
-                Status
-              </label>
-              <Select
-                value={formData.accountStatus}
-                onValueChange={(value) => setFormData({ ...formData, accountStatus: value as UserStatus })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={UserStatus.ACTIVE}>Active</SelectItem>
-                  <SelectItem value={UserStatus.INACTIVE}>Inactive</SelectItem>
-                  <SelectItem value={UserStatus.VERIFYING}>Verifying</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <label htmlFor="role" className="text-sm font-medium">
+              Role
+            </label>
+            <Select
+              value={formData.role}
+              onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UserRole.STUDENT}>Student</SelectItem>
+                <SelectItem value={UserRole.INSTRUCTOR}>Instructor</SelectItem>
+                <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {formData.role === UserRole.STUDENT && (
+            <div className="space-y-2">
+              <label htmlFor="studentId" className="text-sm font-medium">
+                Student ID <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="studentId"
+                value={formData.studentId || ""}
+                onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                className={errors.studentId ? "border-red-500" : ""}
+              />
+              {errors.studentId && (
+                <p className="text-xs text-red-500">{errors.studentId}</p>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter>
