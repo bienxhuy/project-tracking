@@ -3,6 +3,7 @@ import { TaskSchema } from './task.schema.js';
 
 export const MilestoneSchema = z
   .object({
+    id: z.number().describe('Temporary unique identifier for the milestone'),
     title: z.string().describe('Name of the milestone or key deliverable'),
     description: z
       .string()

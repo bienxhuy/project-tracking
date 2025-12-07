@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const TaskSchema = z
   .object({
+    id: z.number().describe('Temporary unique identifier for the task'),
     title: z
       .string()
       .describe('Brief name or summary of the task'),
