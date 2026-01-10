@@ -28,7 +28,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Add a simple nginx configuration for SPA routing
 RUN echo 'server { \
-    listen 8000; \
+    listen 3000; \
     server_name localhost; \
     root /usr/share/nginx/html; \
     index index.html; \
@@ -42,8 +42,8 @@ RUN echo 'server { \
     } \
 }' > /etc/nginx/conf.d/default.conf
 
-# Expose port 8000
-EXPOSE 8000
+# Expose port 3000
+EXPOSE 3000
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
